@@ -1,7 +1,7 @@
-const AppError = require("../utils/AppError");
-const catchAsync = require("../utils/catchAsync");
-const logger = require("../utils/logger");
-const Roles = require("../configs/roleConfig");
+const AppError = require('../utils/AppError');
+const catchAsync = require('../utils/catchAsync');
+const logger = require('../utils/logger');
+const Roles = require('../configs/roleConfig');
 
 module.exports.verifyIsAdmin = catchAsync(async (req, res, next) => {
   if (
