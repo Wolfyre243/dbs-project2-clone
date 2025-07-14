@@ -4,17 +4,38 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon index.js",
+    "start": "node index.js",
+    "prisma-format": "npx prisma-case-format --file \"./prisma/schema.prisma\" --map-table-case \"snake\" --table-case \"camel\""
+  },
+  "prisma": {
+    "schema": "./prisma/schema.prisma"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@prisma/client": "^6.11.1",
+    "bcrypt": "^6.0.0",
     "body-parser": "^2.2.0",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
+    "crypto-random-string": "^5.0.0",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
-    "pg": "^8.16.0"
+    "express-rate-limit": "^7.5.1",
+    "express-validator": "^7.2.1",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "winston": "^3.17.0",
+    "xss": "^1.0.15"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10",
+    "prisma": "^6.11.1",
+    "prisma-case-format": "^2.2.1"
   }
 }
