@@ -1,11 +1,11 @@
 // Import dependencies
-const jwt = require("jsonwebtoken");
+const jwt = require('jsonwebtoken');
 
 // Import models
-const userModel = require("../models/userModel");
-const AppError = require("../utils/AppError");
-const catchAsync = require("../utils/catchAsync");
-const logger = require("../utils/logger");
+const userModel = require('../models/userModel');
+const AppError = require('../utils/AppError');
+const catchAsync = require('../utils/catchAsync');
+const logger = require('../utils/logger');
 
 // JWT Configuration
 const {
@@ -15,13 +15,14 @@ const {
   refreshTokenDuration,
   tokenAlgorithm,
   cookieOptions,
-} = require("../configs/authConfig");
+} = require('../configs/authConfig');
 
 module.exports.generateRefreshToken = catchAsync(async (req, res, next) => {
-  console.log("Generating Refresh Token...");
+  console.log('Generating Refresh Token...');
 
   const payload = {
     userId: res.locals.userId,
+    sessionId: res.locals.sessionId,
     createdAt: new Date(Date.now()),
   };
 
@@ -40,11 +41,12 @@ module.exports.generateRefreshToken = catchAsync(async (req, res, next) => {
 });
 
 module.exports.generateAccessToken = catchAsync(async (req, res, next) => {
-  console.log("Generating Access Token...");
+  console.log('Generating Access Token...');
 
   const payload = {
     userId: res.locals.userId,
     roleId: res.locals.roleId,
+    sessionId: res.locals.sessionId,
     createdAt: new Date(Date.now()),
   };
 
@@ -64,13 +66,13 @@ module.exports.generateAccessToken = catchAsync(async (req, res, next) => {
 });
 
 module.exports.verifyToken = catchAsync(async (req, res, next) => {
-  console.log("[VERIFY ACCESS]");
+  console.log('[VERIFY ACCESS]');
   // Bearer <token>
-  const token = req.headers["authorization"]?.split(" ")[1];
+  const token = req.headers['authorization']?.split(' ')[1];
 
   try {
     if (!token) {
-      throw new AppError("Unauthorized: No access token", 401);
+      throw new AppError('Unauthorized: No access token', 401);
     }
     const payload = jwt.verify(token, accessSK);
 
@@ -81,6 +83,7 @@ module.exports.verifyToken = catchAsync(async (req, res, next) => {
     res.locals.user = {
       userId: payload.userId,
       roleId: payload.roleId,
+      sessionId: payload.sessionId,
     };
 
     logger.info(
@@ -88,12 +91,12 @@ module.exports.verifyToken = catchAsync(async (req, res, next) => {
     );
     return next();
   } catch (error) {
-    if (error.name === "TokenExpiredError") {
+    if (error.name === 'TokenExpiredError') {
       // logger.warning('❌|Error verifying access token: Access token expired');
-      throw new AppError("Access token expired", 401);
-    } else if (error.name === "JsonWebTokenError") {
+      throw new AppError('Access token expired', 401);
+    } else if (error.name === 'JsonWebTokenError') {
       // logger.warning('❌|Error verifying access token: Invalid access token provided');
-      throw new AppError("Invalid access token provided", 403);
+      throw new AppError('Invalid access token provided', 403);
     }
 
     throw error;
@@ -101,14 +104,14 @@ module.exports.verifyToken = catchAsync(async (req, res, next) => {
 });
 
 module.exports.verifyRefreshToken = catchAsync(async (req, res, next) => {
-  console.log("[VERIFY REFRESH]");
+  console.log('[VERIFY REFRESH]');
   const token = req.cookies.refreshToken;
 
   try {
-    console.log("Checking refresh token...");
+    console.log('Checking refresh token...');
 
     if (!token) {
-      throw new AppError("Unauthorised: No refresh token", 401);
+      throw new AppError('Unauthorised: No refresh token', 401);
     }
 
     const payload = jwt.verify(token, refreshSK);
@@ -120,6 +123,7 @@ module.exports.verifyRefreshToken = catchAsync(async (req, res, next) => {
     const user = await userModel.retrieveById(payload.userId);
 
     res.locals.userId = payload.userId;
+    res.locals.sessionId = payload.sessionId;
     res.locals.roleId = user.roleId;
 
     logger.info(
@@ -128,14 +132,15 @@ module.exports.verifyRefreshToken = catchAsync(async (req, res, next) => {
     return next();
   } catch (error) {
     // Automatically clear cookie if cookie is invalid
-    res.clearCookie("refreshToken", cookieOptions);
+    res.clearCookie('refreshToken', cookieOptions);
+    // TODO: Invalidate session if cookie invalid
 
-    if (error.name === "TokenExpiredError") {
+    if (error.name === 'TokenExpiredError') {
       // logger.warning('❌|Error verifying refresh token: Access token expired');
-      throw new AppError("Access token expired", 401);
-    } else if (error.name === "JsonWebTokenError") {
+      throw new AppError('Access token expired', 401);
+    } else if (error.name === 'JsonWebTokenError') {
       // logger.warning('❌|Error verifying refresh token: Invalid access token provided');
-      throw new AppError("Invalid access token provided", 403);
+      throw new AppError('Invalid access token provided', 403);
     }
 
     throw error;
@@ -151,6 +156,6 @@ module.exports.setTokens = catchAsync(async (req, res, next) => {
   );
   res
     .status(200)
-    .cookie("refreshToken", refreshToken, cookieOptions)
+    .cookie('refreshToken', refreshToken, cookieOptions)
     .json({ accessToken });
 });

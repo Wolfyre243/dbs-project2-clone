@@ -1,37 +1,23 @@
-// Import express-rate-limit module
-const rateLimit = require("express-rate-limit");
+const rateLimit = require('express-rate-limit');
+const RateLimits = require('../configs/rateLimitConfig');
 
-//==============================================================================
-// Login rate limiter
-//==============================================================================
-const loginCooldown = 60 * 1000; // 1 min, in milliseconds
-const loginLimiter = rateLimit({
-  windowMs: loginCooldown,
-  max: 5,
-  message: {
-    status: 429,
-    message: `Too many login attempts. Try again after ${loginCooldown / 60000} minutes`,
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-//================================================================================
-// Admin-login limiter
-//================================================================================
-const adminLoginCooldown = 60 * 1000; // 1 min, in milliseconds
-const adminLoginLimiter = rateLimit({
-  windowMs: adminLoginCooldown,
-  max: 3,
-  message: {
-    status: 429,
-    message: `Too many admin login attempts. Try again after ${adminLoginCooldown / 60000} minutes`,
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-module.exports = {
-  loginLimiter,
-  adminLoginLimiter,
+const createRateLimiter = (key) => {
+  const config = RateLimits[key];
+  if (!config) throw new Error(`Rate limit config for ${key} not found`);
+  return rateLimit({
+    windowMs: config.cooldown,
+    max: config.maxAttempts,
+    message: {
+      status: 429,
+      message: `Too many requests. Try again after ${config.cooldown / 60000} minutes`,
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
 };
+
+// Predefined limiters for convenience
+module.exports.loginLimiter = createRateLimiter('LOGIN');
+module.exports.registerLimiter = createRateLimiter('REGISTER');
+module.exports.adminLoginLimiter = createRateLimiter('ADMINLOGIN');
+module.exports.createRateLimiter = createRateLimiter;

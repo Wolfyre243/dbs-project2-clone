@@ -1,11 +1,11 @@
-const xss = require("xss");
+const xss = require('xss');
 
 function sanitizeObject(obj) {
-  if (typeof obj === "string") {
+  if (typeof obj === 'string') {
     return xss(obj);
   } else if (Array.isArray(obj)) {
     return obj.map(sanitizeObject);
-  } else if (obj !== null && typeof obj === "object") {
+  } else if (obj !== null && typeof obj === 'object') {
     const sanitized = {};
     for (const key in obj) {
       sanitized[key] = sanitizeObject(obj[key]);
@@ -24,7 +24,7 @@ const sanitizeOutput = (req, res, next) => {
     return originalJson.call(this, sanitizedData);
   };
 
-  next();
+  return next();
 };
 
 module.exports = sanitizeOutput;

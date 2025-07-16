@@ -11,7 +11,6 @@ datasource db {
 model users {
   userId           String        @id @default(uuid()) @map("user_id") @db.Uuid
   username         String        @db.VarChar(30)
-  password         String        @db.Char(60)
   createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
   modifiedAt       DateTime      @default(now()) @map("modified_at") @db.Timestamptz(6)
   statusCode       String        @map("status_code") @db.VarChar(30)
@@ -21,6 +20,7 @@ model users {
   event            event[]
   exhibitsCreated  exhibit[]     @relation("ExhibitCreatedBy")
   imagesCreated    image[]       @relation("ImageCreatedBy")
+  passwords        password[]
   phoneNumbers     phoneNumber[]
   qrCodesCreated   qrCode[]      @relation("QrCodeCreatedBy")
   reviews          review[]
@@ -136,7 +136,7 @@ model phoneNumber {
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   statusCode    String   @map("status_code") @db.VarChar(30)
   status        status   @relation(fields: [statusCode], references: [statusCode])
-  user          users    @relation(fields: [userId], references: [userId])
+  user          users    @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
   @@index([userId])
   @@index([statusCode])
@@ -152,7 +152,7 @@ model email {
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   statusCode String   @map("status_code") @db.VarChar(30)
   status     status   @relation(fields: [statusCode], references: [statusCode])
-  user       users    @relation(fields: [userId], references: [userId])
+  user       users    @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
   @@index([userId])
   @@index([statusCode])
@@ -162,7 +162,7 @@ model userRole {
   userId String @unique @map("user_id") @db.Uuid
   roleId Int    @map("role_id")
   role   role   @relation(fields: [roleId], references: [roleId])
-  user   users  @relation(fields: [userId], references: [userId])
+  user   users  @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
   @@id([userId, roleId])
   @@index([userId])
@@ -224,8 +224,8 @@ model session {
   sessionId  String   @id @default(uuid()) @map("session_id") @db.Uuid
   userId     String   @map("user_id") @db.Uuid
   deviceInfo String   @map("device_info")
-  isActive   Boolean  @map("is_active")
-  createdAt  DateTime @map("created_at") @db.Timestamptz(6)
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   user       users    @relation(fields: [userId], references: [userId])
 
   @@index([userId])
@@ -234,19 +234,18 @@ model session {
 model userProfile {
   userProfileId String   @id @default(uuid()) @map("user_profile_id") @db.Uuid
   userId        String   @unique @map("user_id") @db.Uuid
-  fName         String   @map("first_name") @db.VarChar(100)
-  lName         String   @map("last_name") @db.VarChar(100)
+  firstName     String   @map("first_name") @db.VarChar(100)
+  lastName      String   @map("last_name") @db.VarChar(100)
   languageCode  String   @map("language_code") @db.VarChar(3)
   gender        String   @db.Char(1)
   dob           DateTime @db.Date
   modifiedBy    String   @map("modified_by") @db.Uuid
-  createdBy     String   @map("created_by") @db.Uuid
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   modifiedAt    DateTime @default(now()) @map("modified_at") @db.Timestamptz(6)
   statusCode    String   @map("status_code") @db.VarChar(30)
   language      language @relation(fields: [languageCode], references: [languageCode])
   status        status   @relation(fields: [statusCode], references: [statusCode])
-  user          users    @relation("UserToProfile", fields: [userId], references: [userId])
+  user          users    @relation("UserToProfile", fields: [userId], references: [userId], onDelete: Cascade)
 
   @@index([languageCode])
   @@index([statusCode])
@@ -303,5 +302,14 @@ model review {
   reviewText String   @map("review_text")
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   modifiedAt DateTime @default(now()) @map("modified_at") @db.Timestamptz(6)
-  user       users    @relation(fields: [userId], references: [userId])
+  user       users    @relation(fields: [userId], references: [userId], onDelete: Cascade)
+}
+
+model password {
+  passwordId String   @id @default(uuid()) @map("password_id") @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  password   String   @db.Char(60)
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  user       users    @relation(fields: [userId], references: [userId], onDelete: Cascade)
 }
