@@ -1,7 +1,8 @@
 const Roles = {
   GUEST: 1,
-  ADMIN: 2,
-  SUPERADMIN: 3,
+  MEMBER: 2,
+  ADMIN: 3,
+  SUPERADMIN: 4,
 };
 
 module.exports = Roles;
