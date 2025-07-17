@@ -46,6 +46,17 @@ authRouter.post(
 );
 
 authRouter.post(
+  '/login',
+  rateLimiter.loginLimiter,
+  loginValidationRules(),
+  validate,
+  authController.login,
+  jwtMiddleware.generateRefreshToken,
+  jwtMiddleware.generateAccessToken,
+  jwtMiddleware.setTokens,
+);
+
+authRouter.post(
   '/register',
   rateLimiter.registerLimiter,
   userValidationRules(),

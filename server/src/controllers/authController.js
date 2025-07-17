@@ -36,6 +36,38 @@ module.exports.guestLogin = catchAsync(async (req, res, next) => {
   return next();
 });
 
+module.exports.login = catchAsync(async (req, res, next) => {
+  const { username, password } = req.body;
+
+  const user = await userModel.retrieveByUsername(username);
+
+  if (!user) {
+    throw new AppError('Login: Invalid username or password.', 400);
+  }
+
+  const passwordRecord = await userModel.retrievePasswordByUserId(user.userId);
+
+  const isMatch = await bcrypt.compare(password, passwordRecord.password);
+  if (!isMatch) {
+    throw new AppError('Login: Invalid username or password.', 400);
+  }
+
+  // Create session for user
+  const deviceInfo = req.headers['user-agent'] || 'Unknown Device';
+  const session = await sessionModel.create({
+    userId: user.userId,
+    deviceInfo,
+  });
+
+  logger.info(`User login with username: ${username}`);
+
+  res.locals.userId = user.userId;
+  res.locals.roleId = user.roleId;
+  res.locals.sessionId = session.sessionId;
+
+  return next();
+});
+
 module.exports.register = catchAsync(async (req, res, next) => {
   const {
     username,
@@ -118,33 +150,6 @@ module.exports.register = catchAsync(async (req, res, next) => {
   return next();
 });
 
-module.exports.adminLogin = catchAsync(async (req, res, next) => {
-  const { username, password } = req.body;
-
-  const userData = await userModel.retrieveByUsername(username);
-
-  if (!userData) {
-    throw new AppError('Login: Invalid username or password', 400);
-  }
-
-  if (userData.roleId != Roles.ADMIN && userData.roleId != Roles.SUPERADMIN) {
-    throw new AppError('Only ADMINs can log in.', 403);
-  }
-
-  const isMatch = await bcrypt.compare(password, userData.password);
-
-  if (!isMatch) {
-    throw new AppError('Login: Invalid username or password.', 400);
-  }
-
-  logger.info(`Admin login with username: ${username}`);
-
-  res.locals.userId = userData.userId;
-  res.locals.roleId = userData.roleId;
-
-  return next();
-});
-
 module.exports.logout = async (req, res, next) => {
   res.clearCookie('refreshToken', cookieOptions);
   res.sendStatus(204);
@@ -166,12 +171,12 @@ module.exports.verifyEmail = catchAsync(async (req, res, next) => {
     if (!userId || !emailId)
       throw new AppError('Invalid verification token provided', 400);
 
-    const foundEmail = await userModel.retrieveEmailById(emailId);
+    // const foundEmail = await userModel.retrieveEmailById(emailId);
 
-    if (foundEmail.verified) {
-      throw new AppError('Email already verified', 409);
-    }
-    await userModel.verifyEmail(userId, emailId);
+    // if (foundEmail.verified) {
+    //   throw new AppError('Email already verified', 409);
+    // }
+    await userModel.verifyUser(userId);
 
     res.status(204).send();
   } catch (error) {

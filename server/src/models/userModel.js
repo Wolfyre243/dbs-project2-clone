@@ -164,6 +164,23 @@ module.exports.retrieveByUsername = async (username) => {
   }
 };
 
+module.exports.retrievePasswordByUserId = async (userId) => {
+  try {
+    const passwordRecord = await prisma.password.findFirst({
+      where: { userId: userId, isActive: true },
+    });
+
+    if (!passwordRecord) {
+      throw new AppError('Password not found for user.', 404);
+    }
+
+    return passwordRecord;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
+
 module.exports.retrieveEmailById = async (emailId) => {
   try {
     const email = await prisma.email.findUnique({
@@ -182,19 +199,18 @@ module.exports.retrieveEmailById = async (emailId) => {
   }
 };
 
-module.exports.verifyEmail = async (userId, emailId) => {
+module.exports.verifyUser = async (userId) => {
   try {
-    const email = await prisma.email.update({
+    const user = await prisma.users.update({
       where: {
         userId: userId,
-        emailId: emailId,
       },
       data: {
         verified: true,
       },
     });
 
-    return email;
+    return user;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2025') {
