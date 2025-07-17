@@ -171,11 +171,6 @@ module.exports.verifyEmail = catchAsync(async (req, res, next) => {
     if (!userId || !emailId)
       throw new AppError('Invalid verification token provided', 400);
 
-    // const foundEmail = await userModel.retrieveEmailById(emailId);
-
-    // if (foundEmail.verified) {
-    //   throw new AppError('Email already verified', 409);
-    // }
     await userModel.verifyUser(userId);
 
     res.status(204).send();

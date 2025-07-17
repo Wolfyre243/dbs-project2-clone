@@ -9,26 +9,26 @@ datasource db {
 }
 
 model users {
-  userId           String        @id @default(uuid()) @map("user_id") @db.Uuid
-  username         String        @unique @db.VarChar(30)
-  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
-  modifiedAt       DateTime      @default(now()) @map("modified_at") @db.Timestamptz(6)
-  statusId         Int           @map("status_id")
-  audiosCreated    audio[]       @relation("AudioCreatedBy")
+  userId           String       @id @default(uuid()) @map("user_id") @db.Uuid
+  username         String       @unique @db.VarChar(30)
+  createdAt        DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  modifiedAt       DateTime     @default(now()) @map("modified_at") @db.Timestamptz(6)
+  statusId         Int          @map("status_id")
+  audiosCreated    audio[]      @relation("AudioCreatedBy")
   auditLogs        auditLog[]
-  emails           email[]
+  emails           email?
   event            event[]
-  exhibitsCreated  exhibit[]     @relation("ExhibitCreatedBy")
-  imagesCreated    image[]       @relation("ImageCreatedBy")
+  exhibitsCreated  exhibit[]    @relation("ExhibitCreatedBy")
+  imagesCreated    image[]      @relation("ImageCreatedBy")
   passwords        password[]
-  phoneNumbers     phoneNumber[]
-  qrCodesCreated   qrCode[]      @relation("QrCodeCreatedBy")
+  phoneNumbers     phoneNumber?
+  qrCodesCreated   qrCode[]     @relation("QrCodeCreatedBy")
   reviews          review[]
   sessions         session[]
-  subtitlesCreated subtitle[]    @relation("SubtitleCreatedBy")
-  userProfile      userProfile?  @relation("UserToProfile")
+  subtitlesCreated subtitle[]   @relation("SubtitleCreatedBy")
+  userProfile      userProfile? @relation("UserToProfile")
   userRoles        userRole?
-  status           status        @relation(fields: [statusId], references: [statusId])
+  status           status       @relation(fields: [statusId], references: [statusId])
 
   @@index([statusId])
 }
@@ -51,7 +51,8 @@ model status {
 
 model audio {
   audioId        String                 @id @default(uuid()) @map("audio_id") @db.Uuid
-  description    String
+  description    String?
+  fileName       String                 @unique @map("file_name") @db.VarChar(150)
   createdBy      String                 @map("created_by") @db.Uuid
   languageId     String                 @map("language_id") @db.VarChar(3)
   createdAt      DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -78,7 +79,7 @@ model exhibitAudioRelation {
 model exhibit {
   exhibitId            String                 @id @default(uuid()) @map("exhibit_id") @db.Uuid
   title                String                 @db.VarChar(100)
-  description          String
+  description          String?
   audioId              String                 @map("audio_id") @db.Uuid
   createdBy            String                 @map("created_by") @db.Uuid
   modifiedBy           String                 @map("modified_by") @db.Uuid
@@ -99,7 +100,7 @@ model exhibit {
 
 model auditAction {
   actionType  String     @id @map("action_type") @db.VarChar(100)
-  description String
+  description String?
   auditLogs   auditLog[]
 
   @@map("audit_action")
@@ -136,14 +137,14 @@ model phoneNumber {
 }
 
 model email {
-  emailId    String   @id @default(uuid()) @map("email_id") @db.Uuid
-  userId     String   @unique @map("user_id") @db.Uuid
-  email      String   @unique @db.VarChar(100)
-  isPrimary  Boolean  @map("is_primary")
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  statusId   Int      @map("status_id")
-  status     status   @relation(fields: [statusId], references: [statusId])
-  user       users    @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  emailId   String   @id @default(uuid()) @map("email_id") @db.Uuid
+  userId    String   @unique @map("user_id") @db.Uuid
+  email     String   @db.VarChar(100)
+  isPrimary Boolean  @map("is_primary")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  statusId  Int      @map("status_id")
+  status    status   @relation(fields: [statusId], references: [statusId])
+  user      users    @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
   @@index([userId, statusId])
 }
@@ -162,7 +163,7 @@ model userRole {
 model role {
   roleId      Int        @id @default(autoincrement()) @map("role_id")
   roleName    String     @unique @map("role_name") @db.VarChar(20)
-  description String
+  description String?
   statusId    Int        @map("status_id")
   status      status     @relation(fields: [statusId], references: [statusId])
   userRoles   userRole[]
@@ -172,15 +173,15 @@ model role {
 
 model qrCode {
   qrCodeId        String   @id @default(uuid()) @map("qr_code_id") @db.Uuid
-  exhibitId       String   @unique @map("exhibit_id") @db.Uuid
   createdBy       String   @map("created_by") @db.Uuid
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  exhibitId       String   @unique @map("exhibit_id") @db.Uuid
   imageId         String   @unique @map("image_id") @db.Uuid
   statusId        Int      @map("status_id")
   qrCodeCreatedBy users    @relation("QrCodeCreatedBy", fields: [createdBy], references: [userId])
-  status          status   @relation(fields: [statusId], references: [statusId])
-  image           image    @relation(fields: [imageId], references: [imageId])
   exhibit         exhibit  @relation(fields: [exhibitId], references: [exhibitId])
+  image           image    @relation(fields: [imageId], references: [imageId])
+  status          status   @relation(fields: [statusId], references: [statusId])
 
   @@index([statusId])
   @@map("qr_code")
@@ -188,7 +189,8 @@ model qrCode {
 
 model image {
   imageId        String    @id @default(uuid()) @map("image_id") @db.Uuid
-  description    String
+  description    String?
+  fileName       String    @unique @map("file_name") @db.VarChar(150)
   createdBy      String    @map("created_by") @db.Uuid
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   statusId       Int       @map("status_id")
@@ -218,7 +220,7 @@ model session {
   deviceInfo String   @map("device_info")
   isActive   Boolean  @default(true) @map("is_active")
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  user       users?   @relation(fields: [userId], references: [userId], onDelete: SetNull)
+  user       users?   @relation(fields: [userId], references: [userId])
 
   @@index([userId])
 }
