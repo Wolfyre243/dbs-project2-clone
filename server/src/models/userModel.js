@@ -8,7 +8,7 @@ module.exports.createGuest = async (username, roleId) => {
     const user = await prisma.users.create({
       data: {
         username: username,
-        statusCode: statusCodes.ACTIVE,
+        statusId: statusCodes.ACTIVE,
       },
     });
 
@@ -38,57 +38,85 @@ module.exports.create = async ({
   roleId,
 }) => {
   try {
-    const user = await prisma.users.create({
-      data: {
-        username: username,
-        statusCode: statusCodes.ACTIVE,
-      },
-    });
+    const result = await prisma.$transaction(async (tx) => {
+      const user = await tx.users.create({
+        data: {
+          username: username,
+          statusId: statusCodes.ACTIVE,
+        },
+      });
 
-    // Assign user role
-    await prisma.userRole.create({
-      data: {
-        userId: user.userId,
-        roleId: roleId,
-      },
-    });
+      await tx.userRole.create({
+        data: {
+          userId: user.userId,
+          roleId: roleId,
+        },
+      });
 
-    // Create user password
-    await prisma.password.create({
-      data: {
-        userId: user.userId,
-        password: passwordHash,
-      },
-    });
+      await tx.password.create({
+        data: {
+          userId: user.userId,
+          password: passwordHash,
+        },
+      });
 
-    // Create user email
-    const email = await prisma.email.create({
-      data: {
-        userId: user.userId,
-        email: encryptedEmail,
-        isPrimary: true,
-        statusCode: statusCodes.ACTIVE,
-      },
-    });
+      const email = await tx.email.create({
+        data: {
+          userId: user.userId,
+          email: encryptedEmail,
+          isPrimary: true,
+          statusId: statusCodes.ACTIVE,
+        },
+      });
 
-    await prisma.userProfile.create({
-      data: {
-        userId: user.userId,
-        firstName: firstName,
-        lastName: lastName,
-        // TODO: Check valid lang code using FK constraint
-        languageCode: languageCode,
-        gender: gender,
-        dob: new Date(dob).toISOString(),
-        modifiedBy: user.userId,
-        statusCode: statusCodes.ACTIVE,
-      },
-    });
+      await tx.userProfile.create({
+        data: {
+          userId: user.userId,
+          firstName: firstName,
+          lastName: lastName,
+          languageCode: languageCode,
+          gender: gender,
+          dob: new Date(dob).toISOString(),
+          modifiedBy: user.userId,
+          statusId: statusCodes.ACTIVE,
+        },
+      });
 
-    return { user, email };
+      return { user, email };
+    });
+    return result;
   } catch (error) {
-    console.log(error);
-    throw error;
+    if (!(error instanceof Prisma.PrismaClientKnownRequestError)) {
+      console.log(error);
+      throw error;
+    }
+    if (error.code === 'P2002') {
+      if (
+        error.meta &&
+        error.meta.target &&
+        error.meta.target.includes('username')
+      ) {
+        throw new AppError('Username is already taken.', 400);
+      }
+      if (
+        error.meta &&
+        error.meta.target &&
+        error.meta.target.includes('email')
+      ) {
+        throw new AppError('Email is already taken.', 400);
+      }
+      throw new AppError('Duplicate field error.', 400);
+    }
+    if (error.code === 'P2003') {
+      if (
+        error.meta &&
+        error.meta.target &&
+        error.meta.target.includes('languageCode')
+      ) {
+        throw new AppError('Invalid language code.', 400);
+      }
+      throw new AppError('Foreign key constraint failed.', 400);
+    }
   }
 };
 

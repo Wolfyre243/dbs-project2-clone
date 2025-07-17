@@ -4,6 +4,7 @@ require('dotenv').config();
 const Roles = require('../src/configs/roleConfig');
 const { PrismaClient } = require('../src/generated/prisma');
 const bcrypt = require('bcrypt');
+const { encryptData } = require('../src/utils/encryption');
 
 const prisma = new PrismaClient();
 
@@ -253,13 +254,13 @@ async function main() {
         const emailData = [
           {
             userId: allUsers.find((u) => u.username === 'superidol').userId,
-            email: 'wolfyreblueflare@gmail.com',
+            email: encryptData('wolfyreblueflare@gmail.com'),
             isPrimary: true,
             statusId: activeStatusId,
           },
           {
             userId: allUsers.find((u) => u.username === 'admin').userId,
-            email: 'admin@gmail.com',
+            email: encryptData('admin@gmail.com'),
             isPrimary: true,
             statusId: activeStatusId,
           },

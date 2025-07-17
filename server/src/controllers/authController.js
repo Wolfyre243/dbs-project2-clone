@@ -66,17 +66,6 @@ module.exports.register = catchAsync(async (req, res, next) => {
   );
   const encryptedEmail = encryptData(email);
 
-  const checkUsername = (await userModel.retrieveByUsername(username)) ?? null;
-  const checkEmail = (await userModel.retrieveEmail(encryptedEmail)) ?? null;
-
-  if (checkUsername) {
-    throw new AppError('Username is already taken.', 400);
-  }
-
-  if (checkEmail) {
-    throw new AppError('Email is already taken.', 400);
-  }
-
   const roleId = Roles.MEMBER;
 
   const { user, email: registeredEmail } = await userModel.create({
@@ -92,9 +81,10 @@ module.exports.register = catchAsync(async (req, res, next) => {
   });
 
   // Create session for user
+  const deviceInfo = req.headers['user-agent'] || 'Unknown Device';
   const session = await sessionModel.create({
     userId: user.userId,
-    deviceInfo: 'Test Info',
+    deviceInfo,
   });
 
   logger.info(`Successfully registered member with username: ${user.username}`);
@@ -107,7 +97,6 @@ module.exports.register = catchAsync(async (req, res, next) => {
   };
 
   const verificationToken = jwt.sign(payload, verifySK, jwtConfig);
-  // TODO Make dynamic URL
   const verifyUrl = `${process.env.FRONTEND_URL}/verify?token=${verificationToken}`;
 
   res.locals.email = decryptData(registeredEmail.email);
@@ -124,6 +113,7 @@ module.exports.register = catchAsync(async (req, res, next) => {
 
   res.locals.userId = user.userId;
   res.locals.roleId = roleId;
+  res.locals.sessionId = session.sessionId;
 
   return next();
 });

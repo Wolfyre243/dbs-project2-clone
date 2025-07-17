@@ -138,7 +138,7 @@ model phoneNumber {
 model email {
   emailId    String   @id @default(uuid()) @map("email_id") @db.Uuid
   userId     String   @unique @map("user_id") @db.Uuid
-  email      String   @db.VarChar(100)
+  email      String   @unique @db.VarChar(100)
   isPrimary  Boolean  @map("is_primary")
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   statusId   Int      @map("status_id")
