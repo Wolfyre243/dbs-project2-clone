@@ -7,6 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon index.js",
     "start": "node index.js",
+    "seed": "node prisma/seed.js",
     "prisma-format": "npx prisma-case-format --file \"./prisma/schema.prisma\" --map-table-case \"snake\" --table-case \"camel\""
   },
   "prisma": {
