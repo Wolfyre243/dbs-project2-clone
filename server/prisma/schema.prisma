@@ -13,7 +13,7 @@ model users {
   username         String        @db.VarChar(30)
   createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
   modifiedAt       DateTime      @default(now()) @map("modified_at") @db.Timestamptz(6)
-  statusCode       String        @map("status_code") @db.VarChar(30)
+  statusId         Int           @map("status_id")
   audiosCreated    audio[]       @relation("AudioCreatedBy")
   auditLogs        auditLog[]
   emails           email[]
@@ -28,14 +28,14 @@ model users {
   subtitlesCreated subtitle[]    @relation("SubtitleCreatedBy")
   userProfile      userProfile?  @relation("UserToProfile")
   userRoles        userRole?
-  status           status        @relation(fields: [statusCode], references: [statusCode])
+  status           status        @relation(fields: [statusId], references: [statusId])
 
-  @@index([statusCode])
+  @@index([statusId])
 }
 
 model status {
-  statusCode   String        @id @map("status_code") @db.VarChar(30)
-  description  String
+  statusId     Int           @id @default(autoincrement()) @map("status_id")
+  statusName   String        @map("status_name") @db.VarChar(30)
   audios       audio[]
   emails       email[]
   exhibits     exhibit[]
@@ -55,15 +55,14 @@ model audio {
   createdBy      String                 @map("created_by") @db.Uuid
   languageId     String                 @map("language_id") @db.VarChar(3)
   createdAt      DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
-  statusCode     String                 @map("status_code") @db.VarChar(30)
+  statusId       Int                    @map("status_id")
   audioCreatedBy users                  @relation("AudioCreatedBy", fields: [createdBy], references: [userId])
   language       language               @relation(fields: [languageId], references: [languageCode])
-  status         status                 @relation(fields: [statusCode], references: [statusCode])
+  status         status                 @relation(fields: [statusId], references: [statusId])
   exhibit        exhibit[]
   exhibits       exhibitAudioRelation[]
 
-  @@index([statusCode])
-  @@index([languageId])
+  @@index([statusId, languageId])
 }
 
 model exhibitAudioRelation {
@@ -83,23 +82,19 @@ model exhibit {
   audioId              String                 @map("audio_id") @db.Uuid
   createdBy            String                 @map("created_by") @db.Uuid
   modifiedBy           String                 @map("modified_by") @db.Uuid
-  qrCodeId             String                 @map("qr_code_id") @db.Uuid
   imageId              String                 @map("image_id") @db.Uuid
   createdAt            DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
   modifiedAt           DateTime               @default(now()) @map("modified_at") @db.Timestamptz(6)
-  statusCode           String                 @map("status_code") @db.VarChar(30)
+  statusId             Int                    @map("status_id")
   audio                audio                  @relation(fields: [audioId], references: [audioId])
   exhibitCreatedBy     users                  @relation("ExhibitCreatedBy", fields: [createdBy], references: [userId])
   image                image                  @relation(fields: [imageId], references: [imageId])
-  qrCode               qrCode                 @relation(fields: [qrCodeId], references: [qrCodeId])
-  status               status                 @relation(fields: [statusCode], references: [statusCode])
+  status               status                 @relation(fields: [statusId], references: [statusId])
   exhibitAudioRelation exhibitAudioRelation[]
   subtitles            exhibitSubtitle[]
+  qrCode               qrCode?
 
-  @@index([statusCode])
-  @@index([audioId])
-  @@index([qrCodeId])
-  @@index([imageId])
+  @@index([statusId, audioId, imageId])
 }
 
 model auditAction {
@@ -122,40 +117,35 @@ model auditLog {
   auditAction auditAction @relation(fields: [actionType], references: [actionType])
   user        users       @relation(fields: [userId], references: [userId])
 
-  @@index([userId])
-  @@index([actionType])
+  @@index([userId, actionType])
   @@map("audit_log")
 }
 
 model phoneNumber {
   phoneNumberId String   @id @default(uuid()) @map("phone_number_id") @db.Uuid
-  userId        String   @map("user_id") @db.Uuid
+  userId        String   @unique @map("user_id") @db.Uuid
   phoneNumber   String   @map("phone_number") @db.Char(8)
-  verified      Boolean  @default(false)
   isPrimary     Boolean  @map("is_primary")
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  statusCode    String   @map("status_code") @db.VarChar(30)
-  status        status   @relation(fields: [statusCode], references: [statusCode])
+  statusId      Int      @map("status_id")
+  status        status   @relation(fields: [statusId], references: [statusId])
   user          users    @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
-  @@index([userId])
-  @@index([statusCode])
+  @@index([userId, statusId])
   @@map("phone_number")
 }
 
 model email {
   emailId    String   @id @default(uuid()) @map("email_id") @db.Uuid
-  userId     String   @map("user_id") @db.Uuid
+  userId     String   @unique @map("user_id") @db.Uuid
   email      String   @db.VarChar(100)
-  verified   Boolean  @default(false)
   isPrimary  Boolean  @map("is_primary")
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  statusCode String   @map("status_code") @db.VarChar(30)
-  status     status   @relation(fields: [statusCode], references: [statusCode])
+  statusId   Int      @map("status_id")
+  status     status   @relation(fields: [statusId], references: [statusId])
   user       users    @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
-  @@index([userId])
-  @@index([statusCode])
+  @@index([userId, statusId])
 }
 
 model userRole {
@@ -165,8 +155,7 @@ model userRole {
   user   users  @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
   @@id([userId, roleId])
-  @@index([userId])
-  @@index([roleId])
+  @@index([userId, roleId])
   @@map("user_role")
 }
 
@@ -174,24 +163,26 @@ model role {
   roleId      Int        @id @default(autoincrement()) @map("role_id")
   roleName    String     @map("role_name") @db.VarChar(20)
   description String
-  statusCode  String     @map("status_code") @db.VarChar(30)
-  status      status     @relation(fields: [statusCode], references: [statusCode])
+  statusId    Int        @map("status_id")
+  status      status     @relation(fields: [statusId], references: [statusId])
   userRoles   userRole[]
 
-  @@index([statusCode])
+  @@index([statusId])
 }
 
 model qrCode {
-  qrCodeId        String    @id @default(uuid()) @map("qr_code_id") @db.Uuid
-  qrLink          String    @map("qr_link") @db.VarChar(255)
-  createdBy       String    @map("created_by") @db.Uuid
-  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  statusCode      String    @map("status_code") @db.VarChar(30)
-  exhibit         exhibit[]
-  qrCodeCreatedBy users     @relation("QrCodeCreatedBy", fields: [createdBy], references: [userId])
-  status          status    @relation(fields: [statusCode], references: [statusCode])
+  qrCodeId        String   @id @default(uuid()) @map("qr_code_id") @db.Uuid
+  exhibitId       String   @unique @map("exhibit_id") @db.Uuid
+  createdBy       String   @map("created_by") @db.Uuid
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  imageId         String   @unique @map("image_id") @db.Uuid
+  statusId        Int      @map("status_id")
+  qrCodeCreatedBy users    @relation("QrCodeCreatedBy", fields: [createdBy], references: [userId])
+  status          status   @relation(fields: [statusId], references: [statusId])
+  image           image    @relation(fields: [imageId], references: [imageId])
+  exhibit         exhibit  @relation(fields: [exhibitId], references: [exhibitId])
 
-  @@index([statusCode])
+  @@index([statusId])
   @@map("qr_code")
 }
 
@@ -200,12 +191,13 @@ model image {
   description    String
   createdBy      String    @map("created_by") @db.Uuid
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  statusCode     String    @map("status_code") @db.VarChar(30)
+  statusId       Int       @map("status_id")
   exhibit        exhibit[]
   imageCreatedBy users     @relation("ImageCreatedBy", fields: [createdBy], references: [userId])
-  status         status    @relation(fields: [statusCode], references: [statusCode])
+  status         status    @relation(fields: [statusId], references: [statusId])
+  qrCode         qrCode?
 
-  @@index([statusCode])
+  @@index([statusId])
 }
 
 model event {
@@ -222,11 +214,11 @@ model event {
 
 model session {
   sessionId  String   @id @default(uuid()) @map("session_id") @db.Uuid
-  userId     String   @map("user_id") @db.Uuid
+  userId     String?  @map("user_id") @db.Uuid
   deviceInfo String   @map("device_info")
   isActive   Boolean  @default(true) @map("is_active")
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  user       users    @relation(fields: [userId], references: [userId])
+  user       users?   @relation(fields: [userId], references: [userId], onDelete: SetNull)
 
   @@index([userId])
 }
@@ -242,26 +234,25 @@ model userProfile {
   modifiedBy    String   @map("modified_by") @db.Uuid
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   modifiedAt    DateTime @default(now()) @map("modified_at") @db.Timestamptz(6)
-  statusCode    String   @map("status_code") @db.VarChar(30)
+  statusId      Int      @map("status_id")
   language      language @relation(fields: [languageCode], references: [languageCode])
-  status        status   @relation(fields: [statusCode], references: [statusCode])
+  status        status   @relation(fields: [statusId], references: [statusId])
   user          users    @relation("UserToProfile", fields: [userId], references: [userId], onDelete: Cascade)
 
-  @@index([languageCode])
-  @@index([statusCode])
+  @@index([languageCode, statusId])
   @@map("user_profile")
 }
 
 model language {
   languageCode String        @id @map("language_code") @db.VarChar(3)
   languageName String        @map("language_name") @db.VarChar(50)
-  statusCode   String        @map("status_code") @db.VarChar(30)
+  statusId     Int           @map("status_id")
   audios       audio[]
-  status       status        @relation(fields: [statusCode], references: [statusCode])
+  status       status        @relation(fields: [statusId], references: [statusId])
   subtitles    subtitle[]
   profiles     userProfile[]
 
-  @@index([statusCode])
+  @@index([statusId])
 }
 
 model subtitle {
@@ -272,14 +263,13 @@ model subtitle {
   modifiedBy        String            @map("modified_by") @db.Uuid
   createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
   modifiedAt        DateTime          @default(now()) @map("modified_at") @db.Timestamptz(6)
-  statusCode        String            @map("status_code") @db.VarChar(30)
+  statusId          Int               @map("status_id")
   exhibits          exhibitSubtitle[]
   subtitleCreatedBy users             @relation("SubtitleCreatedBy", fields: [createdBy], references: [userId])
   language          language          @relation(fields: [languageCode], references: [languageCode])
-  status            status            @relation(fields: [statusCode], references: [statusCode])
+  status            status            @relation(fields: [statusId], references: [statusId])
 
-  @@index([languageCode])
-  @@index([statusCode])
+  @@index([languageCode, statusId])
 }
 
 model exhibitSubtitle {
@@ -290,8 +280,7 @@ model exhibitSubtitle {
   subtitle   subtitle @relation(fields: [subtitleId], references: [subtitleId])
 
   @@id([exhibitId, subtitleId])
-  @@index([exhibitId])
-  @@index([subtitleId])
+  @@index([exhibitId, subtitleId])
   @@map("exhibit_subtitle")
 }
 
@@ -303,6 +292,8 @@ model review {
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   modifiedAt DateTime @default(now()) @map("modified_at") @db.Timestamptz(6)
   user       users    @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@index([rating, reviewText])
 }
 
 model password {
@@ -312,4 +303,6 @@ model password {
   isActive   Boolean  @default(true) @map("is_active")
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   user       users    @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@index([userId])
 }
