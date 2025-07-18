@@ -78,7 +78,7 @@ authRouter.post(
   jwtMiddleware.verifyRefreshToken,
   jwtMiddleware.generateAccessToken,
   async (req, res) => {
-    return res.status(200).json({ accessToken: res.locals.access_token });
+    return res.status(200).json({ accessToken: res.locals.accessToken });
   },
 );
 
