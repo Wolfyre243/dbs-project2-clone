@@ -88,7 +88,7 @@ authRouter.put('/verify/:token', authController.verifyEmail);
 authRouter.post(
   '/logout',
   jwtMiddleware.verifyRefreshToken,
-  authController.logout, // TODO: Invalidate session
+  authController.logout,
 );
 
 module.exports = authRouter;
