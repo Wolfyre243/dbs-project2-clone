@@ -16,8 +16,9 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     // TODO: Add a better naming convention
-    const buf = crypto.randomBytes(16);
-    const uniqueName = Date.now() + '-' + buf + '-' + file.originalname;
+    const buf = crypto.randomBytes(8);
+    const uniqueName =
+      Date.now() + '-' + buf.toString('hex') + '-' + file.originalname;
     cb(null, uniqueName);
   },
 });
