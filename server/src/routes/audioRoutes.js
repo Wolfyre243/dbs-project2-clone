@@ -12,7 +12,7 @@ const rateLimiter = require('../middlewares/rateLimiter');
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '../../uploads/audio'));
+    cb(null, path.join(__dirname, '../../Uploads/audio'));
   },
   filename: (req, file, cb) => {
     const buf = crypto.randomBytes(8);
@@ -21,12 +21,32 @@ const storage = multer.diskStorage({
     cb(null, uniqueName);
   },
 });
-const upload = multer({ storage });
 
+//const upload = multer({ storage });
+
+// The API only allows for wav files
+const upload = multer({
+  storage,
+  /*  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'audio/wav') {
+      cb(null, true);
+    } else {
+      cb(new Error('Only .wav files are allowed'), false);
+    }
+  }, */
+});
 // -----------------------------------SET UP ROUTES-----------------------------------
 // Create the router
-const authRouter = express.Router();
+const audioRouter = express.Router();
 
-authRouter.post('/upload', upload.single('file'), audioController.uploadAudio);
+//authRouter.post('/upload', upload.single('file'), audioController.uploadAudio);
 
-module.exports = authRouter;
+audioRouter.post(
+  '/upload',
+  //jwtMiddleware,
+  //rateLimiter,
+  upload.single('file'),
+  audioController.uploadAudio,
+);
+
+module.exports = audioRouter;
