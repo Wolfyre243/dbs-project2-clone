@@ -68,6 +68,20 @@ authRouter.post(
   jwtMiddleware.setTokens,
 );
 
+/**
+ * POST
+ * Refreshes access token
+ * (POST because access token is created)
+ */
+authRouter.post(
+  '/refresh',
+  jwtMiddleware.verifyRefreshToken,
+  jwtMiddleware.generateAccessToken,
+  async (req, res) => {
+    return res.status(200).json({ accessToken: res.locals.access_token });
+  },
+);
+
 // TODO: Add verification
 authRouter.put('/verify/:token', authController.verifyEmail);
 

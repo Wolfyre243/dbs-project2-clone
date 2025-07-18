@@ -3,6 +3,7 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const crypto = require('crypto');
 
 // Import controllers
 const audioController = require('../controllers/audioController');
@@ -15,7 +16,8 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     // TODO: Add a better naming convention
-    const uniqueName = Date.now() + '-' + file.originalname;
+    const buf = crypto.randomBytes(16);
+    const uniqueName = Date.now() + '-' + buf + '-' + file.originalname;
     cb(null, uniqueName);
   },
 });

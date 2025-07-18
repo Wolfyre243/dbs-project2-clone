@@ -1,9 +1,9 @@
 const cookieOptions = {
-  path: "/",
+  path: '/',
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production", // true in production
-  sameSite: "lax",
-  maxAge: process.env.COOKIE_MAXAGE,
+  secure: process.env.NODE_ENV === 'production', // true in production
+  sameSite: 'lax',
+  // maxAge: process.env.COOKIE_MAXAGE,
 };
 
 // JWT Secrets

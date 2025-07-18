@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 
 // Import models
 const userModel = require('../models/userModel');
+const sessionModel = require('../models/sessionModel');
 const AppError = require('../utils/AppError');
 const catchAsync = require('../utils/catchAsync');
 const logger = require('../utils/logger');
@@ -92,10 +93,8 @@ module.exports.verifyToken = catchAsync(async (req, res, next) => {
     return next();
   } catch (error) {
     if (error.name === 'TokenExpiredError') {
-      // logger.warning('❌|Error verifying access token: Access token expired');
       throw new AppError('Access token expired', 401);
     } else if (error.name === 'JsonWebTokenError') {
-      // logger.warning('❌|Error verifying access token: Invalid access token provided');
       throw new AppError('Invalid access token provided', 403);
     }
 
@@ -133,14 +132,14 @@ module.exports.verifyRefreshToken = catchAsync(async (req, res, next) => {
   } catch (error) {
     // Automatically clear cookie if cookie is invalid
     res.clearCookie('refreshToken', cookieOptions);
-    // TODO: Invalidate session if cookie invalid
 
     if (error.name === 'TokenExpiredError') {
-      // logger.warning('❌|Error verifying refresh token: Access token expired');
-      throw new AppError('Access token expired', 401);
+      // Invalidate session if expired
+      const { sessionId } = jwt.decode(token);
+      await sessionModel.invalidateById(sessionId);
+      throw new AppError('Refresh token expired', 401);
     } else if (error.name === 'JsonWebTokenError') {
-      // logger.warning('❌|Error verifying refresh token: Invalid access token provided');
-      throw new AppError('Invalid access token provided', 403);
+      throw new AppError('Invalid refresh token provided', 403);
     }
 
     throw error;

@@ -150,10 +150,14 @@ module.exports.register = catchAsync(async (req, res, next) => {
   return next();
 });
 
-module.exports.logout = async (req, res, next) => {
+module.exports.logout = catchAsync(async (req, res, next) => {
+  const { sessionId } = res.locals;
+
+  await sessionModel.invalidateById(sessionId);
+
   res.clearCookie('refreshToken', cookieOptions);
   res.sendStatus(204);
-};
+});
 
 module.exports.verifyEmail = catchAsync(async (req, res, next) => {
   const { token } = req.params;

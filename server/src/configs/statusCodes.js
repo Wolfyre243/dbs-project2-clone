@@ -5,6 +5,7 @@ const statusCodes = {
   PUBLISHED: 4,
   PENDING: 5,
   ARCHIVED: 6,
+  VERIFIED: 7,
 };
 
 module.exports = statusCodes;

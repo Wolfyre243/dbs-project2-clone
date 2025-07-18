@@ -21,6 +21,7 @@ async function main() {
       { statusName: 'Published' },
       { statusName: 'Pending' },
       { statusName: 'Archived' },
+      { statusName: 'Verified' },
     ];
 
     if (statusData.length > 0) {
