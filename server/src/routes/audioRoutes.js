@@ -12,10 +12,9 @@ const rateLimiter = require('../middlewares/rateLimiter');
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '../../uploads'));
+    cb(null, path.join(__dirname, '../../uploads/audio'));
   },
   filename: (req, file, cb) => {
-    // TODO: Add a better naming convention
     const buf = crypto.randomBytes(8);
     const uniqueName =
       Date.now() + '-' + buf.toString('hex') + '-' + file.originalname;
