@@ -59,7 +59,7 @@ module.exports.login = catchAsync(async (req, res, next) => {
     deviceInfo,
   });
 
-  logger.info(`User login with username: ${username}`);
+  logger.info(`🔒 User login with username: ${username}`);
 
   res.locals.userId = user.userId;
   res.locals.roleId = user.userRoles.roleId;
@@ -119,7 +119,9 @@ module.exports.register = catchAsync(async (req, res, next) => {
     deviceInfo,
   });
 
-  logger.info(`Successfully registered member with username: ${user.username}`);
+  logger.info(
+    `🖊️ Successfully registered member with username: ${user.username}`,
+  );
 
   // Craft & Send Email
   const payload = {
