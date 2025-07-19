@@ -39,19 +39,23 @@ try {
   console.error('swagger-jsdoc error:', error);
 }
 
+const FRONTEND_URL =
+  process.env.NODE_ENV === 'production'
+    ? process.env.FRONTEND_PROD_URL
+    : process.env.FRONTEND_URL;
+
 //----------------------------SET UP APP--------------------------------
 // Create server
 const app = express();
 
-// Read cookies
-app.use(cookieParser(cookieOptions));
-
 app.use(
   cors({
-    origin: [`http://localhost:${process.env.FRONTEND_PORT}`, process.env.FRONTEND_URL],
+    origin: [FRONTEND_URL],
     credentials: true,
   }),
 );
+
+app.use(cookieParser(cookieOptions));
 
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: false, limit: '10kb' }));

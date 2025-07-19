@@ -1,13 +1,13 @@
 // This file creates the context needed to share the stored token
-import React, { createContext, useState } from "react";
+import React, { createContext, useState } from 'react';
 
 export type AuthContextType = {
   accessToken: string | null;
   setAccessToken: (accessToken: string) => void;
   role: number | null;
   setRole: (role: number | null) => void;
-  userId: number | null;
-  setUserId: (userId: number | null) => void;
+  userId: string | null;
+  setUserId: (userId: string | null) => void;
   loading: boolean;
   setLoading: (loading: boolean) => void;
 };
@@ -18,7 +18,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Store accessToken and roles here
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [role, setRole] = useState<number | null>(null);
-  const [userId, setUserId] = useState<number | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   return (

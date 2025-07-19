@@ -74,8 +74,8 @@ module.exports.create = async ({
           userId: user.userId,
           firstName: firstName,
           lastName: lastName,
-          languageCode: languageCode,
-          gender: gender,
+          languageCode: languageCode.toLowerCase(),
+          gender: gender.toUpperCase(),
           dob: new Date(dob).toISOString(),
           modifiedBy: user.userId,
           statusId: statusCodes.ACTIVE,
@@ -155,6 +155,9 @@ module.exports.retrieveByUsername = async (username) => {
   try {
     const user = await prisma.users.findFirst({
       where: { username: username },
+      include: {
+        userRoles: true,
+      },
     });
 
     return user;

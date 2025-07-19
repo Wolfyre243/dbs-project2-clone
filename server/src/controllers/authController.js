@@ -31,7 +31,7 @@ module.exports.guestLogin = catchAsync(async (req, res, next) => {
   logger.info(`Guest login with username: ${username}`);
 
   res.locals.userId = newUser.userId;
-  res.locals.roleId = newUser.roleId;
+  res.locals.roleId = roleId;
 
   return next();
 });
@@ -62,7 +62,7 @@ module.exports.login = catchAsync(async (req, res, next) => {
   logger.info(`User login with username: ${username}`);
 
   res.locals.userId = user.userId;
-  res.locals.roleId = user.roleId;
+  res.locals.roleId = user.userRoles.roleId;
   res.locals.sessionId = session.sessionId;
 
   return next();

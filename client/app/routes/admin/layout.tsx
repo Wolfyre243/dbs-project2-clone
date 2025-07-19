@@ -7,7 +7,7 @@ import Roles from '~/rolesConfig';
 
 export default function AdminHomeLayout() {
   return (
-    // <RequireAuth allowedRoles={[Roles.ADMIN, Roles.SUPERADMIN]}>
+    <RequireAuth allowedRoles={[Roles.ADMIN, Roles.SUPERADMIN]}>
       <SidebarProvider
         style={
           {
@@ -26,6 +26,6 @@ export default function AdminHomeLayout() {
           </div>
         </SidebarInset>
       </SidebarProvider>
-    // </RequireAuth>
+    </RequireAuth>
   );
 }

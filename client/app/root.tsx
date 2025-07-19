@@ -31,7 +31,7 @@ export const links: Route.LinksFunction = () => [
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: 'New React Router App' },
+    { title: 'SDC Exhibition App' },
     { name: 'description', content: 'Welcome to React Router!' },
   ];
 }
@@ -46,14 +46,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        <main className='w-screen flex flex-col justify-center items-center'>
-          <AuthProvider>
+        <AuthProvider>
+          <main className='w-screen flex flex-col justify-center items-center'>
             {children}
             <ScrollRestoration />
-          </AuthProvider>
-        </main>
-        <ScrollRestoration />
-        <Scripts />
+          </main>
+          <ScrollRestoration />
+          <Scripts />
+        </AuthProvider>
       </body>
     </html>
   );
@@ -106,7 +106,11 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
       error.status === 404
         ? 'The requested page could not be found.'
         : error.statusText || details;
-  } else if (import.meta.env.DEV && error && error instanceof Error) {
+  } else if (
+    import.meta.env.VITE_ENV === 'development' &&
+    error &&
+    error instanceof Error
+  ) {
     details = error.message;
     stack = error.stack;
   }
