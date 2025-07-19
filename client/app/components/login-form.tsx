@@ -4,15 +4,21 @@ import { cn } from '~/lib/utils';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
-import { Form, Link, useSubmit } from 'react-router';
+import { Link } from 'react-router';
 
 export function LoginForm({
   className,
-  ...props
-}: React.ComponentProps<'div'>) {
+  submitCb,
+  ref,
+}: {
+  className?: string;
+  submitCb: (e: React.FormEvent) => Promise<void>;
+  ref: React.RefObject<HTMLFormElement | null>;
+}) {
   return (
-    <div className={cn('flex flex-col gap-6 w-full', className)} {...props}>
-      <Form action='/auth/login' method='post'>
+    <div className={cn('flex flex-col gap-6 w-full', className)}>
+      {/* <Form action='/auth/login' method='post'> */}
+      <form ref={ref} onSubmit={submitCb}>
         <div className='flex flex-col gap-6'>
           <div className='flex flex-col items-center gap-2'>
             <a
@@ -59,7 +65,8 @@ export function LoginForm({
             </Button>
           </div>
         </div>
-      </Form>
+      </form>
+      {/* </Form> */}
     </div>
   );
 }

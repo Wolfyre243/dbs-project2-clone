@@ -124,6 +124,9 @@ module.exports.retrieveById = async (userId) => {
   try {
     const user = prisma.users.findUnique({
       where: { userId: userId },
+      include: {
+        userRoles: true,
+      },
     });
 
     return user;

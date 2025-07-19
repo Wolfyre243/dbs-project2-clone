@@ -48,14 +48,14 @@ const FRONTEND_URL =
 // Create server
 const app = express();
 
+app.use(cookieParser(cookieOptions));
+
 app.use(
   cors({
     origin: [FRONTEND_URL],
     credentials: true,
   }),
 );
-
-app.use(cookieParser(cookieOptions));
 
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: false, limit: '10kb' }));
@@ -82,7 +82,7 @@ app.use((req, res, next) => {
     originalEnd.apply(res, args);
   };
 
-  return next();
+  next();
 });
 
 app.use(loggerMiddleware);
@@ -90,12 +90,12 @@ app.use(loggerMiddleware);
 // Main routes
 app.use('/', mainRouter);
 
-app.use('/docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
+// app.use('/docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
 
-// Redirect the user if they try to access the main page
-app.get('/', (req, res) => {
-  res.redirect('/docs');
-});
+// // Redirect the user if they try to access the main page
+// app.get('/', (req, res) => {
+//   res.redirect('/docs');
+// });
 
 // Handle nonexistent routes
 app.use(notFound);

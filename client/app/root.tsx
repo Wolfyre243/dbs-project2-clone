@@ -51,9 +51,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
             {children}
             <ScrollRestoration />
           </main>
-          <ScrollRestoration />
-          <Scripts />
         </AuthProvider>
+        <Scripts />
       </body>
     </html>
   );

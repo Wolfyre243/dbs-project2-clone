@@ -123,7 +123,7 @@ module.exports.verifyRefreshToken = catchAsync(async (req, res, next) => {
 
     res.locals.userId = payload.userId;
     res.locals.sessionId = payload.sessionId;
-    res.locals.roleId = user.roleId;
+    res.locals.roleId = user.userRoles.roleId;
 
     logger.info(
       `✅ Successfully verified refresh token for userId: ${res.locals.userId}`,
