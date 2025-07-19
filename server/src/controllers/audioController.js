@@ -1,8 +1,5 @@
-// Import dependencies
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-
-// Import services
 const userModel = require('../models/userModel');
 const sessionModel = require('../models/sessionModel');
 const AppError = require('../utils/AppError');
@@ -16,24 +13,16 @@ const {
   tokenAlgorithm,
 } = require('../configs/authConfig');
 const catchAsync = require('../utils/catchAsync');
-
 const Roles = require('../configs/roleConfig');
+const ttsService = require('../utils/ttsService');
+const { transcribeAndTranslateAudio } = ttsService;
 
-const ttsService = require('../utils/ttsService'); // Import the entire module to debug
-const { transcribeAudio } = ttsService; // Destructure transcribeAudio
-
-// Debug import
-console.log('ttsService loaded:', ttsService);
-if (!transcribeAudio) {
-  throw new AppError('Transcription service not available', 500);
+// Check if transcribe function is available
+if (!transcribeAndTranslateAudio) {
+  throw new AppError('Transcription and translation service not available', 500);
+} else {
+  logger.info('Transcription and translation service loaded successfully');
 }
-
-/* module.exports.uploadAudio = catchAsync(async (req, res, next) => {
-  console.log(req.file);
-  const fileName = req.file.filename;
-  console.log('New name of file: ', fileName);
-  res.status(200).json({ message: 'Successfully uploaded file' });
-}); */
 
 module.exports.uploadAudio = catchAsync(async (req, res, next) => {
   if (!req.file) {
@@ -41,19 +30,20 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
   }
 
   const { filename, path: filePath } = req.file;
-  const userId = req.locals.user.userId;
+  const userId = res.locals.user.userId;
   const languageCode = req.body.languageCode;
+  const description = req.body.description || 'No description provided';
+  logger.info(`Uploaded file: ${JSON.stringify(req.file)}`);
 
   // Validate language code
   const supportedLanguages = [
-    'en-US',
-    'es-ES',
-    'fr-FR',
-    'de-DE',
-    'ja-JP',
-    'cmn-CN',
-    'ml-IN',
-    'ta-IN',
+  'eng', // English
+    'spa', // Spanish
+    'fre', // French
+    'ger', // German
+    'zho', // Chinese (Mandarin)
+    'msa', // Malay
+    'tam', // Tamil
   ];
   if (!supportedLanguages.includes(languageCode)) {
     throw new AppError(
@@ -62,14 +52,15 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
     );
   }
 
-  // Transcribe audio to text
-  const transcription = await transcribeAudio(filePath, languageCode);
+  // Transcribe and translate audio
+  const { transcription, translations } = await transcribeAndTranslateAudio(filePath, languageCode);
   if (!transcription) {
     throw new AppError('Failed to transcribe audio', 500);
   }
 
   // Create audio record using the model
   const audio = await audioModel.createAudio({
+    description: description,
     fileName: filename,
     createdBy: userId,
     languageId: languageCode,
@@ -82,19 +73,31 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
     ipAddress: req.ip || '0.0.0.0',
     entityName: 'audio',
     entityId: audio.audioId,
-    actionType: 'UPLOAD_AND_TRANSCRIBE_AUDIO',
-    logText: `Uploaded and transcribed audio file: ${filename} to ${languageCode}`,
+    actionType: 'CREATE',
+    logText: `Uploaded, transcribed, and translated audio file: ${filename} to ${languageCode}`,
   });
 
-  logger.info(`Audio uploaded and transcribed successfully: ${filename}`);
+ // Create subtitle record with transcription text and custom subtitleId format
+  const subtitle = await audioModel.createSubtitle({
+    subtitleText: transcription,
+    languageCode,
+    createdBy: userId,
+    modifiedBy: userId,
+    statusId: 1, // active status
+  });
 
-  res.status(200).json({
+logger.info(`Audio uploaded, transcribed, and translated successfully: ${filename}`);
+
+ res.status(200).json({
     status: 'success',
     data: {
       audioId: audio.audioId,
       fileName: audio.fileName,
       languageCode,
-      message: 'Successfully uploaded and transcribed audio',
+      transcription,
+      translations,
+      subtitleId: subtitle.subtitleId,
+      message: 'Successfully uploaded audio and saved transcription as subtitle',
     },
   });
 });
