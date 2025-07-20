@@ -1,5 +1,5 @@
-const AppError = require("../utils/AppError");
-const logger = require("../utils/logger");
+const AppError = require('../utils/AppError');
+const logger = require('../utils/logger');
 
 module.exports = (req, res, next) => {
   logger.warning(`Route not found: ${req.method} ${req.path}`);

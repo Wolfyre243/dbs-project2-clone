@@ -34,4 +34,7 @@ module.exports = (err, req, res, next) => {
       path: req.path,
     });
   }
+
+  // Send response
+  res.status(err.statusCode).json(response);
 };

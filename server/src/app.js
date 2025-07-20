@@ -27,22 +27,16 @@ const swaggerOptions = {
       version: '1.0.0',
       description: 'API documentation using Swagger',
     },
-    servers: [{ url: `http://localhost:${process.env.PORT}` }],
+    servers: [{ url: `http://localhost:3000` }],
   },
-  apis: ['./src/routes/*.js'],
+  apis: ['./routes/*.js'], // Path to your API docs
 };
 
 let swaggerDocs;
 try {
   swaggerDocs = swaggerJsDoc(swaggerOptions);
-  console.log('Swagger docs generated successfully');
-  console.log(
-    'Number of paths found:',
-    Object.keys(swaggerDocs.paths || {}).length,
-  );
 } catch (error) {
   console.error('swagger-jsdoc error:', error);
-  swaggerDocs = null;
 }
 
 const FRONTEND_URL =
@@ -66,39 +60,37 @@ app.use(
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: false, limit: '10kb' }));
 
-// HELMET with CSP configuration for Swagger UI
+// HELMET
+app.use(helmet());
 app.use(
-  helmet({
-    contentSecurityPolicy: {
-      useDefaults: true,
-      directives: {
-        connectSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-        fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-        imgSrc: ["'self'", 'data:', 'https:'],
-      },
+  helmet.contentSecurityPolicy({
+    useDefaults: true,
+    directives: {
+      connectSrc: ["'self'"],
     },
   }),
 );
 
 app.use((req, res, next) => {
   const start = Date.now();
-  req.startTime = start;
 
-  // Set response time header when response finishes
-  res.on('finish', () => {
+  // Wrap res.end to set the header just before the response is sent
+  const originalEnd = res.end;
+  res.end = function (...args) {
     const duration = Date.now() - start;
     res.setHeader('X-Response-Time', `${duration}`);
-  });
+    originalEnd.apply(res, args);
+  };
 
   next();
 });
 
 app.use(loggerMiddleware);
 
+// Output Sanitization Middleware
 app.use(outputSanitize);
 
+// Main routes
 app.use('/docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
 
 app.use('/', mainRouter);
@@ -106,7 +98,7 @@ app.use('/', mainRouter);
 // Handle nonexistent routes
 app.use(notFound);
 
-// Global error handling middleware (should be last)
+// Global error handling middleware
 app.use(errorHandler);
 
 // Export server
