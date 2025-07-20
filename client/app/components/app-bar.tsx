@@ -16,7 +16,7 @@ import {
 import { Button } from '~/components/ui/button';
 import { Avatar, AvatarFallback } from '~/components/ui/avatar';
 import useAuth from '~/hooks/useAuth';
-import { User, LogOut, Settings, Menu, X } from 'lucide-react';
+import { User, LogOut, Settings, Menu, X, Shield } from 'lucide-react';
 import useApiPrivate from '~/hooks/useApiPrivate';
 import Roles from '~/rolesConfig';
 // import ThemeSwitcher from './theme-switch';
@@ -26,11 +26,6 @@ const links = [
     to: '/home',
     name: 'Home',
     auth: true,
-  },
-  {
-    to: '/home',
-    name: 'Test',
-    auth: false,
   },
 ];
 
@@ -109,7 +104,7 @@ export function UserMenu() {
       <DropdownMenuTrigger asChild>
         <Button
           variant={'ghost'}
-          className='cursor-pointer relative rounded-full !bg-transparent !hover:bg-transparent'
+          className='cursor-pointer relative rounded-full !ring-none !bg-transparent !hover:bg-transparent'
         >
           <h1>{`${role === Roles.ADMIN ? '🛠️' : ''}${role === Roles.SUPERADMIN ? '👑' : ''} ${user?.username}`}</h1>
           <Avatar className='h-8 w-8'>
@@ -126,6 +121,14 @@ export function UserMenu() {
             Profile
           </Link>
         </DropdownMenuItem>
+        {role === Roles.SUPERADMIN && (
+          <DropdownMenuItem asChild>
+            <Link to='/admin' className='cursor-pointer'>
+              <Shield className='mr-2 h-4 w-4' />
+              Admin Dashboard
+            </Link>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem asChild>
           <Link to='/home/settings' className='cursor-pointer'>
             <Settings className='mr-2 h-4 w-4' />
@@ -133,10 +136,7 @@ export function UserMenu() {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={handleLogout}
-          className='cursor-pointer text-red-600 focus:text-red-600'
-        >
+        <DropdownMenuItem onClick={handleLogout} className='cursor-pointer'>
           <LogOut className='mr-2 h-4 w-4' />
           Logout
         </DropdownMenuItem>

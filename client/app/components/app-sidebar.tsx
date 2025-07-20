@@ -1,21 +1,21 @@
-import * as React from "react"
 import {
-  BookOpen,
-  Bot,
-  Command,
-  Frame,
-  LifeBuoy,
-  Map,
-  PieChart,
-  Send,
-  Settings2,
-  SquareTerminal,
-} from "lucide-react"
+  Gauge,
+  Users,
+  UserPlus,
+  Settings,
+  CircleQuestionMark,
+  LayoutDashboard,
+  ScrollText,
+  Hammer,
+  ChartNoAxesCombined,
+  HardDrive,
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
 
-import { NavMain } from "~/components/nav-main"
-import { NavProjects } from "~/components/nav-projects"
-import { NavSecondary } from "~/components/nav-secondary"
-import { NavUser } from "~/components/nav-user"
+import { NavMain } from '~/components/nav-main';
+import { NavProjects } from '~/components/nav-projects';
+import { NavSecondary } from '~/components/nav-secondary';
+import { NavUser } from '~/components/nav-user';
 import {
   Sidebar,
   SidebarContent,
@@ -24,146 +24,116 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "~/components/ui/sidebar"
+} from '~/components/ui/sidebar';
+import useApiPrivate from '~/hooks/useApiPrivate';
+import useAuth from '~/hooks/useAuth';
+import { NavSuperAdmin } from './nav-superadmin';
+import Roles from '~/rolesConfig';
 
 const data = {
   user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
+    username: 'shadcn',
+    firstName: 'shad',
+    lastName: 'cn',
+    email: 'shadcn@mail.com',
+    roleId: 0,
   },
   navMain: [
     {
-      title: "Playground",
-      url: "#",
-      icon: SquareTerminal,
-      isActive: true,
-      items: [
-        {
-          title: "History",
-          url: "#",
-        },
-        {
-          title: "Starred",
-          url: "#",
-        },
-        {
-          title: "Settings",
-          url: "#",
-        },
-      ],
+      title: 'Dashboard',
+      url: '/admin',
+      icon: Gauge,
     },
     {
-      title: "Models",
-      url: "#",
-      icon: Bot,
-      items: [
-        {
-          title: "Genesis",
-          url: "#",
-        },
-        {
-          title: "Explorer",
-          url: "#",
-        },
-        {
-          title: "Quantum",
-          url: "#",
-        },
-      ],
+      title: 'Tour Editor',
+      url: '/admin/tour-editor',
+      icon: Hammer,
     },
     {
-      title: "Documentation",
-      url: "#",
-      icon: BookOpen,
-      items: [
-        {
-          title: "Introduction",
-          url: "#",
-        },
-        {
-          title: "Get Started",
-          url: "#",
-        },
-        {
-          title: "Tutorials",
-          url: "#",
-        },
-        {
-          title: "Changelog",
-          url: "#",
-        },
-      ],
+      title: 'Analytics',
+      url: '/admin/analytics',
+      icon: ChartNoAxesCombined,
     },
     {
-      title: "Settings",
-      url: "#",
-      icon: Settings2,
-      items: [
-        {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
-          url: "#",
-        },
-      ],
+      title: 'Content',
+      url: '/admin/users',
+      icon: HardDrive,
+    },
+    {
+      title: 'User Management',
+      url: '/admin/users',
+      icon: Users,
+    },
+  ],
+  navSuperadmin: [
+    {
+      title: 'Register Admin',
+      url: '/admin/register',
+      icon: UserPlus,
     },
   ],
   navSecondary: [
     {
-      title: "Support",
-      url: "#",
-      icon: LifeBuoy,
+      title: 'Settings',
+      url: '#',
+      icon: Settings,
     },
     {
-      title: "Feedback",
-      url: "#",
-      icon: Send,
+      title: 'Release Notes',
+      url: '#',
+      icon: ScrollText,
+    },
+    {
+      title: 'Get Help',
+      url: '#',
+      icon: CircleQuestionMark,
     },
   ],
-  projects: [
-    {
-      name: "Design Engineering",
-      url: "#",
-      icon: Frame,
-    },
-    {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: PieChart,
-    },
-    {
-      name: "Travel",
-      url: "#",
-      icon: Map,
-    },
-  ],
-}
+};
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const [user, setUser] = useState<any | null>(data.user);
+  const { userId, accessToken, role } = useAuth();
+  const apiPrivate = useApiPrivate();
+
+  useEffect(() => {
+    (async () => {
+      try {
+        if (!userId) return;
+        const { data: responseData } = await apiPrivate.get('/user/profile');
+        const user = responseData.data.user;
+
+        setUser({
+          username: user.username,
+          firstName: user.userProfile?.firstName,
+          lastName: user.userProfile?.lastName,
+          email: user.emails?.email,
+          roleId: role,
+        });
+      } catch (error: any) {
+        setUser(data.user);
+        console.log(error.response.data.message);
+      }
+    })();
+  }, [accessToken, userId]);
+
   return (
-    <Sidebar collapsible="icon" {...props}>
+    <Sidebar collapsible='icon' {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
-              <a href="#">
-                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <Command className="size-4" />
+            <SidebarMenuButton size='lg' asChild>
+              <a href='/'>
+                <div className='text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg'>
+                  <LayoutDashboard className='size-6' />
                 </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">Acme Inc</span>
-                  <span className="truncate text-xs">Enterprise</span>
+                <div className='grid flex-1 text-left text-sm leading-tight'>
+                  <span className='truncate font-medium'>
+                    Singapore Discovery Centre
+                  </span>
+                  <span className='truncate text-xs opacity-50'>
+                    Admin Dashboard
+                  </span>
                 </div>
               </a>
             </SidebarMenuButton>
@@ -172,12 +142,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        {user.roleId === Roles.SUPERADMIN ? (
+          <NavSuperAdmin items={data.navSuperadmin} />
+        ) : (
+          ''
+        )}
+        <NavSecondary items={data.navSecondary} className='mt-auto' />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={user} />
       </SidebarFooter>
     </Sidebar>
-  )
+  );
 }
