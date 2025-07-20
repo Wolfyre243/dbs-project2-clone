@@ -2,6 +2,8 @@ const statusCodes = require('../configs/statusCodes');
 const { Prisma, PrismaClient } = require('../generated/prisma');
 const prisma = new PrismaClient();
 const AppError = require('../utils/AppError');
+const { encryptData, decryptData } = require('../utils/encryption');
+const { convertDatesToStrings } = require('../utils/formatters');
 
 module.exports.createGuest = async (username, roleId) => {
   try {
@@ -122,14 +124,24 @@ module.exports.create = async ({
 
 module.exports.retrieveById = async (userId) => {
   try {
-    const user = prisma.users.findUnique({
+    const user = await prisma.users.findUnique({
       where: { userId: userId },
       include: {
-        userRoles: true,
+        userRoles: {
+          include: {
+            role: true,
+          },
+        },
+        userProfile: true,
+        status: true,
+        emails: true,
+        phoneNumbers: true,
       },
     });
 
-    return user;
+    user.emails.email = decryptData(user.emails.email);
+
+    return convertDatesToStrings(user);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2001') {

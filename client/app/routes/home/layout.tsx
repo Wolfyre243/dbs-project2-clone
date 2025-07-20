@@ -10,7 +10,7 @@ export default function HomeLayout() {
         <div className='sticky top-0 w-full'>
           <AppBar />
         </div>
-        <div className='flex px-6 py-2 justify-stretch flex-col h-full overflow-y-scroll'>
+        <div className='flex px-6 py-2 justify-stretch flex-col h-full '>
           <Outlet />
         </div>
         <div className='sticky bottom-0 w-full block md:hidden'>

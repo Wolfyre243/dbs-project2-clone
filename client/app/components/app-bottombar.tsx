@@ -4,7 +4,7 @@ import { CameraIcon, HomeIcon } from 'lucide-react';
 export function AppBottomBar({ ...props }: React.ComponentProps<any>) {
   return (
     <div
-      className='flex flex-row w-full justify-between items-center px-6 py-3 bg-primary'
+      className='flex flex-row w-full justify-between items-center px-6 py-3 bg-background'
       {...props}
     >
       <div className='flex flex-row w-full justify-between'>

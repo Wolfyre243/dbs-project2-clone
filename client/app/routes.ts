@@ -10,9 +10,18 @@ export default [
   index('routes/page.tsx'),
   route('/*', 'routes/notFound.tsx'),
   route('/unauthorized', 'routes/unauthorized.tsx'),
+
+  ...prefix('home', [
+    layout('routes/home/layout.tsx', [
+      index('routes/home/page.tsx'),
+      route('/profile', 'routes/home/profile.tsx'),
+    ]),
+  ]),
+
   ...prefix('admin', [
     layout('routes/admin/layout.tsx', [index('routes/admin/page.tsx')]),
   ]),
+
   ...prefix('auth', [
     layout('routes/auth/layout.tsx', [
       route('/login', 'routes/auth/login.tsx'),
