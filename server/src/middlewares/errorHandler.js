@@ -34,9 +34,4 @@ module.exports = (err, req, res, next) => {
       path: req.path,
     });
   }
-
-  // Send response (check if headers already sent)
-  if (!res.headersSent) {
-    res.status(err.statusCode).json(response);
-  }
 };

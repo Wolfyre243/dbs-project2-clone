@@ -66,16 +66,14 @@ app.use(
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: false, limit: '10kb' }));
 
-// HELMET
-app.use(helmet());
+// HELMET with CSP configuration for Swagger UI
 app.use(
-  helmet.contentSecurityPolicy({
-    useDefaults: true,
-    directives: {
-      connectSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"], // Allow inline scripts for Swagger UI
-      styleSrc: ["'self'", "'unsafe-inline'"], // Allow inline styles for Swagger UI
-      imgSrc: ["'self'", 'data:', 'https:'], // Allow data URLs and HTTPS images
+  helmet({
+    contentSecurityPolicy: {
+      useDefaults: true,
+      directives: {
+        connectSrc: ["'self'"],
+      },
     },
   }),
 );
@@ -96,12 +94,11 @@ app.use((req, res, next) => {
 
 app.use(loggerMiddleware);
 
-app.use(outputSanitize);
+app.use('/', mainRouter);
 
-// Swagger docs route
 app.use('/docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
 
-app.use('/', mainRouter);
+app.use(outputSanitize);
 
 // Handle nonexistent routes
 app.use(notFound);
