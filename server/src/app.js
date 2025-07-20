@@ -29,7 +29,7 @@ const swaggerOptions = {
     },
     servers: [{ url: `http://localhost:${process.env.PORT}` }],
   },
-  apis: ['./src/routes/*.js'], // Path to your API docs
+  apis: ['./src/routes/*.js'],
 };
 
 let swaggerDocs;
@@ -73,6 +73,10 @@ app.use(
       useDefaults: true,
       directives: {
         connectSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+        fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+        imgSrc: ["'self'", 'data:', 'https:'],
       },
     },
   }),
@@ -80,25 +84,24 @@ app.use(
 
 app.use((req, res, next) => {
   const start = Date.now();
+  req.startTime = start;
 
-  // Wrap res.end to set the header just before the response is sent
-  const originalEnd = res.end;
-  res.end = function (...args) {
+  // Set response time header when response finishes
+  res.on('finish', () => {
     const duration = Date.now() - start;
     res.setHeader('X-Response-Time', `${duration}`);
-    originalEnd.apply(res, args);
-  };
+  });
 
   next();
 });
 
 app.use(loggerMiddleware);
 
-app.use('/', mainRouter);
+app.use(outputSanitize);
 
 app.use('/docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
 
-app.use(outputSanitize);
+app.use('/', mainRouter);
 
 // Handle nonexistent routes
 app.use(notFound);

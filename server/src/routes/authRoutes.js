@@ -45,6 +45,34 @@ authRouter.post(
   jwtMiddleware.setTokens,
 );
 
+/**
+ * @swagger
+ * /auth/login:
+ *   post:
+ *     summary: Login as a user
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - username
+ *               - password
+ *             properties:
+ *               username:
+ *                 type: string
+ *                 example: johndoe
+ *               password:
+ *                 type: string
+ *                 example: secret123
+ *     responses:
+ *       200:
+ *         description: User successfully logged in
+ *       401:
+ *         description: Invalid credentials
+ */
 authRouter.post(
   '/login',
   rateLimiter.loginLimiter,
