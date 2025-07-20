@@ -15,8 +15,8 @@ const {
 const catchAsync = require('../utils/catchAsync');
 const Roles = require('../configs/roleConfig');
 const ttsService = require('../utils/ttsService');
-const { transcribeAndTranslateAudio } = ttsService;
-
+const { transcribeAndTranslateAudio, textToSpeech } = ttsService;
+const path = require('path');
 // Check if transcribe function is available
 if (!transcribeAndTranslateAudio) {
   throw new AppError('Transcription and translation service not available', 500);
@@ -39,8 +39,8 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
   const supportedLanguages = [
   'eng', // English
     'spa', // Spanish
-    'fre', // French
-    'ger', // German
+    'fra', // French
+    'deu', // German
     'zho', // Chinese (Mandarin)
     'msa', // Malay
     'tam', // Tamil
@@ -98,6 +98,63 @@ logger.info(`Audio uploaded, transcribed, and translated successfully: ${filenam
       translations,
       subtitleId: subtitle.subtitleId,
       message: 'Successfully uploaded audio and saved transcription as subtitle',
+    },
+  });
+});
+
+// Convert text to audio
+module.exports.convertTextToAudio = catchAsync(async (req, res, next) => {
+  const { text, languageCode, description } = req.body;
+  const userId = res.locals.user.userId;
+
+  if (!text || !languageCode) {
+    throw new AppError('Text and languageCode are required', 400);
+  }
+
+  // Validate language code
+  const supportedLanguages = [
+    'eng', // English
+    'spa', // Spanish
+    'fre', // French
+    'ger', // German
+    'zho', // Chinese (Mandarin)
+    'msa', // Malay
+    'tam', // Tamil
+  ];
+  if (!supportedLanguages.includes(languageCode)) {
+    throw new AppError(
+      `Unsupported language code: ${languageCode}. Supported: ${supportedLanguages.join(', ')}`,
+      400,
+    );
+  }
+
+  // Define the destination path for the audio file
+  const destinationPath = path.join(__dirname, '../../Uploads/audio');
+
+  // Generate audio from text
+  const { fileName, filePath } = await textToSpeech(text, languageCode, destinationPath);
+
+  // Create audio and subtitle records using the model
+  const { audio, subtitle } = await audioModel.createTextToAudio({
+    text,
+    fileName,
+    languageCode,
+    createdBy: userId,
+    ipAddress: req.ip,
+    description: description || 'Text-to-speech generated audio',
+    statusId: 1,
+  });
+
+  logger.info(`Text converted to audio and saved successfully: ${fileName}`);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      audioId: audio.audioId,
+      fileName,
+      languageCode,
+      subtitleId: subtitle.subtitleId,
+      message: 'Successfully converted text to audio and saved as subtitle',
     },
   });
 });

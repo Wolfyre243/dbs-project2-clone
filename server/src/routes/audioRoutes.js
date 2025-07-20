@@ -54,4 +54,11 @@ audioRouter.post(
   audioController.uploadAudio,
 );
 
+audioRouter.post(
+  '/text-to-audio',
+  // rateLimiter, 
+  audioController.convertTextToAudio,
+);
+
+
 module.exports = audioRouter;

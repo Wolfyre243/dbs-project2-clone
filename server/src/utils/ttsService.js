@@ -1,20 +1,33 @@
 const fs = require('fs').promises;
+const path = require('path');
 const { SpeechClient } = require('@google-cloud/speech');
 const { Translate } = require('@google-cloud/translate').v2;
+const { TextToSpeechClient } = require('@google-cloud/text-to-speech');
+const crypto = require('crypto');
 const logger = require('../utils/logger');
 const AppError = require('../utils/AppError');
+
 logger.info(`Credentials path: ${process.env.GOOGLE_APPLICATION_CREDENTIALS}`);
+
 // Initialize Google Cloud clients
 const speechClient = new SpeechClient();
 const translateClient = new Translate();
+let textToSpeechClient;
 
-// Define supported languages for transcription and translation
-// Define supported languages for transcription and translation
+try {
+  textToSpeechClient = new TextToSpeechClient();
+  logger.info('TextToSpeechClient initialized successfully');
+} catch (error) {
+  logger.error(`Failed to initialize TextToSpeechClient: ${JSON.stringify(error, null, 2)}`);
+  throw new AppError('Failed to initialize Text-to-Speech client', 500);
+}
+
+// Define supported languages for transcription, translation, and text-to-speech
 const supportedLanguages = {
   'eng': 'English',
   'spa': 'Spanish',
-  'fre': 'French',
-  'ger': 'German',
+  'fra': 'French',
+  'deu': 'German',
   'zho': 'Chinese (Mandarin)',
   'msa': 'Malay',
   'tam': 'Tamil',
@@ -24,14 +37,14 @@ const supportedLanguages = {
 const apiLanguageCodeMap = {
   'eng': 'en-GB',
   'spa': 'es-ES',
-  'fre': 'fr-FR',
-  'ger': 'de-DE',
+  'fra': 'fr-FR',
+  'deu': 'de-DE',
   'zho': 'cmn-CN',
   'msa': 'ms-MY',
   'tam': 'ta-IN',
 };
 
-
+// Transcribe and translate audio
 module.exports.transcribeAndTranslateAudio = async (audioFilePath, languageCode) => {
   try {
     // Validate language code
@@ -51,8 +64,6 @@ module.exports.transcribeAndTranslateAudio = async (audioFilePath, languageCode)
     const apiLanguageCode = apiLanguageCodeMap[languageCode] || languageCode;
     const request = {
       config: {
-       // encoding: 'LINEAR16', // Required for WAV files
-        //sampleRateHertz: 16000, // Common sample rate; adjust if needed
         languageCode: apiLanguageCode,
       },
       audio,
@@ -73,7 +84,7 @@ module.exports.transcribeAndTranslateAudio = async (audioFilePath, languageCode)
     // Step 2: Translate to all supported languages
     const translations = {};
     for (const [targetLangCode, targetLangName] of Object.entries(supportedLanguages)) {
-      if (targetLangCode !== languageCode) { // Skip translating to source language
+      if (targetLangCode !== languageCode) {
         const apiTargetLangCode = apiLanguageCodeMap[targetLangCode] || targetLangCode;
         logger.info(`Translating to ${targetLangName} (${apiTargetLangCode})`);
         const [translatedText] = await translateClient.translate(transcription, apiTargetLangCode);
@@ -86,5 +97,65 @@ module.exports.transcribeAndTranslateAudio = async (audioFilePath, languageCode)
   } catch (error) {
     logger.error(`Error processing audio for ${languageCode}: ${JSON.stringify(error, null, 2)}`);
     throw new AppError(`Failed to process audio: ${error.message}`, 500);
+  }
+};
+
+// Convert text to speech and save to disk
+module.exports.textToSpeech = async (text, languageCode, destinationPath) => {
+  try {
+    // Validate language code
+    if (!Object.keys(supportedLanguages).includes(languageCode)) {
+      throw new AppError(`Unsupported language code: ${languageCode}. Supported: ${Object.keys(supportedLanguages).join(', ')}`, 400);
+    }
+
+    if (!textToSpeechClient) {
+      logger.error('TextToSpeechClient is not initialized');
+      throw new AppError('TextToSpeechClient is not initialized', 500);
+    }
+
+    const apiLanguageCode = apiLanguageCodeMap[languageCode] || languageCode;
+
+    // Create the text-to-speech request
+    const request = {
+      input: { text },
+      voice: {
+        languageCode: apiLanguageCode,
+        ssmlGender: 'NEUTRAL',
+      },
+      audioConfig: {
+       audioEncoding: 'LINEAR16', // WAV format
+        sampleRateHertz: 16000,
+      },
+    };
+
+    logger.info(`Generating speech for text in language: ${apiLanguageCode}`);
+    let response;
+    try {
+      [response] = await textToSpeechClient.synthesizeSpeech(request);
+    } catch (error) {
+      logger.error(`Error in synthesizeSpeech: ${JSON.stringify(error, null, 2)}`);
+      throw new AppError(`Failed to synthesize speech: ${error.message}`, 500);
+    }
+
+    if (!response || !response.audioContent) {
+      logger.error('No audio content returned from synthesizeSpeech');
+      throw new AppError('No audio content generated', 500);
+    }
+
+    // Generate a unique filename
+    const buf = crypto.randomBytes(4);
+    const uniqueName = `${Date.now()}-${buf.toString('hex')}-output.wav`;
+
+    // Define the full file path
+    const filePath = path.join(destinationPath, uniqueName);
+
+    // Save the audio content to disk
+    await fs.writeFile(filePath, response.audioContent, 'binary');
+    logger.info(`Audio file saved successfully: ${filePath}`);
+
+    return { fileName: uniqueName, filePath };
+  } catch (error) {
+    logger.error(`Error generating speech for ${languageCode}: ${JSON.stringify(error, null, 2)}`);
+    throw new AppError(`Failed to generate speech: ${error.message}`, 500);
   }
 };
