@@ -32,6 +32,7 @@ export default function LoginPage() {
 
         setAccessToken(responseData.accessToken);
         await JWTDecode(responseData.accessToken);
+        // TOFIX: How come user is taken to /admin
         navigate('/');
         // If auth successful, redirect to dashboard
       } catch (error) {

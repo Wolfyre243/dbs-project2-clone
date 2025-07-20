@@ -74,6 +74,8 @@ module.exports.dobValidation = () =>
 module.exports.genderValidation = () =>
   body('gender')
     .trim()
+    .notEmpty()
+    .withMessage('Gender is required')
     .isIn(['M', 'F'])
     .withMessage("Gender must be either 'M' or 'F'")
     .escape();
@@ -81,6 +83,8 @@ module.exports.genderValidation = () =>
 module.exports.languageCodeValidation = () =>
   body('languageCode')
     .trim()
+    .notEmpty()
+    .withMessage('Language code is required')
     .isLength({ min: 3, max: 3 })
     .withMessage('Language code must be exactly 3 characters')
     .isAlpha()

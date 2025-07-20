@@ -11,5 +11,9 @@ const mainRouter = express.Router();
 mainRouter.use('/auth', authRouter);
 mainRouter.use('/audio', audioRouter);
 
+mainRouter.get('/', (req, res) => {
+  res.redirect('/docs');
+});
+
 // Export the main router
 module.exports = mainRouter;
