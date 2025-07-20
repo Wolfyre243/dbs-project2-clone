@@ -60,5 +60,9 @@ audioRouter.post(
   audioController.convertTextToAudio,
 );
 
+audioRouter.get(
+  '/subtitles',
+  audioController.getAllSubtitles,
+);
 
 module.exports = audioRouter;

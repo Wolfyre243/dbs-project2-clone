@@ -158,3 +158,28 @@ module.exports.convertTextToAudio = catchAsync(async (req, res, next) => {
     },
   });
 });
+
+module.exports.getAllSubtitles = catchAsync(async (req, res, next) => {
+  const userId = res.locals.user.userId;
+  //const role = res.locals.user.role;
+  // Restrict to admins only
+  /* if (role !== Roles.ADMIN) {
+    throw new AppError('Only admins can view subtitles', 403);
+  } */
+
+  // Fetch all subtitles for admins
+  const subtitles = await audioModel.getAllSubtitles({
+    userId,
+    isAdmin: true, 
+  });
+
+  logger.info(`Fetched ${subtitles.length} subtitles for admin userId=${userId}`);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      subtitles,
+      message: 'Successfully retrieved subtitles',
+    },
+  });
+});

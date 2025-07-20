@@ -122,3 +122,27 @@ module.exports.createTextToAudio = async ({
 
   return { audio, subtitle };
 };
+
+
+// Get subtitles for a user
+module.exports.getAllSubtitles = async ({ userId, isAdmin }) => {
+  return await prisma.subtitle.findMany({
+    where: isAdmin ? {} : { createdBy: userId }, // Admins see all subtitles
+    select: {
+      subtitleId: true,
+      subtitleText: true,
+      languageCode: true,
+      createdBy: true,
+      createdAt: true,
+      modifiedAt: true,
+      statusId: true,
+     /*  audio: {
+        select: {
+          audioId: true,
+          description: true,
+          fileName: true,
+        },
+      }, */
+    },
+  });
+};
