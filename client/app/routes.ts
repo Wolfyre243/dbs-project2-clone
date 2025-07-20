@@ -7,7 +7,7 @@ import {
 } from '@react-router/dev/routes';
 
 export default [
-  index('routes/home.tsx'),
+  index('routes/page.tsx'),
   route('/*', 'routes/notFound.tsx'),
   route('/unauthorized', 'routes/unauthorized.tsx'),
   ...prefix('admin', [

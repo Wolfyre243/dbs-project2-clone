@@ -27,16 +27,22 @@ const swaggerOptions = {
       version: '1.0.0',
       description: 'API documentation using Swagger',
     },
-    servers: [{ url: `http://localhost:3000` }],
+    servers: [{ url: `http://localhost:${process.env.PORT}` }],
   },
-  apis: ['./routes/*.js'], // Path to your API docs
+  apis: ['./src/routes/*.js'], // Path to your API docs
 };
 
 let swaggerDocs;
 try {
   swaggerDocs = swaggerJsDoc(swaggerOptions);
+  console.log('Swagger docs generated successfully');
+  console.log(
+    'Number of paths found:',
+    Object.keys(swaggerDocs.paths || {}).length,
+  );
 } catch (error) {
   console.error('swagger-jsdoc error:', error);
+  swaggerDocs = null;
 }
 
 const FRONTEND_URL =
@@ -67,6 +73,9 @@ app.use(
     useDefaults: true,
     directives: {
       connectSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"], // Allow inline scripts for Swagger UI
+      styleSrc: ["'self'", "'unsafe-inline'"], // Allow inline styles for Swagger UI
+      imgSrc: ["'self'", 'data:', 'https:'], // Allow data URLs and HTTPS images
     },
   }),
 );
@@ -87,24 +96,18 @@ app.use((req, res, next) => {
 
 app.use(loggerMiddleware);
 
-// Main routes
+app.use(outputSanitize);
+
+// Swagger docs route
+app.use('/docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
+
 app.use('/', mainRouter);
-
-// app.use('/docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
-
-// // Redirect the user if they try to access the main page
-// app.get('/', (req, res) => {
-//   res.redirect('/docs');
-// });
 
 // Handle nonexistent routes
 app.use(notFound);
 
-// Global error handling middleware
+// Global error handling middleware (should be last)
 app.use(errorHandler);
-
-// Output Sanitization Middleware
-app.use(outputSanitize);
 
 // Export server
 module.exports = app;

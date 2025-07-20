@@ -66,6 +66,7 @@ export function DatePicker({
               setOpen(true);
             }
           }}
+          required={required}
         />
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>

@@ -10,14 +10,14 @@ export function LoginForm({
   className,
   submitCb,
   ref,
+  ...props
 }: {
   className?: string;
   submitCb: (e: React.FormEvent) => Promise<void>;
   ref: React.RefObject<HTMLFormElement | null>;
 }) {
   return (
-    <div className={cn('flex flex-col gap-6 w-full', className)}>
-      {/* <Form action='/auth/login' method='post'> */}
+    <div className={cn('flex flex-col gap-6 w-full', className)} {...props}>
       <form ref={ref} onSubmit={submitCb}>
         <div className='flex flex-col gap-6'>
           <div className='flex flex-col items-center gap-2'>
@@ -66,7 +66,6 @@ export function LoginForm({
           </div>
         </div>
       </form>
-      {/* </Form> */}
     </div>
   );
 }

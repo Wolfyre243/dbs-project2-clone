@@ -1,4 +1,5 @@
 import { GalleryVerticalEnd } from 'lucide-react';
+import { useState } from 'react';
 
 import { cn } from '~/lib/utils';
 import { Button } from '~/components/ui/button';
@@ -18,30 +19,53 @@ import {
 import { LanguageSelect } from './language-select';
 import { DatePicker } from './date-picker';
 
-export function RegistrationGenderSelect() {
+export function RegistrationGenderSelect({
+  className,
+  placeholder,
+  label,
+  fieldName,
+  required = false,
+}: {
+  className?: string;
+  placeholder?: string;
+  label?: string;
+  fieldName: string;
+  required?: boolean;
+}) {
+  const [value, setValue] = useState<string>('');
+
   return (
-    <Select name='gender'>
-      <SelectTrigger className='w-full'>
-        <SelectValue placeholder='Gender' />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectGroup>
-          <SelectLabel>Gender</SelectLabel>
-          <SelectItem value='M'>Male</SelectItem>
-          <SelectItem value='F'>Female</SelectItem>
-        </SelectGroup>
-      </SelectContent>
-    </Select>
+    <>
+      <Select value={value} onValueChange={setValue}>
+        <SelectTrigger className={cn('w-full', className)}>
+          <SelectValue placeholder={placeholder ?? 'Gender'} />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            <SelectLabel>{label ?? 'Gender'}</SelectLabel>
+            <SelectItem value='M'>Male</SelectItem>
+            <SelectItem value='F'>Female</SelectItem>
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+      <input type='hidden' name={fieldName} value={value} required={required} />
+    </>
   );
 }
 
 export function MemberRegisterForm({
   className,
+  submitCb,
+  ref,
   ...props
-}: React.ComponentProps<'div'>) {
+}: {
+  className?: string;
+  submitCb: (e: React.FormEvent) => Promise<void>;
+  ref: React.RefObject<HTMLFormElement | null>;
+}) {
   return (
     <div className={cn('flex flex-col gap-6 w-full', className)} {...props}>
-      <Form action='/auth/register' method='post'>
+      <form ref={ref} onSubmit={submitCb}>
         <div className='flex flex-col gap-6'>
           <div className='flex flex-col items-center gap-2'>
             <a
@@ -94,19 +118,27 @@ export function MemberRegisterForm({
                   />
                 </div>
               </div>
-              <div className='flex flex-row gap-5 w-full'>
-                <div className='flex flex-col gap-3 w-full'>
+              <div className='grid grid-cols-2 gap-5 w-full'>
+                <div className='flex flex-col gap-3'>
                   <Label htmlFor='gender'>Gender</Label>
-                  <RegistrationGenderSelect />
+                  <RegistrationGenderSelect
+                    fieldName='gender'
+                    required={true}
+                  />
                 </div>
-                <div className='flex flex-col gap-3 w-full'>
-                  <DatePicker label='Date of Birth' fieldName='dob' />
-                </div>
-                <div className='flex flex-col gap-3 w-full'>
+                <div className='flex flex-col gap-3'>
                   <Label htmlFor='languageCode'>Language</Label>
                   <LanguageSelect
                     placeholder='Language'
                     fieldName='languageCode'
+                    required
+                  />
+                </div>
+                <div className='flex flex-col gap-3 col-span-2'>
+                  <DatePicker
+                    label='Date of Birth'
+                    fieldName='dob'
+                    required={true}
                   />
                 </div>
               </div>
@@ -140,7 +172,7 @@ export function MemberRegisterForm({
             </Button>
           </div>
         </div>
-      </Form>
+      </form>
     </div>
   );
 }

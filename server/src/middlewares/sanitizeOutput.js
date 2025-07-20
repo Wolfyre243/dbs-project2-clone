@@ -19,8 +19,12 @@ const sanitizeOutput = (req, res, next) => {
   const originalJson = res.json;
 
   res.json = function (data) {
-    const sanitizedData = sanitizeObject(data);
+    // Check if response already sent
+    if (res.headersSent) {
+      return;
+    }
 
+    const sanitizedData = sanitizeObject(data);
     return originalJson.call(this, sanitizedData);
   };
 
