@@ -6,7 +6,7 @@ const { TextToSpeechClient } = require('@google-cloud/text-to-speech');
 const crypto = require('crypto');
 const logger = require('../utils/logger');
 const AppError = require('../utils/AppError');
-
+const audioModel = require('../models/audioModel');
 logger.info(`Credentials path: ${process.env.GOOGLE_APPLICATION_CREDENTIALS}`);
 
 // Initialize Google Cloud clients
@@ -23,7 +23,7 @@ try {
 }
 
 // Define supported languages for transcription, translation, and text-to-speech
-const supportedLanguages = {
+/* const supportedLanguages = {
   'eng': 'English',
   'spa': 'Spanish',
   'fra': 'French',
@@ -32,6 +32,15 @@ const supportedLanguages = {
   'msa': 'Malay',
   'tam': 'Tamil',
 };
+ */
+const getSupportedLanguagesMap = async () => {
+  const langArr = await audioModel.getActiveLanguages();
+  return langArr.reduce((a, c) => {
+    a[c.languageCode.toString()] = c.languageName;
+    return a;
+  }, {});
+};
+// const supportedLanguages = suppLangArr();
 
 // Map internal codes to Google Cloud API codes
 const apiLanguageCodeMap = {
@@ -42,10 +51,16 @@ const apiLanguageCodeMap = {
   'zho': 'cmn-CN',
   'msa': 'ms-MY',
   'tam': 'ta-IN',
+  'jpn': 'ja-JP',
+  'kor': 'ko-KR',
+  'rus': 'ru-RU',
+  'ita': 'it-IT',
+  'hin': 'hi-IN',
 };
 
 // Transcribe and translate audio
 module.exports.transcribeAndTranslateAudio = async (audioFilePath, languageCode) => {
+  const supportedLanguages = await getSupportedLanguagesMap();
   try {
     // Validate language code
     if (!Object.keys(supportedLanguages).includes(languageCode)) {
@@ -76,13 +91,17 @@ module.exports.transcribeAndTranslateAudio = async (audioFilePath, languageCode)
       .join('\n');
 
     if (!transcription) {
-      throw new AppError('No transcription generated', 500);
+      throw new AppError('No transcription generated', 400);
     }
 
     logger.info(`Transcription (${languageCode}): ${transcription}`);
 
-    // Step 2: Translate to all supported languages
-    const translations = {};
+    // Step 2: Include transcription in translations for the source language
+    const translations = {
+      [languageCode]: transcription, // Include transcription as translation for source language
+    };
+
+    // Step 3: Translate to other supported languages
     for (const [targetLangCode, targetLangName] of Object.entries(supportedLanguages)) {
       if (targetLangCode !== languageCode) {
         const apiTargetLangCode = apiLanguageCodeMap[targetLangCode] || targetLangCode;
@@ -102,6 +121,7 @@ module.exports.transcribeAndTranslateAudio = async (audioFilePath, languageCode)
 
 // Convert text to speech and save to disk
 module.exports.textToSpeech = async (text, languageCode, destinationPath) => {
+  const supportedLanguages = await getSupportedLanguagesMap();
   try {
     // Validate language code
     if (!Object.keys(supportedLanguages).includes(languageCode)) {
@@ -123,7 +143,7 @@ module.exports.textToSpeech = async (text, languageCode, destinationPath) => {
         ssmlGender: 'NEUTRAL',
       },
       audioConfig: {
-       audioEncoding: 'LINEAR16', // WAV format
+        audioEncoding: 'LINEAR16', // WAV format
         sampleRateHertz: 16000,
       },
     };
