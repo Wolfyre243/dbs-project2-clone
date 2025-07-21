@@ -6,6 +6,7 @@ const AppError = require('../utils/AppError');
 const logger = require('../utils/logger');
 const { encryptData, decryptData } = require('../utils/encryption');
 const audioModel = require('../models/audioModel');
+const languageModel = require('../models/languageModel');
 const {
   cookieOptions,
   verifySK,
@@ -39,20 +40,7 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
   const description = req.body.description || 'No description provided';
   logger.info(`Uploaded file: ${JSON.stringify(req.file)}`);
 
-  // TODO: Fetch from database
-  // Validate language code
-  /* const supportedLanguages = [
-    'eng', // English
-    'spa', // Spanish
-    'fra', // French
-    'deu', // German
-    'zho', // Chinese (Mandarin)
-    'msa', // Malay
-    'tam', // Tamil
-  ]; */
-  const supportedLanguages = (await audioModel.getActiveLanguages()).map(
-    (lang) => lang.languageCode,
-  );
+  const supportedLanguages = await audioModel.getActiveLanguages();
   if (!languageCode) {
     throw new AppError('Language code is required', 400);
   }
@@ -89,7 +77,7 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
     description: description,
     fileName: filename,
     createdBy: userId,
-    languageId: languageCode,
+    languageCode: languageCode,
     statusId: 1, // Assuming 1 is active status
   });
 
@@ -141,15 +129,7 @@ module.exports.convertTextToAudio = catchAsync(async (req, res, next) => {
   }
 
   // Validate language code
-  const supportedLanguages = [
-    'eng', // English
-    'spa', // Spanish
-    'fra', // French
-    'deu', // German
-    'zho', // Chinese (Mandarin)
-    'msa', // Malay
-    'tam', // Tamil
-  ];
+  const supportedLanguages = await languageModel.getActiveLanguages();
   if (!supportedLanguages.includes(languageCode)) {
     throw new AppError(
       `Unsupported language code: ${languageCode}. Supported: ${supportedLanguages.join(', ')}`,
@@ -192,24 +172,6 @@ module.exports.convertTextToAudio = catchAsync(async (req, res, next) => {
   });
 });
 
-module.exports.getSupportedLanguages = catchAsync(async (req, res, next) => {
-  res.status(200).json({
-    status: 'success',
-    data: {
-      supportedLanguages: {
-        eng: 'English',
-        spa: 'Spanish',
-        fra: 'French',
-        deu: 'German',
-        zho: 'Chinese (Mandarin)',
-        msa: 'Malay',
-        tam: 'Tamil',
-      },
-      supportedVoiceGenders: ['NEUTRAL', 'MALE', 'FEMALE'],
-    },
-  });
-});
-
 module.exports.updateSubtitle = catchAsync(async (req, res, next) => {
   const { subtitleId } = req.params;
   const { subtitleText, languageCode } = req.body;
@@ -227,15 +189,7 @@ module.exports.updateSubtitle = catchAsync(async (req, res, next) => {
   }
 
   // Validate language code if provided
-  const supportedLanguages = [
-    'eng', // English
-    'spa', // Spanish
-    'fra', // French
-    'deu', // German
-    'zho', // Chinese (Mandarin)
-    'msa', // Malay
-    'tam', // Tamil
-  ];
+  const supportedLanguages = await audioModel.getActiveLanguages();
   if (languageCode && !supportedLanguages.includes(languageCode)) {
     throw new AppError(
       `Unsupported language code: ${languageCode}. Supported: ${supportedLanguages.join(', ')}`,

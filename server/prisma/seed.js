@@ -83,62 +83,62 @@ async function main() {
       console.log('\n🌍 Step 3: Creating language records...');
       const languageData = [
         {
-          languageCode: 'eng',
+          languageCode: 'en-GB',
           languageName: 'English',
           statusId: activeStatusId,
         },
         {
-          languageCode: 'zho',
+          languageCode: 'cmn-CN',
           languageName: 'Chinese',
           statusId: activeStatusId,
         },
         {
-          languageCode: 'spa',
+          languageCode: 'es-ES',
           languageName: 'Spanish',
           statusId: activeStatusId,
         },
         {
-          languageCode: 'fra',
+          languageCode: 'fr-FR',
           languageName: 'French',
           statusId: activeStatusId,
         },
         {
-          languageCode: 'deu',
+          languageCode: 'de-DE',
           languageName: 'German',
           statusId: activeStatusId,
         },
         {
-          languageCode: 'jpn',
+          languageCode: 'ja-JP',
           languageName: 'Japanese',
           statusId: activeStatusId,
         },
         {
-          languageCode: 'rus',
+          languageCode: 'ru-RU',
           languageName: 'Russian',
           statusId: activeStatusId,
         },
         {
-          languageCode: 'ita',
+          languageCode: 'it-IT',
           languageName: 'Italian',
           statusId: activeStatusId,
         },
         {
-          languageCode: 'kor',
+          languageCode: 'ko-KR',
           languageName: 'Korean',
           statusId: activeStatusId,
         },
         {
-          languageCode: 'msa',
+          languageCode: 'ms-MY',
           languageName: 'Malay',
           statusId: activeStatusId,
         },
         {
-          languageCode: 'tam',
+          languageCode: 'ta-IN',
           languageName: 'Tamil',
           statusId: activeStatusId,
         },
         {
-          languageCode: 'hin',
+          languageCode: 'hi-IN',
           languageName: 'Hindi',
           statusId: activeStatusId,
         },

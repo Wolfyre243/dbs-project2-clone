@@ -6,8 +6,8 @@ const { TextToSpeechClient } = require('@google-cloud/text-to-speech');
 const crypto = require('crypto');
 const logger = require('../utils/logger');
 const AppError = require('../utils/AppError');
-const audioModel = require('../models/audioModel');
-logger.info(`Credentials path: ${process.env.GOOGLE_APPLICATION_CREDENTIALS}`);
+const languageModel = require('../models/languageModel');
+// logger.info(`Credentials path: ${process.env.GOOGLE_APPLICATION_CREDENTIALS}`);
 
 // Initialize Google Cloud clients
 const speechClient = new SpeechClient();
@@ -24,53 +24,17 @@ try {
   throw new AppError('Failed to initialize Text-to-Speech client', 500);
 }
 
-// Define supported languages for transcription, translation, and text-to-speech
-/* const supportedLanguages = {
-  'eng': 'English',
-  'spa': 'Spanish',
-  'fra': 'French',
-  'deu': 'German',
-  'zho': 'Chinese (Mandarin)',
-  'msa': 'Malay',
-  'tam': 'Tamil',
-};
- */
-const getSupportedLanguagesMap = async () => {
-  const langArr = await audioModel.getActiveLanguages();
-  return langArr.reduce((a, c) => {
-    a[c.languageCode.toString()] = c.languageName;
-    return a;
-  }, {});
-};
-// const supportedLanguages = suppLangArr();
-
-// Map internal codes to Google Cloud API codes
-const apiLanguageCodeMap = {
-  eng: 'en-GB',
-  spa: 'es-ES',
-  fra: 'fr-FR',
-  deu: 'de-DE',
-  zho: 'cmn-CN',
-  msa: 'ms-MY',
-  tam: 'ta-IN',
-  jpn: 'ja-JP',
-  kor: 'ko-KR',
-  rus: 'ru-RU',
-  ita: 'it-IT',
-  hin: 'hi-IN',
-};
-
 // Transcribe and translate audio
 module.exports.transcribeAndTranslateAudio = async (
   audioFilePath,
   languageCode,
 ) => {
-  const supportedLanguages = await getSupportedLanguagesMap();
+  const supportedLanguages = await languageModel.getActiveLanguages();
   try {
     // Validate language code
-    if (!Object.keys(supportedLanguages).includes(languageCode)) {
+    if (!supportedLanguages.includes(languageCode)) {
       throw new AppError(
-        `Unsupported language code: ${languageCode}. Supported: ${Object.keys(supportedLanguages).join(', ')}`,
+        `Unsupported language code: ${languageCode}. Supported: ${supportedLanguages.join(', ')}`,
         400,
       );
     }
@@ -84,7 +48,7 @@ module.exports.transcribeAndTranslateAudio = async (
       content: file.toString('base64'),
     };
 
-    const apiLanguageCode = apiLanguageCodeMap[languageCode] || languageCode;
+    const apiLanguageCode = languageCode;
     const request = {
       config: {
         languageCode: apiLanguageCode,
@@ -112,20 +76,17 @@ module.exports.transcribeAndTranslateAudio = async (
     };
 
     // Step 3: Translate to other supported languages
-    for (const [targetLangCode, targetLangName] of Object.entries(
-      supportedLanguages,
-    )) {
+    for (const targetLangCode of supportedLanguages) {
       if (targetLangCode !== languageCode) {
-        const apiTargetLangCode =
-          apiLanguageCodeMap[targetLangCode] || targetLangCode;
-        logger.info(`Translating to ${targetLangName} (${apiTargetLangCode})`);
+        const apiTargetLangCode = targetLangCode;
+        logger.info(`Translating to ${targetLangCode} (${apiTargetLangCode})`);
         const [translatedText] = await translateClient.translate(
           transcription,
           apiTargetLangCode,
         );
         translations[targetLangCode] = translatedText;
         logger.info(
-          `Translation to ${targetLangName} [${targetLangCode}]: ${translatedText}`,
+          `Translation to ${targetLangCode} [${targetLangCode}]: ${translatedText}`,
         );
       }
     }
@@ -141,12 +102,12 @@ module.exports.transcribeAndTranslateAudio = async (
 
 // Convert text to speech and save to disk
 module.exports.textToSpeech = async (text, languageCode, destinationPath) => {
-  const supportedLanguages = await getSupportedLanguagesMap();
+  const supportedLanguages = await languageModel.getActiveLanguages();
   try {
     // Validate language code
-    if (!Object.keys(supportedLanguages).includes(languageCode)) {
+    if (!supportedLanguages.includes(languageCode)) {
       throw new AppError(
-        `Unsupported language code: ${languageCode}. Supported: ${Object.keys(supportedLanguages).join(', ')}`,
+        `Unsupported language code: ${languageCode}. Supported: ${supportedLanguages.join(', ')}`,
         400,
       );
     }
@@ -156,7 +117,7 @@ module.exports.textToSpeech = async (text, languageCode, destinationPath) => {
       throw new AppError('TextToSpeechClient is not initialized', 500);
     }
 
-    const apiLanguageCode = apiLanguageCodeMap[languageCode] || languageCode;
+    const apiLanguageCode = languageCode;
 
     // Create the text-to-speech request
     const request = {

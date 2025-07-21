@@ -4,33 +4,20 @@ const crypto = require('crypto');
 
 const prisma = new PrismaClient();
 
-// Fetch active languages
-module.exports.getActiveLanguages = async () => {
-  const languagesArr = await prisma.language.findMany({
-    where: { statusId: statusCodes.ACTIVE },
-    // select: {
-    //   languageCode: true,
-    //   languageName: true,
-    // },
-  });
-  return languagesArr;
-};
-
 // Create a new audio record
 module.exports.createAudio = async ({
   description,
   fileName,
   createdBy,
-  languageId,
+  languageCode,
   statusId,
 }) => {
   return await prisma.audio.create({
     data: {
-      audioId: crypto.randomUUID(),
       description,
       fileName,
       createdBy,
-      languageId,
+      languageCode,
       statusId,
       createdAt: new Date(),
     },
@@ -48,7 +35,6 @@ module.exports.createAuditLog = async ({
 }) => {
   return await prisma.auditLog.create({
     data: {
-      //auditLogId: crypto.randomUUID(),
       userId,
       ipAddress,
       entityName,
@@ -70,7 +56,6 @@ module.exports.createSubtitle = async ({
 }) => {
   return await prisma.subtitle.create({
     data: {
-      //subtitleId: crypto.randomUUID(), // ✅ UUID instead of custom string
       subtitleText,
       languageCode,
       createdBy,
@@ -95,11 +80,10 @@ module.exports.createTextToAudio = async ({
   // Create audio record
   const audio = await prisma.audio.create({
     data: {
-      // audioId: crypto.randomUUID(),
       description,
       fileName,
       createdBy,
-      languageId: languageCode,
+      languageCode: languageCode,
       statusId,
       createdAt: new Date(),
     },
@@ -108,7 +92,6 @@ module.exports.createTextToAudio = async ({
   // Create subtitle record with the input text
   const subtitle = await prisma.subtitle.create({
     data: {
-      // subtitleId: crypto.randomUUID(),
       subtitleText: text,
       languageCode,
       createdBy,
@@ -122,7 +105,6 @@ module.exports.createTextToAudio = async ({
   // Create audit log entry
   await prisma.auditLog.create({
     data: {
-      //  auditLogId: crypto.randomUUID(),
       userId: createdBy,
       ipAddress: ipAddress || '0.0.0.0',
       entityName: 'audio',

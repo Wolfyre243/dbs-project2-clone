@@ -10,8 +10,6 @@ const audioController = require('../controllers/audioController');
 const jwtMiddleware = require('../middlewares/jwtMiddleware');
 const rateLimiter = require('../middlewares/rateLimiter');
 
-
-
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, path.join(__dirname, '../../Uploads/audio'));
@@ -29,21 +27,23 @@ const storage = multer.diskStorage({
 // The API only allows for wav files
 const upload = multer({
   storage,
-   fileFilter: (req, file, cb) => {
-    if ( file.mimetype === 'audio/wav' ||
-  file.mimetype === 'audio/wave' ||
-  file.mimetype === 'audio/x-wav') {
+  fileFilter: (req, file, cb) => {
+    if (
+      file.mimetype === 'audio/wav' ||
+      file.mimetype === 'audio/wave' ||
+      file.mimetype === 'audio/x-wav'
+    ) {
       cb(null, true);
     } else {
       cb(new Error('Only .wav files are allowed'), false);
     }
-  }, 
+  },
 });
 // -----------------------------------SET UP ROUTES-----------------------------------
 // Create the router
 const audioRouter = express.Router();
 
-audioRouter.use(jwtMiddleware.verifyToken)
+audioRouter.use(jwtMiddleware.verifyToken);
 
 //authRouter.post('/upload', upload.single('file'), audioController.uploadAudio);
 
@@ -56,13 +56,10 @@ audioRouter.post(
 
 audioRouter.post(
   '/text-to-audio',
-  // rateLimiter, 
+  // TODO: rateLimiter,
   audioController.convertTextToAudio,
 );
 
-audioRouter.get(
-  '/subtitles',
-  audioController.getAllSubtitles,
-);
+audioRouter.get('/subtitles', audioController.getAllSubtitles);
 
 module.exports = audioRouter;
