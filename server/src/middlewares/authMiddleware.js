@@ -8,7 +8,7 @@ module.exports.verifyIsAdmin = catchAsync(async (req, res, next) => {
     res.locals.user.roleId != Roles.ADMIN &&
     res.locals.user.roleId != Roles.SUPERADMIN
   ) {
-    logger.warning(
+    throw new AppError(
       `User ID (${res.locals.user.userId}) has no adminstrator rights.`,
       403,
     );

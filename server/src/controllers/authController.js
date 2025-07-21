@@ -19,6 +19,7 @@ const {
 const catchAsync = require('../utils/catchAsync');
 
 const Roles = require('../configs/roleConfig');
+const statusCodes = require('../configs/statusCodes');
 
 module.exports.guestLogin = catchAsync(async (req, res, next) => {
   const roleId = Roles.GUEST; // 1 for Guest
@@ -177,6 +178,10 @@ module.exports.verifyEmail = catchAsync(async (req, res, next) => {
     if (!userId || !emailId)
       throw new AppError('Invalid verification token provided', 400);
 
+    const user = await userModel.retrieveById(userId);
+    if (user.status.statusId === statusCodes.VERIFIED)
+      throw new AppError('User already verified', 409);
+
     await userModel.verifyUser(userId);
 
     res.status(204).send();
@@ -191,4 +196,41 @@ module.exports.verifyEmail = catchAsync(async (req, res, next) => {
 
     throw error;
   }
+});
+
+module.exports.generateVerificationMail = catchAsync(async (req, res, next) => {
+  const { emailId } = req.body;
+
+  const jwtConfig = {
+    algorithm: tokenAlgorithm,
+    expiresIn: verifyTokenDuration,
+  };
+
+  const registeredEmail = await userModel.retrieveEmailById(emailId);
+  const user = await userModel.retrieveById(registeredEmail.userId);
+
+  const payload = {
+    userId: registeredEmail.userId,
+    emailId: registeredEmail.emailId,
+    createdAt: new Date(Date.now()),
+  };
+
+  const verificationToken = jwt.sign(payload, verifySK, jwtConfig);
+  const verifyUrl = `${process.env.FRONTEND_URL}/verify?token=${verificationToken}`;
+
+  res.locals.email = decryptData(registeredEmail.email);
+  res.locals.mailContent = {
+    subject: 'Verify your email',
+    html: `
+      <p>Hi ${user.username},<br/><br/>
+      Please verify your email by clicking the link below:<br/><a href="${verifyUrl}">Verify Email</a><br/><br/>
+      The link will expire in ${verifyTokenDuration}.<br/><br/>
+      Regards,<br/>
+      The SDC Team</p>
+    `,
+  };
+
+  res.locals.statusCode = 200;
+
+  return next();
 });

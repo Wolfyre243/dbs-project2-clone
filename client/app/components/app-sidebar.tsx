@@ -13,7 +13,6 @@ import {
 import { useEffect, useState } from 'react';
 
 import { NavMain } from '~/components/nav-main';
-import { NavProjects } from '~/components/nav-projects';
 import { NavSecondary } from '~/components/nav-secondary';
 import { NavUser } from '~/components/nav-user';
 import {
@@ -107,7 +106,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           username: user.username,
           firstName: user.userProfile?.firstName,
           lastName: user.userProfile?.lastName,
-          email: user.emails?.email,
+          email: user.emails.email,
           roleId: role,
         });
       } catch (error: any) {

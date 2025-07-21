@@ -110,7 +110,13 @@ authRouter.post(
   },
 );
 
-// TODO: Add verification
+authRouter.post(
+  '/send-verification',
+  jwtMiddleware.verifyToken,
+  authController.generateVerificationMail,
+  mailMiddleware.sendMail,
+);
+
 authRouter.put('/verify/:token', authController.verifyEmail);
 
 authRouter.post(

@@ -224,7 +224,7 @@ module.exports.verifyUser = async (userId) => {
         userId: userId,
       },
       data: {
-        verified: true,
+        statusId: statusCodes.VERIFIED,
       },
     });
 
@@ -232,7 +232,7 @@ module.exports.verifyUser = async (userId) => {
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2025') {
-        throw new AppError('Email or User not found', 404);
+        throw new AppError('User not found', 404);
       }
     }
     console.log(error);

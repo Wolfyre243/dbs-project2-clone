@@ -67,7 +67,7 @@ model audio {
 }
 
 model exhibitAudioRelation {
-  audioId   String  @map("audio_id") @db.Uuid
+  audioId   String  @unique @map("audio_id") @db.Uuid
   exhibitId String  @map("exhibit_id") @db.Uuid
   audio     audio   @relation(fields: [audioId], references: [audioId])
   exhibit   exhibit @relation(fields: [exhibitId], references: [exhibitId])

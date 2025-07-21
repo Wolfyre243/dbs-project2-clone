@@ -19,7 +19,10 @@ const { transcribeAndTranslateAudio, textToSpeech } = ttsService;
 const path = require('path');
 // Check if transcribe function is available
 if (!transcribeAndTranslateAudio) {
-  throw new AppError('Transcription and translation service not available', 500);
+  throw new AppError(
+    'Transcription and translation service not available',
+    500,
+  );
 } else {
   logger.info('Transcription and translation service loaded successfully');
 }
@@ -35,9 +38,10 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
   const description = req.body.description || 'No description provided';
   logger.info(`Uploaded file: ${JSON.stringify(req.file)}`);
 
+  // TODO: Fetch from database
   // Validate language code
   const supportedLanguages = [
-  'eng', // English
+    'eng', // English
     'spa', // Spanish
     'fra', // French
     'deu', // German
@@ -53,7 +57,10 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
   }
 
   // Transcribe and translate audio
-  const { transcription, translations } = await transcribeAndTranslateAudio(filePath, languageCode);
+  const { transcription, translations } = await transcribeAndTranslateAudio(
+    filePath,
+    languageCode,
+  );
   if (!transcription) {
     throw new AppError('Failed to transcribe audio', 500);
   }
@@ -77,7 +84,7 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
     logText: `Uploaded, transcribed, and translated audio file: ${filename} to ${languageCode}`,
   });
 
- // Create subtitle record with transcription text and custom subtitleId format
+  // Create subtitle record with transcription text and custom subtitleId format
   const subtitle = await audioModel.createSubtitle({
     subtitleText: transcription,
     languageCode,
@@ -86,9 +93,11 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
     statusId: 1, // active status
   });
 
-logger.info(`Audio uploaded, transcribed, and translated successfully: ${filename}`);
+  logger.info(
+    `Audio uploaded, transcribed, and translated successfully: ${filename}`,
+  );
 
- res.status(200).json({
+  res.status(200).json({
     status: 'success',
     data: {
       audioId: audio.audioId,
@@ -97,7 +106,8 @@ logger.info(`Audio uploaded, transcribed, and translated successfully: ${filenam
       transcription,
       translations,
       subtitleId: subtitle.subtitleId,
-      message: 'Successfully uploaded audio and saved transcription as subtitle',
+      message:
+        'Successfully uploaded audio and saved transcription as subtitle',
     },
   });
 });
@@ -132,7 +142,11 @@ module.exports.convertTextToAudio = catchAsync(async (req, res, next) => {
   const destinationPath = path.join(__dirname, '../../Uploads/audio');
 
   // Generate audio from text
-  const { fileName, filePath } = await textToSpeech(text, languageCode, destinationPath);
+  const { fileName, filePath } = await textToSpeech(
+    text,
+    languageCode,
+    destinationPath,
+  );
 
   // Create audio and subtitle records using the model
   const { audio, subtitle } = await audioModel.createTextToAudio({
@@ -170,10 +184,12 @@ module.exports.getAllSubtitles = catchAsync(async (req, res, next) => {
   // Fetch all subtitles for admins
   const subtitles = await audioModel.getAllSubtitles({
     userId,
-    isAdmin: true, 
+    isAdmin: true,
   });
 
-  logger.info(`Fetched ${subtitles.length} subtitles for admin userId=${userId}`);
+  logger.info(
+    `Fetched ${subtitles.length} subtitles for admin userId=${userId}`,
+  );
 
   res.status(200).json({
     status: 'success',

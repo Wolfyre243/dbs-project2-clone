@@ -9,6 +9,7 @@ import {
 export default [
   index('routes/page.tsx'),
   route('/*', 'routes/notFound.tsx'),
+  route('/verify', 'routes/verify.tsx'),
   route('/unauthorized', 'routes/unauthorized.tsx'),
 
   ...prefix('home', [
