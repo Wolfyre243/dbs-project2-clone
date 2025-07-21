@@ -35,8 +35,8 @@ export function LanguageSelect({
         <SelectContent>
           <SelectGroup>
             <SelectLabel>{label ?? 'Language'}</SelectLabel>
-            <SelectItem value='eng'>English</SelectItem>
-            <SelectItem value='zho'>Chinese</SelectItem>
+            <SelectItem value='en-GB'>English</SelectItem>
+            <SelectItem value='cmn-CN'>Chinese</SelectItem>
           </SelectGroup>
         </SelectContent>
       </Select>

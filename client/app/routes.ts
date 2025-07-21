@@ -20,7 +20,11 @@ export default [
   ]),
 
   ...prefix('admin', [
-    layout('routes/admin/layout.tsx', [index('routes/admin/page.tsx')]),
+    layout('routes/admin/layout.tsx', [
+      index('routes/admin/page.tsx'),
+      route('/analytics', 'routes/admin/analytics.tsx'),
+      ...prefix('tour-editor', []),
+    ]),
   ]),
 
   ...prefix('auth', [
