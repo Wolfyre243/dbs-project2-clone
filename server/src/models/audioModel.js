@@ -1,7 +1,20 @@
+const statusCodes = require('../configs/statusCodes');
 const { PrismaClient } = require('../generated/prisma');
 const crypto = require('crypto');
 
 const prisma = new PrismaClient();
+
+// Fetch active languages
+module.exports.getActiveLanguages = async () => {
+  const languagesArr = await prisma.language.findMany({
+    where: { statusId: statusCodes.ACTIVE },
+    // select: {
+    //   languageCode: true,
+    //   languageName: true,
+    // },
+  });
+  return languagesArr;
+};
 
 // Create a new audio record
 module.exports.createAudio = async ({
@@ -14,7 +27,7 @@ module.exports.createAudio = async ({
   return await prisma.audio.create({
     data: {
       audioId: crypto.randomUUID(),
-       description,
+      description,
       fileName,
       createdBy,
       languageId,
@@ -35,7 +48,7 @@ module.exports.createAuditLog = async ({
 }) => {
   return await prisma.auditLog.create({
     data: {
-      auditLogId: crypto.randomUUID(),
+      //auditLogId: crypto.randomUUID(),
       userId,
       ipAddress,
       entityName,
@@ -57,7 +70,7 @@ module.exports.createSubtitle = async ({
 }) => {
   return await prisma.subtitle.create({
     data: {
-      subtitleId: crypto.randomUUID(), // ✅ UUID instead of custom string
+      //subtitleId: crypto.randomUUID(), // ✅ UUID instead of custom string
       subtitleText,
       languageCode,
       createdBy,
@@ -82,7 +95,7 @@ module.exports.createTextToAudio = async ({
   // Create audio record
   const audio = await prisma.audio.create({
     data: {
-      audioId: crypto.randomUUID(),
+      // audioId: crypto.randomUUID(),
       description,
       fileName,
       createdBy,
@@ -95,7 +108,7 @@ module.exports.createTextToAudio = async ({
   // Create subtitle record with the input text
   const subtitle = await prisma.subtitle.create({
     data: {
-      subtitleId: crypto.randomUUID(),
+      // subtitleId: crypto.randomUUID(),
       subtitleText: text,
       languageCode,
       createdBy,
@@ -109,7 +122,7 @@ module.exports.createTextToAudio = async ({
   // Create audit log entry
   await prisma.auditLog.create({
     data: {
-      auditLogId: crypto.randomUUID(),
+      //  auditLogId: crypto.randomUUID(),
       userId: createdBy,
       ipAddress: ipAddress || '0.0.0.0',
       entityName: 'audio',
@@ -123,7 +136,6 @@ module.exports.createTextToAudio = async ({
   return { audio, subtitle };
 };
 
-
 // Get subtitles for a user
 module.exports.getAllSubtitles = async ({ userId, isAdmin }) => {
   return await prisma.subtitle.findMany({
@@ -136,7 +148,7 @@ module.exports.getAllSubtitles = async ({ userId, isAdmin }) => {
       createdAt: true,
       modifiedAt: true,
       statusId: true,
-     /*  audio: {
+      /*  audio: {
         select: {
           audioId: true,
           description: true,

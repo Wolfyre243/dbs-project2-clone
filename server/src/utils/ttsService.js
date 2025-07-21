@@ -6,7 +6,7 @@ const { TextToSpeechClient } = require('@google-cloud/text-to-speech');
 const crypto = require('crypto');
 const logger = require('../utils/logger');
 const AppError = require('../utils/AppError');
-
+const audioModel = require('../models/audioModel');
 logger.info(`Credentials path: ${process.env.GOOGLE_APPLICATION_CREDENTIALS}`);
 
 // Initialize Google Cloud clients
@@ -18,12 +18,14 @@ try {
   textToSpeechClient = new TextToSpeechClient();
   logger.info('TextToSpeechClient initialized successfully');
 } catch (error) {
-  logger.error(`Failed to initialize TextToSpeechClient: ${JSON.stringify(error, null, 2)}`);
+  logger.error(
+    `Failed to initialize TextToSpeechClient: ${JSON.stringify(error, null, 2)}`,
+  );
   throw new AppError('Failed to initialize Text-to-Speech client', 500);
 }
 
 // Define supported languages for transcription, translation, and text-to-speech
-const supportedLanguages = {
+/* const supportedLanguages = {
   'eng': 'English',
   'spa': 'Spanish',
   'fra': 'French',
@@ -32,24 +34,45 @@ const supportedLanguages = {
   'msa': 'Malay',
   'tam': 'Tamil',
 };
+ */
+const getSupportedLanguagesMap = async () => {
+  const langArr = await audioModel.getActiveLanguages();
+  return langArr.reduce((a, c) => {
+    a[c.languageCode.toString()] = c.languageName;
+    return a;
+  }, {});
+};
+// const supportedLanguages = suppLangArr();
 
 // Map internal codes to Google Cloud API codes
 const apiLanguageCodeMap = {
-  'eng': 'en-GB',
-  'spa': 'es-ES',
-  'fra': 'fr-FR',
-  'deu': 'de-DE',
-  'zho': 'cmn-CN',
-  'msa': 'ms-MY',
-  'tam': 'ta-IN',
+  eng: 'en-GB',
+  spa: 'es-ES',
+  fra: 'fr-FR',
+  deu: 'de-DE',
+  zho: 'cmn-CN',
+  msa: 'ms-MY',
+  tam: 'ta-IN',
+  jpn: 'ja-JP',
+  kor: 'ko-KR',
+  rus: 'ru-RU',
+  ita: 'it-IT',
+  hin: 'hi-IN',
 };
 
 // Transcribe and translate audio
-module.exports.transcribeAndTranslateAudio = async (audioFilePath, languageCode) => {
+module.exports.transcribeAndTranslateAudio = async (
+  audioFilePath,
+  languageCode,
+) => {
+  const supportedLanguages = await getSupportedLanguagesMap();
   try {
     // Validate language code
     if (!Object.keys(supportedLanguages).includes(languageCode)) {
-      throw new AppError(`Unsupported language code: ${languageCode}. Supported: ${Object.keys(supportedLanguages).join(', ')}`, 400);
+      throw new AppError(
+        `Unsupported language code: ${languageCode}. Supported: ${Object.keys(supportedLanguages).join(', ')}`,
+        400,
+      );
     }
 
     logger.info(`Attempting to read file: ${audioFilePath}`);
@@ -69,43 +92,63 @@ module.exports.transcribeAndTranslateAudio = async (audioFilePath, languageCode)
       audio,
     };
 
-    logger.info(`Sending recognition request with languageCode: ${apiLanguageCode}`);
+    logger.info(
+      `Sending recognition request with languageCode: ${apiLanguageCode}`,
+    );
     const [response] = await speechClient.recognize(request);
     const transcription = response.results
       .map((result) => result.alternatives[0].transcript)
       .join('\n');
 
     if (!transcription) {
-      throw new AppError('No transcription generated', 500);
+      throw new AppError('No transcription generated', 400);
     }
 
     logger.info(`Transcription (${languageCode}): ${transcription}`);
 
-    // Step 2: Translate to all supported languages
-    const translations = {};
-    for (const [targetLangCode, targetLangName] of Object.entries(supportedLanguages)) {
+    // Step 2: Include transcription in translations for the source language
+    const translations = {
+      [languageCode]: transcription, // Include transcription as translation for source language
+    };
+
+    // Step 3: Translate to other supported languages
+    for (const [targetLangCode, targetLangName] of Object.entries(
+      supportedLanguages,
+    )) {
       if (targetLangCode !== languageCode) {
-        const apiTargetLangCode = apiLanguageCodeMap[targetLangCode] || targetLangCode;
+        const apiTargetLangCode =
+          apiLanguageCodeMap[targetLangCode] || targetLangCode;
         logger.info(`Translating to ${targetLangName} (${apiTargetLangCode})`);
-        const [translatedText] = await translateClient.translate(transcription, apiTargetLangCode);
+        const [translatedText] = await translateClient.translate(
+          transcription,
+          apiTargetLangCode,
+        );
         translations[targetLangCode] = translatedText;
-        logger.info(`Translation to ${targetLangName} [${targetLangCode}]: ${translatedText}`);
+        logger.info(
+          `Translation to ${targetLangName} [${targetLangCode}]: ${translatedText}`,
+        );
       }
     }
 
     return { transcription, translations };
   } catch (error) {
-    logger.error(`Error processing audio for ${languageCode}: ${JSON.stringify(error, null, 2)}`);
+    logger.error(
+      `Error processing audio for ${languageCode}: ${JSON.stringify(error, null, 2)}`,
+    );
     throw new AppError(`Failed to process audio: ${error.message}`, 500);
   }
 };
 
 // Convert text to speech and save to disk
 module.exports.textToSpeech = async (text, languageCode, destinationPath) => {
+  const supportedLanguages = await getSupportedLanguagesMap();
   try {
     // Validate language code
     if (!Object.keys(supportedLanguages).includes(languageCode)) {
-      throw new AppError(`Unsupported language code: ${languageCode}. Supported: ${Object.keys(supportedLanguages).join(', ')}`, 400);
+      throw new AppError(
+        `Unsupported language code: ${languageCode}. Supported: ${Object.keys(supportedLanguages).join(', ')}`,
+        400,
+      );
     }
 
     if (!textToSpeechClient) {
@@ -123,7 +166,7 @@ module.exports.textToSpeech = async (text, languageCode, destinationPath) => {
         ssmlGender: 'NEUTRAL',
       },
       audioConfig: {
-       audioEncoding: 'LINEAR16', // WAV format
+        audioEncoding: 'LINEAR16', // WAV format
         sampleRateHertz: 16000,
       },
     };
@@ -133,7 +176,9 @@ module.exports.textToSpeech = async (text, languageCode, destinationPath) => {
     try {
       [response] = await textToSpeechClient.synthesizeSpeech(request);
     } catch (error) {
-      logger.error(`Error in synthesizeSpeech: ${JSON.stringify(error, null, 2)}`);
+      logger.error(
+        `Error in synthesizeSpeech: ${JSON.stringify(error, null, 2)}`,
+      );
       throw new AppError(`Failed to synthesize speech: ${error.message}`, 500);
     }
 
@@ -155,7 +200,9 @@ module.exports.textToSpeech = async (text, languageCode, destinationPath) => {
 
     return { fileName: uniqueName, filePath };
   } catch (error) {
-    logger.error(`Error generating speech for ${languageCode}: ${JSON.stringify(error, null, 2)}`);
+    logger.error(
+      `Error generating speech for ${languageCode}: ${JSON.stringify(error, null, 2)}`,
+    );
     throw new AppError(`Failed to generate speech: ${error.message}`, 500);
   }
 };

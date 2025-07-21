@@ -17,6 +17,7 @@ const Roles = require('../configs/roleConfig');
 const ttsService = require('../utils/ttsService');
 const { transcribeAndTranslateAudio, textToSpeech } = ttsService;
 const path = require('path');
+
 // Check if transcribe function is available
 if (!transcribeAndTranslateAudio) {
   throw new AppError(
@@ -40,7 +41,7 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
 
   // TODO: Fetch from database
   // Validate language code
-  const supportedLanguages = [
+  /* const supportedLanguages = [
     'eng', // English
     'spa', // Spanish
     'fra', // French
@@ -48,7 +49,16 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
     'zho', // Chinese (Mandarin)
     'msa', // Malay
     'tam', // Tamil
-  ];
+  ]; */
+  const supportedLanguages = (await audioModel.getActiveLanguages()).map(
+    (lang) => lang.languageCode,
+  );
+  if (!languageCode) {
+    throw new AppError('Language code is required', 400);
+  }
+
+  console.log(`Supported languages: ${supportedLanguages.join(', ')}`);
+
   if (!supportedLanguages.includes(languageCode)) {
     throw new AppError(
       `Unsupported language code: ${languageCode}. Supported: ${supportedLanguages.join(', ')}`,
@@ -63,6 +73,15 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
   );
   if (!transcription) {
     throw new AppError('Failed to transcribe audio', 500);
+  }
+
+  // Get the translated text for the specified languageCode
+  const translatedText = translations[languageCode];
+  if (!translatedText) {
+    throw new AppError(
+      `No translation available for language code: ${languageCode}`,
+      500,
+    );
   }
 
   // Create audio record using the model
@@ -84,9 +103,9 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
     logText: `Uploaded, transcribed, and translated audio file: ${filename} to ${languageCode}`,
   });
 
-  // Create subtitle record with transcription text and custom subtitleId format
+  // Create subtitle record with translated text
   const subtitle = await audioModel.createSubtitle({
-    subtitleText: transcription,
+    subtitleText: translatedText,
     languageCode,
     createdBy: userId,
     modifiedBy: userId,
@@ -103,11 +122,11 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
       audioId: audio.audioId,
       fileName: audio.fileName,
       languageCode,
-      transcription,
+      transcription: translatedText, // Return translated text as transcription
       translations,
       subtitleId: subtitle.subtitleId,
       message:
-        'Successfully uploaded audio and saved transcription as subtitle',
+        'Successfully uploaded audio and saved translated text as subtitle',
     },
   });
 });
@@ -125,8 +144,8 @@ module.exports.convertTextToAudio = catchAsync(async (req, res, next) => {
   const supportedLanguages = [
     'eng', // English
     'spa', // Spanish
-    'fre', // French
-    'ger', // German
+    'fra', // French
+    'deu', // German
     'zho', // Chinese (Mandarin)
     'msa', // Malay
     'tam', // Tamil
@@ -173,13 +192,93 @@ module.exports.convertTextToAudio = catchAsync(async (req, res, next) => {
   });
 });
 
+module.exports.getSupportedLanguages = catchAsync(async (req, res, next) => {
+  res.status(200).json({
+    status: 'success',
+    data: {
+      supportedLanguages: {
+        eng: 'English',
+        spa: 'Spanish',
+        fra: 'French',
+        deu: 'German',
+        zho: 'Chinese (Mandarin)',
+        msa: 'Malay',
+        tam: 'Tamil',
+      },
+      supportedVoiceGenders: ['NEUTRAL', 'MALE', 'FEMALE'],
+    },
+  });
+});
+
+module.exports.updateSubtitle = catchAsync(async (req, res, next) => {
+  const { subtitleId } = req.params;
+  const { subtitleText, languageCode } = req.body;
+  const userId = res.locals.user.userId;
+  const role = res.locals.user.role; // Assuming role is stored in JWT payload
+
+  // Restrict to admins only
+  if (role !== Roles.ADMIN) {
+    throw new AppError('Only admins can update subtitles', 403);
+  }
+
+  // Validate inputs
+  if (!subtitleText || !subtitleText.trim()) {
+    throw new AppError('Subtitle text is required and cannot be empty', 400);
+  }
+
+  // Validate language code if provided
+  const supportedLanguages = [
+    'eng', // English
+    'spa', // Spanish
+    'fra', // French
+    'deu', // German
+    'zho', // Chinese (Mandarin)
+    'msa', // Malay
+    'tam', // Tamil
+  ];
+  if (languageCode && !supportedLanguages.includes(languageCode)) {
+    throw new AppError(
+      `Unsupported language code: ${languageCode}. Supported: ${supportedLanguages.join(', ')}`,
+      400,
+    );
+  }
+
+  // Check if subtitle exists
+  const subtitle = await audioModel.getSubtitleById(subtitleId);
+  if (!subtitle) {
+    throw new AppError('Subtitle not found', 404);
+  }
+
+  // Update subtitle
+  const updatedSubtitle = await audioModel.updateSubtitle({
+    subtitleId,
+    subtitleText,
+    languageCode: languageCode || subtitle.languageCode, // Keep existing languageCode if not provided
+    modifiedBy: userId,
+    ipAddress: req.ip || '0.0.0.0',
+  });
+
+  logger.info(`Subtitle updated successfully: subtitleId=${subtitleId}`);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      subtitleId: updatedSubtitle.subtitleId,
+      subtitleText: updatedSubtitle.subtitleText,
+      languageCode: updatedSubtitle.languageCode,
+      message: 'Subtitle updated successfully',
+    },
+  });
+});
+
 module.exports.getAllSubtitles = catchAsync(async (req, res, next) => {
   const userId = res.locals.user.userId;
-  //const role = res.locals.user.role;
+  const role = res.locals.user.role;
+
   // Restrict to admins only
-  /* if (role !== Roles.ADMIN) {
+  if (role !== Roles.ADMIN) {
     throw new AppError('Only admins can view subtitles', 403);
-  } */
+  }
 
   // Fetch all subtitles for admins
   const subtitles = await audioModel.getAllSubtitles({
