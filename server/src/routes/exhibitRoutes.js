@@ -18,11 +18,17 @@ const audioRouter = express.Router();
 audioRouter.use(jwtMiddleware.verifyToken)
 
 // Admin Exhibit Routes
-router.post('/create-exhibit', exhibitController.createExhibit);             // -- C
+
 router.get('/get-byId/:exhibitId', exhibitController.getSingleExhibit);     // -- R
 router.put('/update-exhibit', exhibitController.updateExhibit);            // -- U
 router.delete('/delete/:exhibitId', exhibitController.deleteExhibit);     // -- D
-
+router.post(
+  '/create-exhibit',
+  upload.single('audio'),
+  audioController.uploadAudio,
+  audioController.convertTextToAudio,
+  exhibitController.createExhibit
+);
 router.get('/get-everything', exhibitController.getAllExhibits);
 
 

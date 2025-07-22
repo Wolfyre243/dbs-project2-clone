@@ -5,34 +5,43 @@ const AppError = require('../utils/AppError');
 const { encryptData, decryptData } = require('../utils/encryption');
 const { convertDatesToStrings } = require('../utils/formatters');
 
-// Create New Exhibit Model
-module.exports.newExhibit = async (title, desc, audioId, createdBy, imageId, statusId) => {
-  try {
-    const exhibit = await prisma.exhibit.create({
-      data: {
-        title: title,
-        description: desc,
-        audioId: audioId,
-        createdBy: createdBy,
-        imageId: imageId,
-        statusId: statusId,
-      },
-    });
+module.exports.createExhibit = async ({  title, description, audioId, createdBy, modifiedBy, imageId, statusId }) => {
+  return await prisma.exhibit.create({
+    data: {
+      
+      title,
+      description,
+      audioId,
+      createdBy,
+      modifiedBy,
+      imageId,
+      statusId,
+    },
+  });
+};
 
-    // Add a record in the exhibitAudioRelation table
-    await prisma.exhibitAudioRelation.create({
-      data: {
-        exhibitId: exhibit.exhibitId,
-        audioId: audioId,
-      },
-    });
+module.exports.createExhibitSubtitle = async ({  subtitleId }) => {
+  return await prisma.exhibitSubtitle.create({
+    data: {
+     
+      subtitleId,
+      createdAt: new Date(),
+    },
+  });
+};
 
-    return exhibit;
-  } catch (error) {
-    // Log error and throw a custom AppError for upstream handling
-    console.error('Error creating new exhibit:', error);
-    throw new AppError('Failed to create new exhibit', 500);
-  }
+module.exports.createAuditLog = async ({ userId, ipAddress, entityName, entityId, actionType, logText }) => {
+  return await prisma.auditLog.create({
+    data: {
+      userId,
+      ipAddress,
+      entityName,
+      entityId,
+      actionTypeId: (await prisma.auditAction.findFirst({ where: { actionType } })).actionTypeId,
+      logText,
+      timestamp: new Date(),
+    },
+  });
 };
 
 // Update exhibit
