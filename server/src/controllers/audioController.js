@@ -75,6 +75,7 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
     );
   }
 
+  // TODO: Add support for supabase
   // Create audio record using the model
   const audio = await audioModel.createAudio({
     description: description,
@@ -87,7 +88,7 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
   // Log audit action
   await audioModel.createAuditLog({
     userId,
-    ipAddress: req.ip || '0.0.0.0',
+    ipAddress: req.ip,
     entityName: 'audio',
     entityId: audio.audioId,
     actionTypeId: AuditActions.CREATE,
@@ -120,7 +121,7 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
         'Successfully uploaded audio and saved translated text as subtitle',
     },
   });
-  next()
+  next();
 });
 
 // Convert text to audio
@@ -142,19 +143,15 @@ module.exports.convertTextToAudio = catchAsync(async (req, res, next) => {
   }
 
   // Define the destination path for the audio file
-  const destinationPath = path.join(__dirname, '../../Uploads/audio');
+  // const destinationPath = path.join(__dirname, '../../Uploads/audio');
 
   // Generate audio from text
-  const { fileName, filePath } = await textToSpeech(
-    text,
-    languageCode,
-    destinationPath,
-  );
+  const { fileLink } = await textToSpeech(text, languageCode);
 
   // Create audio and subtitle records using the model
   const { audio, subtitle } = await audioModel.createTextToAudio({
     text,
-    fileName,
+    fileLink,
     languageCode,
     createdBy: userId,
     ipAddress: req.ip,
@@ -162,19 +159,19 @@ module.exports.convertTextToAudio = catchAsync(async (req, res, next) => {
     statusId: statusCodes.ACTIVE,
   });
 
-  logger.info(`Text converted to audio and saved successfully: ${fileName}`);
+  logger.info(`Text converted to audio and saved successfully: ${fileLink}`);
 
   res.status(200).json({
     status: 'success',
     data: {
       audioId: audio.audioId,
-      fileName,
+      fileLink,
       languageCode,
       subtitleId: subtitle.subtitleId,
       message: 'Successfully converted text to audio and saved as subtitle',
     },
   });
-  next();
+  // next();
 });
 
 module.exports.updateSubtitle = catchAsync(async (req, res, next) => {

@@ -10,17 +10,19 @@ const audioController = require('../controllers/audioController');
 const jwtMiddleware = require('../middlewares/jwtMiddleware');
 const rateLimiter = require('../middlewares/rateLimiter');
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '../../Uploads/audio'));
-  },
-  filename: (req, file, cb) => {
-    const buf = crypto.randomBytes(4);
-    const uniqueName =
-      Date.now() + '-' + buf.toString('hex') + '-' + file.originalname;
-    cb(null, uniqueName);
-  },
-});
+// const storage = multer.diskStorage({
+//   destination: (req, file, cb) => {
+//     cb(null, path.join(__dirname, '../../Uploads/audio'));
+//   },
+//   filename: (req, file, cb) => {
+//     const buf = crypto.randomBytes(4);
+//     const uniqueName =
+//       Date.now() + '-' + buf.toString('hex') + '-' + file.originalname;
+//     cb(null, uniqueName);
+//   },
+// });
+
+const storage = multer.memoryStorage();
 
 //const upload = multer({ storage });
 
@@ -28,11 +30,7 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
-    if (
-      file.mimetype === 'audio/wav' ||
-      file.mimetype === 'audio/wave' ||
-      file.mimetype === 'audio/x-wav'
-    ) {
+    if (file.mimetype === 'audio/wav') {
       cb(null, true);
     } else {
       cb(new Error('Only .wav files are allowed'), false);
@@ -47,8 +45,10 @@ audioRouter.use(jwtMiddleware.verifyToken);
 
 //authRouter.post('/upload', upload.single('file'), audioController.uploadAudio);
 
+// TODO: ! BREAKING CHANGES !
 audioRouter.post(
   '/upload',
+  //  TODO: Validation
   //rateLimiter,
   upload.single('file'),
   audioController.uploadAudio,

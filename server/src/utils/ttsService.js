@@ -7,6 +7,7 @@ const crypto = require('crypto');
 const logger = require('../utils/logger');
 const AppError = require('../utils/AppError');
 const languageModel = require('../models/languageModel');
+const fileUploader = require('../utils/fileUploader');
 // logger.debug(`Credentials path: ${process.env.GOOGLE_APPLICATION_CREDENTIALS}`);
 
 // Initialize Google Cloud clients
@@ -101,9 +102,9 @@ module.exports.transcribeAndTranslateAudio = async (
 };
 
 // Convert text to speech and save to disk
-module.exports.textToSpeech = async (text, languageCode, destinationPath) => {
-  const supportedLanguages = await languageModel.getActiveLanguages();
+module.exports.textToSpeech = async (text, languageCode) => {
   try {
+    const supportedLanguages = await languageModel.getActiveLanguages();
     // Validate language code
     if (!supportedLanguages.includes(languageCode)) {
       throw new AppError(
@@ -114,16 +115,14 @@ module.exports.textToSpeech = async (text, languageCode, destinationPath) => {
 
     if (!textToSpeechClient) {
       logger.error('TextToSpeechClient is not initialized');
-      throw new AppError('TextToSpeechClient is not initialized', 500);
+      throw new Error('TextToSpeechClient is not initialized');
     }
-
-    const apiLanguageCode = languageCode;
 
     // Create the text-to-speech request
     const request = {
       input: { text },
       voice: {
-        languageCode: apiLanguageCode,
+        languageCode,
         ssmlGender: 'NEUTRAL',
       },
       audioConfig: {
@@ -132,7 +131,7 @@ module.exports.textToSpeech = async (text, languageCode, destinationPath) => {
       },
     };
 
-    logger.debug(`Generating speech for text in language: ${apiLanguageCode}`);
+    logger.debug(`Generating speech for text in language: ${languageCode}`);
     let response;
     try {
       [response] = await textToSpeechClient.synthesizeSpeech(request);
@@ -140,26 +139,30 @@ module.exports.textToSpeech = async (text, languageCode, destinationPath) => {
       logger.error(
         `Error in synthesizeSpeech: ${JSON.stringify(error, null, 2)}`,
       );
-      throw new AppError(`Failed to synthesize speech: ${error.message}`, 500);
+      throw new Error(`Failed to synthesize speech: ${error.message}`);
     }
 
     if (!response || !response.audioContent) {
       logger.error('No audio content returned from synthesizeSpeech');
-      throw new AppError('No audio content generated', 500);
+      throw new Error('No audio content generated');
     }
 
+    // console.log(typeof response.audioContent)
+
     // Generate a unique filename
-    const buf = crypto.randomBytes(4);
-    const uniqueName = `${Date.now()}-${buf.toString('hex')}-output.wav`;
+    // const buf = crypto.randomBytes(4);
+    // const uniqueName = `${Date.now()}-${buf.toString('hex')}-output.wav`;
 
     // Define the full file path
-    const filePath = path.join(destinationPath, uniqueName);
+    // const filePath = path.join(destinationPath, uniqueName);
 
     // Save the audio content to disk
-    await fs.writeFile(filePath, response.audioContent, 'binary');
-    logger.debug(`Audio file saved successfully: ${filePath}`);
+    // await fs.writeFile(filePath, response.audioContent, 'binary');
+    // logger.debug(`Audio file saved successfully: ${filePath}`);
+    const publicUrl = await fileUploader.saveAudioFile(response.audioContent);
+    // logger.debug(`Audio file saved successfully to supabase: ${publicUrl}`);
 
-    return { fileName: uniqueName, filePath };
+    return { fileLink: publicUrl };
   } catch (error) {
     logger.error(
       `Error generating speech for ${languageCode}: ${JSON.stringify(error, null, 2)}`,

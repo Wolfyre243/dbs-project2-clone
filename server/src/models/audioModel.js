@@ -1,3 +1,4 @@
+const AuditActions = require('../configs/auditActionConfig');
 const statusCodes = require('../configs/statusCodes');
 const { PrismaClient } = require('../generated/prisma');
 const crypto = require('crypto');
@@ -7,30 +8,30 @@ const prisma = new PrismaClient();
 // Create a new audio record
 module.exports.createAudio = async ({
   description,
-  fileName,
+  fileLink,
   createdBy,
   languageCode,
-  statusId,
+  statusId = statusCodes.ACTIVE,
 }) => {
   return await prisma.audio.create({
     data: {
       description,
-      fileName,
+      fileLink,
       createdBy,
       languageCode,
       statusId,
-      createdAt: new Date(),
     },
   });
 };
 
+// TODO: Shift to auditLog utility
 // Create an audit log entry
 module.exports.createAuditLog = async ({
   userId,
   ipAddress,
   entityName,
   entityId,
-  actionType,
+  actionTypeId,
   logText,
 }) => {
   return await prisma.auditLog.create({
@@ -39,9 +40,8 @@ module.exports.createAuditLog = async ({
       ipAddress,
       entityName,
       entityId,
-      actionType,
+      actionTypeId,
       logText,
-      timestamp: new Date(),
     },
   });
 };
@@ -52,7 +52,7 @@ module.exports.createSubtitle = async ({
   languageCode,
   createdBy,
   modifiedBy,
-  statusId,
+  statusId = statusCodes.ACTIVE,
 }) => {
   return await prisma.subtitle.create({
     data: {
@@ -60,8 +60,6 @@ module.exports.createSubtitle = async ({
       languageCode,
       createdBy,
       modifiedBy,
-      createdAt: new Date(),
-      modifiedAt: new Date(),
       statusId,
     },
   });
@@ -70,22 +68,22 @@ module.exports.createSubtitle = async ({
 // Create audio and subtitle records for text-to-speech
 module.exports.createTextToAudio = async ({
   text,
-  fileName,
+  fileLink,
   languageCode,
   createdBy,
   ipAddress,
   description = 'Text-to-speech generated audio',
-  statusId = 1,
+  statusId = statusCodes.ACTIVE,
 }) => {
+  // TODO: Convert to transaction
   // Create audio record
   const audio = await prisma.audio.create({
     data: {
       description,
-      fileName,
+      fileLink,
       createdBy,
-      languageCode: languageCode,
+      languageCode,
       statusId,
-      createdAt: new Date(),
     },
   });
 
@@ -96,8 +94,6 @@ module.exports.createTextToAudio = async ({
       languageCode,
       createdBy,
       modifiedBy: createdBy,
-      createdAt: new Date(),
-      modifiedAt: new Date(),
       statusId,
     },
   });
@@ -106,12 +102,11 @@ module.exports.createTextToAudio = async ({
   await prisma.auditLog.create({
     data: {
       userId: createdBy,
-      ipAddress: ipAddress || '0.0.0.0',
+      ipAddress,
       entityName: 'audio',
       entityId: audio.audioId,
-      actionType: 'CREATE',
-      logText: `Generated audio from text in ${languageCode}: ${fileName}`,
-      timestamp: new Date(),
+      actionTypeId: AuditActions.CREATE,
+      logText: `Generated audio from text in ${languageCode}, at ${fileLink}`,
     },
   });
 
