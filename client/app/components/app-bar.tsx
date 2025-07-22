@@ -19,7 +19,7 @@ import useAuth from '~/hooks/useAuth';
 import { User, LogOut, Settings, Menu, X, Shield } from 'lucide-react';
 import useApiPrivate from '~/hooks/useApiPrivate';
 import Roles from '~/rolesConfig';
-// import ThemeSwitcher from './theme-switch';
+import ThemeSwitcher from './theme-switch';
 
 const links = [
   {
@@ -178,12 +178,15 @@ export function MobileMenu({ isLoggedIn }: { isLoggedIn: boolean }) {
               }
             })}
 
-            {!isLoggedIn && (
-              <div className='flex gap-2 pt-2 border-t'>
-                <LoginButton />
-                <RegisterButton />
-              </div>
-            )}
+            <div className='flex gap-2 pt-2 border-t'>
+              <ThemeSwitcher />
+              {!isLoggedIn && (
+                <>
+                  <LoginButton />
+                  <RegisterButton />
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -226,15 +229,15 @@ export function AppBar({ ...props }: React.ComponentProps<any>) {
           </NavigationMenuList>
         </NavigationMenu>
       </div>
-
-      <div className='hidden md:flex items-center gap-2'>
+      <div className='hidden md:flex items-center gap-4'>
+        <ThemeSwitcher />
         {isLoggedIn ? (
           <UserMenu />
         ) : (
-          <>
+          <div className='flex flex-row gap-2'>
             <LoginButton />
             <RegisterButton />
-          </>
+          </div>
         )}
       </div>
 

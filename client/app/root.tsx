@@ -10,6 +10,7 @@ import {
 import type { Route } from './+types/root';
 import './app.css';
 import { AuthProvider } from './context/authProvider';
+import { ThemeProvider } from './context/themeProvider';
 import useAuth from './hooks/useAuth';
 import useRefreshToken from './hooks/useRefreshToken';
 import { useLayoutEffect } from 'react';
@@ -38,7 +39,7 @@ export function meta({}: Route.MetaArgs) {
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang='en' className='dark'>
+    <html lang='en'>
       <head>
         <meta charSet='utf-8' />
         <meta name='viewport' content='width=device-width, initial-scale=1' />
@@ -46,12 +47,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        <AuthProvider>
-          <main className='w-screen flex flex-col justify-center items-center'>
-            {children}
-            <ScrollRestoration />
-          </main>
-        </AuthProvider>
+        <ThemeProvider defaultTheme='system' storageKey='sdc-theme'>
+          <AuthProvider>
+            <main className='max-w-screen flex flex-col justify-center items-center'>
+              {children}
+              <ScrollRestoration />
+            </main>
+          </AuthProvider>
+        </ThemeProvider>
         <Scripts />
       </body>
     </html>
