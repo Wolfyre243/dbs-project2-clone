@@ -99,26 +99,27 @@ model exhibit {
 }
 
 model auditAction {
-  actionType  String     @id @map("action_type") @db.VarChar(100)
-  description String?
-  auditLogs   auditLog[]
+  actionTypeId Int        @id @default(autoincrement()) @map("action_type_id") @db.Integer
+  actionType   String     @map("action_type") @db.VarChar(100)
+  description  String?
+  auditLogs    auditLog[]
 
   @@map("audit_action")
 }
 
 model auditLog {
-  auditLogId  String      @id @default(uuid()) @map("audit_log_id") @db.Uuid
-  userId      String      @map("user_id") @db.Uuid
-  ipAddress   String      @map("ip_address") @db.VarChar(45)
-  entityName  String      @map("entity_name") @db.VarChar(100)
-  entityId    String      @map("entity_id")
-  actionType  String      @map("action_type") @db.VarChar(100)
-  timestamp   DateTime    @db.Timestamptz(6)
-  logText     String      @map("log_text")
-  auditAction auditAction @relation(fields: [actionType], references: [actionType])
-  user        users       @relation(fields: [userId], references: [userId])
+  auditLogId   String      @id @default(uuid()) @map("audit_log_id") @db.Uuid
+  userId       String      @map("user_id") @db.Uuid
+  ipAddress    String      @map("ip_address") @db.VarChar(45)
+  entityName   String      @map("entity_name") @db.VarChar(100)
+  entityId     String      @map("entity_id")
+  actionTypeId Int         @map("action_type_id") @db.Integer
+  logText      String      @map("log_text")
+  timestamp    DateTime    @default(now()) @db.Timestamptz(6)
+  auditAction  auditAction @relation(fields: [actionTypeId], references: [actionTypeId])
+  user         users       @relation(fields: [userId], references: [userId])
 
-  @@index([userId, actionType])
+  @@index([userId, actionTypeId])
   @@map("audit_log")
 }
 
