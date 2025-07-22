@@ -83,13 +83,13 @@ model exhibit {
   audioId              String                 @map("audio_id") @db.Uuid
   createdBy            String                 @map("created_by") @db.Uuid
   modifiedBy           String                 @map("modified_by") @db.Uuid
-  imageId              String                 @map("image_id") @db.Uuid
+  imageId              String?                 @map("image_id") @db.Uuid
   createdAt            DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
   modifiedAt           DateTime               @default(now()) @map("modified_at") @db.Timestamptz(6)
   statusId             Int                    @map("status_id")
   audio                audio                  @relation(fields: [audioId], references: [audioId])
   exhibitCreatedBy     users                  @relation("ExhibitCreatedBy", fields: [createdBy], references: [userId])
-  image                image                  @relation(fields: [imageId], references: [imageId])
+  image                image?                  @relation(fields: [imageId], references: [imageId])
   status               status                 @relation(fields: [statusId], references: [statusId])
   exhibitAudioRelation exhibitAudioRelation[]
   subtitles            exhibitSubtitle[]
