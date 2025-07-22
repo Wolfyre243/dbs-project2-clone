@@ -1,4 +1,4 @@
-const winston = require("winston");
+const winston = require('winston');
 const { combine, timestamp, json, errors } = winston.format;
 
 // Custom format for console output
@@ -11,9 +11,9 @@ const consoleFormat = combine(
 );
 
 const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || "info",
+  level: process.env.LOG_LEVEL || 'info',
   format: combine(
-    timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
+    timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
     errors({ stack: true }),
     json(),
   ),
@@ -21,14 +21,27 @@ const logger = winston.createLogger({
     new winston.transports.Console({
       format: combine(timestamp(), consoleFormat),
     }),
-    new winston.transports.File({
-      filename: "logs/app.log",
-      level: "http",
-    }),
-    new winston.transports.File({
-      filename: "logs/errors.log",
-      level: "error",
-    }),
+    ...(process.env.NODE_ENV === 'production'
+      ? [
+          new winston.transports.File({
+            filename: '/tmp/logs/app.log',
+            level: 'http',
+          }),
+          new winston.transports.File({
+            filename: '/tmp/logs/errors.log',
+            level: 'error',
+          }),
+        ]
+      : [
+          new winston.transports.File({
+            filename: 'logs/app.log',
+            level: 'http',
+          }),
+          new winston.transports.File({
+            filename: 'logs/errors.log',
+            level: 'error',
+          }),
+        ]),
   ],
   levels: {
     ...winston.config.syslog.levels,
