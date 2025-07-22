@@ -18,58 +18,79 @@ const validateFields = require('../utils/validateFields');
 const exhibitModel = require('../models/exhibitModel');
 const exhibitModes = require('../configs/exhibitModes');
 const statusCodes = require('../configs/statusCodes');
+const AuditActions = require('../configs/auditActionConfig');
 
+const { logAdminAudit } = require('../utils/auditlogs'); 
 // Create Exhibit controller function
 module.exports.createExhibit = catchAsync(async (req, res, next) => {
-  // Extract mode (transcribe or synthesize) from request body
-  const { mode, title, description, imageId, languageCode } = req.body;
+  const { title, description, languageCode } = req.body;
   const userId = res.locals.user.userId;
+  const imageId = req.body.imageId; // Assuming imageId is provided in the request
+  const audioData = res.locals.audioData; // this Data from audioController 
 
-  // Use validateFields utility for required fields
-  validateFields({
-    mode,
-    title,
-    description,
-    imageId,
-    languageCode,
-  });
-
-  // Validate mode
-  if (!exhibitModes.values.includes(mode)) {
-    throw new AppError('Invalid exhibit mode', 400);
+  // Validate required fields
+  if (!title) {
+    throw new AppError('Title is required', 400);
   }
 
-  let audioId;
-
-  // --- AUDIO LOGIC PLACEHOLDER ---
-  // If mode is TRANSCRIBE, require audio file and handle audio upload/transcription
-  // If mode is SYNTHESIZE, require text and handle text-to-speech
-  // Set audioId after audio is created
-  // ------------------------------------------------
-
-  // Require audioId before creating exhibit
-  if (!audioId) {
-    throw new AppError('Audio creation failed or missing audioId', 500);
+  if (!audioData) {
+    throw new AppError('Audio processing failed or no audio data provided', 500);
   }
 
-  // Create the exhibit
-  const exhibit = await exhibitModel.newExhibit(
+ // Validate imageId if provided
+  if (imageId) {
+    const image = await prisma.image.findUnique({
+      where: { imageId },
+    });
+    if (!image) {
+      throw new AppError('Invalid imageId provided', 400);
+    }
+  }
+
+
+  const { audioId, fileName, subtitleId, transcription, translations } = audioData;
+
+  // Create exhibit
+  const exhibit = await exhibitModel.createExhibit({
     title,
     description,
     audioId,
-    userId,
+    createdBy: userId,
+    modifiedBy: userId,
     imageId,
-    status.ACTIVE // or another status as needed
-  );
+    statusId: 1,
+  });
 
-  // Add a record in the exhibitAudioRelation table
-  await exhibitModel.createExhibitAudioRelation(exhibit.exhibitId, audioId);
+  // Create exhibit-subtitle relation
+  await exhibitModel.createExhibitSubtitle({
+    exhibitId: exhibit.exhibitId,
+    subtitleId,
+  });
 
-  res.status(201).json({
+  // Log audit action
+  await logAdminAudit({
+    userId,
+    ipAddress: req.ip,
+    entityName: 'exhibit',
+    entityId: exhibit.exhibitId,
+    actionTypeId: AuditActions.CREATE,
+    logText: `Admin created exhibit with audio: ${fileName} in ${languageCode}`,
+  });
+
+
+  logger.info(`Exhibit created successfully: ${exhibit.exhibitId}`);
+
+  res.status(200).json({
     status: 'success',
     data: {
-      exhibit,
-      message: 'Exhibit created successfully',
+      exhibitId: exhibit.exhibitId,
+      audioId,
+      fileName,
+      languageCode,
+      subtitleId,
+      transcription,
+      translations,
+      message: 'Successfully created exhibit with audio and subtitle',
     },
   });
 });

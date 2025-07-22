@@ -118,6 +118,7 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
         'Successfully uploaded audio and saved translated text as subtitle',
     },
   });
+  next()
 });
 
 // Convert text to audio
@@ -171,6 +172,7 @@ module.exports.convertTextToAudio = catchAsync(async (req, res, next) => {
       message: 'Successfully converted text to audio and saved as subtitle',
     },
   });
+  next();
 });
 
 module.exports.updateSubtitle = catchAsync(async (req, res, next) => {
