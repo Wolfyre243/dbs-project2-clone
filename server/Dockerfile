@@ -24,8 +24,6 @@ RUN --mount=type=bind,source=package.json,target=package.json \
     --mount=type=cache,target=/root/.npm \
     npm ci --omit=dev
 
-RUN npm install
-
 # Run the application as a non-root user.
 USER node
 
@@ -34,8 +32,6 @@ COPY . .
 
 # Expose the port that the application listens on.
 EXPOSE 3000
-
-RUN npx prisma generate
 
 # Run the application.
 CMD npm run start
