@@ -33,5 +33,7 @@ COPY . .
 # Expose the port that the application listens on.
 EXPOSE 3000
 
+RUN npx prisma generate
+
 # Run the application.
 CMD npm run start
