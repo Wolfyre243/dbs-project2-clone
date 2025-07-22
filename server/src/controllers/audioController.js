@@ -19,6 +19,8 @@ const ttsService = require('../utils/ttsService');
 const { transcribeAndTranslateAudio, textToSpeech } = ttsService;
 const path = require('path');
 const AuditActions = require('../configs/auditActionConfig');
+const fileUploader = require('../utils/fileUploader');
+const statusCodes = require('../configs/statusCodes');
 
 // Check if transcribe function is available
 if (!transcribeAndTranslateAudio) {
@@ -39,7 +41,7 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
   const userId = res.locals.user.userId;
   const languageCode = req.body.languageCode;
   const description = req.body.description || 'No description provided';
-  logger.info(`Uploaded file: ${JSON.stringify(req.file)}`);
+  logger.debug(`Received file: ${JSON.stringify(req.file)}`);
 
   const supportedLanguages = await audioModel.getActiveLanguages();
   if (!languageCode) {
@@ -88,7 +90,7 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
     ipAddress: req.ip || '0.0.0.0',
     entityName: 'audio',
     entityId: audio.audioId,
-    actionType: AuditActions.CREATE,
+    actionTypeId: AuditActions.CREATE,
     logText: `Uploaded, transcribed, and translated audio file: ${filename} to ${languageCode}`,
   });
 
@@ -156,7 +158,7 @@ module.exports.convertTextToAudio = catchAsync(async (req, res, next) => {
     createdBy: userId,
     ipAddress: req.ip,
     description: description || 'Text-to-speech generated audio',
-    statusId: 1,
+    statusId: statusCodes.ACTIVE,
   });
 
   logger.info(`Text converted to audio and saved successfully: ${fileName}`);
