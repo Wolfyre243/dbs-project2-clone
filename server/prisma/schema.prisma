@@ -100,7 +100,7 @@ model exhibit {
 
 model auditAction {
   actionTypeId Int        @id @default(autoincrement()) @map("action_type_id") @db.Integer
-  actionType   String     @map("action_type") @db.VarChar(100)
+  actionType   String     @unique @map("action_type") @db.VarChar(100)
   description  String?
   auditLogs    auditLog[]
 
@@ -203,16 +203,27 @@ model image {
   @@index([statusId])
 }
 
-model event {
-  eventId    String   @id @default(uuid()) @map("event_id") @db.Uuid
-  entityId   Int      @map("entity_id")
-  entityName String   @map("entity_name") @db.VarChar(100)
-  timestamp  DateTime @db.Timestamptz(6)
-  details    String
-  userId     String   @map("user_id") @db.Uuid
-  users      users    @relation(fields: [userId], references: [userId])
+model eventType {
+  eventTypeId Int     @id @default(autoincrement()) @map("event_type_id") @db.Integer
+  eventType   String  @unique @map("event_type") @db.VarChar(100)
+  description String
+  event       event[]
 
-  @@index([userId])
+  @@map("event_type")
+}
+
+model event {
+  eventId     String    @id @default(uuid()) @map("event_id") @db.Uuid
+  entityId    Int       @map("entity_id")
+  entityName  String    @map("entity_name") @db.VarChar(100)
+  eventTypeId Int       @map("event_type_id") @db.Integer
+  timestamp   DateTime  @db.Timestamptz(6)
+  details     String
+  userId      String    @map("user_id") @db.Uuid
+  users       users     @relation(fields: [userId], references: [userId])
+  eventType   eventType @relation(fields: [eventTypeId], references: [eventTypeId])
+
+  @@index([userId, eventTypeId])
 }
 
 model session {
@@ -253,7 +264,7 @@ model language {
   audio        audio[]
   status       status        @relation(fields: [statusId], references: [statusId])
   subtitle     subtitle[]
-  user_profile userProfile[]
+  userProfile  userProfile[]
 
   @@index([statusId, languageCode])
 }
