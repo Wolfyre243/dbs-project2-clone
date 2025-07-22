@@ -5,39 +5,62 @@ const AppError = require('../utils/AppError');
 const { encryptData, decryptData } = require('../utils/encryption');
 const { convertDatesToStrings } = require('../utils/formatters');
 
-module.exports.createExhibit = async ({  title, description, audioId, createdBy, modifiedBy, imageId, statusId }) => {
+// TODO: Add back imageId
+module.exports.createExhibit = async ({
+  title,
+  description,
+  createdBy,
+  modifiedBy,
+  // imageId,
+  statusId = statusCodes.ACTIVE,
+}) => {
   return await prisma.exhibit.create({
     data: {
-      
       title,
       description,
-      audioId,
       createdBy,
       modifiedBy,
-      imageId,
+      // imageId,
       statusId,
     },
   });
 };
 
-module.exports.createExhibitSubtitle = async ({  subtitleId }) => {
+module.exports.createExhibitSubtitle = async ({ exhibitId, subtitleId }) => {
   return await prisma.exhibitSubtitle.create({
     data: {
-     
+      exhibitId,
       subtitleId,
-      createdAt: new Date(),
     },
   });
 };
 
-module.exports.createAuditLog = async ({ userId, ipAddress, entityName, entityId, actionType, logText }) => {
+module.exports.createExhibitAudio = async ({ exhibitId, audioId }) => {
+  return await prisma.exhibitAudioRelation.create({
+    data: {
+      exhibitId,
+      audioId,
+    },
+  });
+};
+
+module.exports.createAuditLog = async ({
+  userId,
+  ipAddress,
+  entityName,
+  entityId,
+  actionType,
+  logText,
+}) => {
   return await prisma.auditLog.create({
     data: {
       userId,
       ipAddress,
       entityName,
       entityId,
-      actionTypeId: (await prisma.auditAction.findFirst({ where: { actionType } })).actionTypeId,
+      actionTypeId: (
+        await prisma.auditAction.findFirst({ where: { actionType } })
+      ).actionTypeId,
       logText,
       timestamp: new Date(),
     },
@@ -103,7 +126,9 @@ module.exports.softDeleteExhibit = async (exhibitId, statusCode) => {
       return null;
     }
 
-    logger.info(`Exhibit with ID ${exhibitId} soft deleted (status set to ${statusCode}).`);
+    logger.info(
+      `Exhibit with ID ${exhibitId} soft deleted (status set to ${statusCode}).`,
+    );
     return { id: exhibitId, status: statusCode };
   } catch (error) {
     logger.error(`Error soft deleting exhibit with ID ${exhibitId}:`, error);
@@ -133,4 +158,3 @@ module.exports.getAllTeams = async () => {
     throw new AppError('Error fetching all teams', 500);
   }
 };
-

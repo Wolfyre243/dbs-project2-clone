@@ -17,6 +17,8 @@ const fileUploader = require('../utils/fileUploader');
 // Impoort Models
 const audioModel = require('../models/audioModel');
 const languageModel = require('../models/languageModel');
+const subtitleModel = require('../models/subtitleModel');
+const { logAdminAudit } = require('../utils/auditlogs');
 
 module.exports.uploadAudio = catchAsync(async (req, res, next) => {
   if (!req.file) {
@@ -161,6 +163,89 @@ module.exports.convertTextToAudio = catchAsync(async (req, res, next) => {
     },
   });
   // next();
+});
+
+module.exports.convertMultiTextToAudio = catchAsync(async (req, res, next) => {
+  const { subtitleArr } = req.body;
+  const userId = res.locals.user.userId;
+
+  const supportedLanguages = await languageModel.getActiveLanguages();
+
+  if (!Array.isArray(subtitleArr)) {
+    throw new AppError('subtitleArr must be an array', 400);
+  }
+
+  // Create an array of audio + subtitle
+  const generatedAssetIdsArray = subtitleArr.map(async (subtitleObj) => {
+    const { text, languageCode, tts } = subtitleObj;
+    if (!text || !languageCode || !tts) {
+      throw new AppError(
+        'Text, languageCode and TTS options are required',
+        400,
+      );
+    }
+
+    // Validate language code
+    if (!supportedLanguages.includes(languageCode)) {
+      throw new AppError(
+        `Unsupported language code: ${languageCode}. Supported: ${supportedLanguages.join(', ')}`,
+        400,
+      );
+    }
+
+    let assetObj = {};
+    // If user wants TTS
+    if (tts) {
+      // Generate audio from text
+      // We are assuming text input is already translated
+      const { fileLink } = await textToSpeech(text, languageCode);
+
+      const audio = await audioModel.createAudio({
+        description: 'Text-to-speech generated audio',
+        fileLink,
+        createdBy: userId,
+        languageCode,
+      });
+      // console.log('Generated Audio: ', audio)
+      assetObj['audioId'] = audio.audioId;
+
+      await logAdminAudit({
+        userId,
+        ipAddress: req.ip,
+        entityName: 'audio',
+        entityId: audio.audioId,
+        actionTypeId: AuditActions.CREATE,
+        logText: `Created audio file with ID ${audio.audioId}`,
+      });
+
+      logger.debug(
+        `Text converted to audio and saved successfully: ${fileLink}`,
+      );
+    }
+
+    const subtitle = await subtitleModel.create({
+      subtitleText: text,
+      languageCode,
+      createdBy: userId,
+      modifiedBy: userId,
+    });
+    assetObj['subtitleId'] = subtitle.subtitleId;
+
+    await logAdminAudit({
+      userId,
+      ipAddress: req.ip,
+      entityName: 'subtitle',
+      entityId: subtitle.subtitleId,
+      actionTypeId: AuditActions.CREATE,
+      logText: `Created subtitle entity with ID ${subtitle.subtitleId}`,
+    });
+
+    return assetObj;
+  });
+
+  // Pass on the IDs of the generated assets
+  res.locals.generatedAssetIdsArray = await Promise.all(generatedAssetIdsArray);
+  return next();
 });
 
 module.exports.updateSubtitle = catchAsync(async (req, res, next) => {

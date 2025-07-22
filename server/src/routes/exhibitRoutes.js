@@ -12,11 +12,7 @@ const authMiddleware = require('../middlewares/authMiddleware');
 const rateLimiter = require('../middlewares/rateLimiter');
 const exhibitController = require('../controllers/exhibitController');
 
-// -----------------------------------SET UP ROUTES-----------------------------------
-// Create the router
-const audioRouter = express.Router();
-
-audioRouter.use(jwtMiddleware.verifyToken);
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage,
@@ -35,11 +31,16 @@ const upload = multer({
   },
 });
 
-// Admin Exhibit Routes
+// -----------------------------------SET UP ROUTES-----------------------------------
+// Create the router
+const exhibitRouter = express.Router();
 
-router.get('/get-byId/:exhibitId', exhibitController.getSingleExhibit); // -- R
-router.put('/update-exhibit', exhibitController.updateExhibit); // -- U
-router.delete('/delete/:exhibitId', exhibitController.deleteExhibit); // -- D
+exhibitRouter.use(jwtMiddleware.verifyToken);
+
+// Admin Exhibit Routes
+exhibitRouter.get('/get-byId/:exhibitId', exhibitController.getSingleExhibit); // -- R
+exhibitRouter.put('/update-exhibit', exhibitController.updateExhibit); // -- U
+exhibitRouter.delete('/delete/:exhibitId', exhibitController.deleteExhibit); // -- D
 // router.post(
 //   '/create-exhibit',
 //   authMiddleware.verifyIsAdmin,
@@ -60,15 +61,15 @@ router.delete('/delete/:exhibitId', exhibitController.deleteExhibit); // -- D
  *   ]
  * }
  */
-router.post(
-  '/create-exhibit',
+exhibitRouter.post(
+  '/',
   authMiddleware.verifyIsAdmin,
-  upload.single('audio'),
-  audioController.uploadAudio,
-  audioController.convertTextToAudio,
+  // upload.single('audio'),
+  // audioController.uploadAudio,
+  audioController.convertMultiTextToAudio,
   exhibitController.createExhibit,
 );
 
-router.get('/get-everything', exhibitController.getAllExhibits);
+exhibitRouter.get('/get-everything', exhibitController.getAllExhibits);
 
-module.exports = audioRouter;
+module.exports = exhibitRouter;

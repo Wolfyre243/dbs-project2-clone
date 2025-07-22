@@ -5,6 +5,8 @@ const crypto = require('crypto');
 
 const prisma = new PrismaClient();
 
+const { logAdminAudit } = require('../utils/auditlogs');
+
 // Create a new audio record
 module.exports.createAudio = async ({
   description,
@@ -13,7 +15,7 @@ module.exports.createAudio = async ({
   languageCode,
   statusId = statusCodes.ACTIVE,
 }) => {
-  return await prisma.audio.create({
+  const audio = await prisma.audio.create({
     data: {
       description,
       fileLink,
@@ -22,6 +24,8 @@ module.exports.createAudio = async ({
       statusId,
     },
   });
+
+  return audio;
 };
 
 // TODO: Shift to auditLog utility
