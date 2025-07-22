@@ -18,3 +18,4 @@ Thumbs.db
 generated
 
 google-credentials.json
+*.Docker.md

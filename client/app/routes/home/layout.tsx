@@ -5,7 +5,9 @@ import RequireAuth from '~/components/RequireAuth';
 import Roles from '~/rolesConfig';
 export default function HomeLayout() {
   return (
-    <RequireAuth allowedRoles={[Roles.GUEST, Roles.MEMBER]}>
+    <RequireAuth
+      allowedRoles={[Roles.GUEST, Roles.MEMBER, Roles.ADMIN, Roles.SUPERADMIN]}
+    >
       <main className='flex flex-col h-screen w-full'>
         <div className='sticky top-0 w-full'>
           <AppBar />

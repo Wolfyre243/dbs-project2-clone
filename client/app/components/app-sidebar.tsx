@@ -9,6 +9,7 @@ import {
   Hammer,
   ChartNoAxesCombined,
   HardDrive,
+  SlidersVertical,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -55,7 +56,7 @@ const data = {
     },
     {
       title: 'Content',
-      url: '/admin/users',
+      url: '/admin/content',
       icon: HardDrive,
     },
     {
@@ -70,13 +71,13 @@ const data = {
       url: '/admin/register',
       icon: UserPlus,
     },
+    {
+      title: 'Manage Site',
+      url: '/admin/site-settings',
+      icon: SlidersVertical,
+    },
   ],
   navSecondary: [
-    {
-      title: 'Settings',
-      url: '#',
-      icon: Settings,
-    },
     {
       title: 'Release Notes',
       url: '#',
