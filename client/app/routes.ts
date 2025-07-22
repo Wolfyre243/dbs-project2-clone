@@ -23,7 +23,15 @@ export default [
     layout('routes/admin/layout.tsx', [
       index('routes/admin/page.tsx'),
       route('/analytics', 'routes/admin/analytics.tsx'),
-      ...prefix('tour-editor', []),
+      route('/content', 'routes/admin/content.tsx'),
+      route('/users', 'routes/admin/user-management/user-pagination.tsx'),
+      route('/register', 'routes/admin/register-admin.tsx'),
+      route('/site-settings', 'routes/admin/site-settings.tsx'),
+      ...prefix('tour-editor', [
+        layout('routes/admin/tour-editor/layout.tsx', [
+          index('routes/admin/tour-editor/page.tsx'),
+        ]),
+      ]),
     ]),
   ]),
 

@@ -56,7 +56,7 @@ const data = {
     },
     {
       title: 'Content',
-      url: '/admin/users',
+      url: '/admin/content',
       icon: HardDrive,
     },
     {
