@@ -7,7 +7,7 @@ const crypto = require('crypto');
 const logger = require('../utils/logger');
 const AppError = require('../utils/AppError');
 const languageModel = require('../models/languageModel');
-// logger.info(`Credentials path: ${process.env.GOOGLE_APPLICATION_CREDENTIALS}`);
+// logger.debug(`Credentials path: ${process.env.GOOGLE_APPLICATION_CREDENTIALS}`);
 
 // Initialize Google Cloud clients
 const speechClient = new SpeechClient();
@@ -16,7 +16,7 @@ let textToSpeechClient;
 
 try {
   textToSpeechClient = new TextToSpeechClient();
-  logger.info('TextToSpeechClient initialized successfully');
+  logger.debug('TextToSpeechClient initialized successfully');
 } catch (error) {
   logger.error(
     `Failed to initialize TextToSpeechClient: ${JSON.stringify(error, null, 2)}`,
@@ -39,9 +39,9 @@ module.exports.transcribeAndTranslateAudio = async (
       );
     }
 
-    logger.info(`Attempting to read file: ${audioFilePath}`);
+    logger.debug(`Attempting to read file: ${audioFilePath}`);
     const file = await fs.readFile(audioFilePath);
-    logger.info(`File read successfully, size: ${file.length} bytes`);
+    logger.debug(`File read successfully, size: ${file.length} bytes`);
 
     // Step 1: Transcribe audio
     const audio = {
@@ -56,7 +56,7 @@ module.exports.transcribeAndTranslateAudio = async (
       audio,
     };
 
-    logger.info(
+    logger.debug(
       `Sending recognition request with languageCode: ${apiLanguageCode}`,
     );
     const [response] = await speechClient.recognize(request);
@@ -68,7 +68,7 @@ module.exports.transcribeAndTranslateAudio = async (
       throw new AppError('No transcription generated', 400);
     }
 
-    logger.info(`Transcription (${languageCode}): ${transcription}`);
+    logger.debug(`Transcription (${languageCode}): ${transcription}`);
 
     // Step 2: Include transcription in translations for the source language
     const translations = {
@@ -79,13 +79,13 @@ module.exports.transcribeAndTranslateAudio = async (
     for (const targetLangCode of supportedLanguages) {
       if (targetLangCode !== languageCode) {
         const apiTargetLangCode = targetLangCode;
-        logger.info(`Translating to ${targetLangCode} (${apiTargetLangCode})`);
+        logger.debug(`Translating to ${targetLangCode} (${apiTargetLangCode})`);
         const [translatedText] = await translateClient.translate(
           transcription,
           apiTargetLangCode,
         );
         translations[targetLangCode] = translatedText;
-        logger.info(
+        logger.debug(
           `Translation to ${targetLangCode} [${targetLangCode}]: ${translatedText}`,
         );
       }
@@ -132,7 +132,7 @@ module.exports.textToSpeech = async (text, languageCode, destinationPath) => {
       },
     };
 
-    logger.info(`Generating speech for text in language: ${apiLanguageCode}`);
+    logger.debug(`Generating speech for text in language: ${apiLanguageCode}`);
     let response;
     try {
       [response] = await textToSpeechClient.synthesizeSpeech(request);
@@ -157,7 +157,7 @@ module.exports.textToSpeech = async (text, languageCode, destinationPath) => {
 
     // Save the audio content to disk
     await fs.writeFile(filePath, response.audioContent, 'binary');
-    logger.info(`Audio file saved successfully: ${filePath}`);
+    logger.debug(`Audio file saved successfully: ${filePath}`);
 
     return { fileName: uniqueName, filePath };
   } catch (error) {
