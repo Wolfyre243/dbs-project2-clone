@@ -115,12 +115,6 @@ export function UserMenu() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className='w-56' align='end' forceMount>
-        <DropdownMenuItem asChild>
-          <Link to='/home/profile' className='cursor-pointer'>
-            <User className='mr-2 h-4 w-4' />
-            Profile
-          </Link>
-        </DropdownMenuItem>
         {(role === Roles.SUPERADMIN || role === Roles.ADMIN) && (
           <DropdownMenuItem asChild>
             <Link to='/admin' className='cursor-pointer'>
@@ -200,7 +194,7 @@ export function AppBar({ ...props }: React.ComponentProps<any>) {
 
   return (
     <div
-      className='relative flex flex-row w-full justify-between items-center px-3 py-3 bg-background border-b'
+      className='sticky top-0 z-50 flex flex-row w-full justify-between items-center px-3 py-3 bg-background border-b'
       {...props}
     >
       <div className='flex flex-row items-center gap-3 px-3'>

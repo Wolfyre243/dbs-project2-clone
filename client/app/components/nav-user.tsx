@@ -122,15 +122,6 @@ export function NavUser({
             <DropdownMenuGroup>
               <DropdownMenuItem>
                 <Link
-                  to={'/home/profile'}
-                  className='flex flex-row gap-2 w-full'
-                >
-                  <User />
-                  Profile
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Link
                   to={'/home/settings'}
                   className='flex flex-row gap-2 w-full'
                 >
