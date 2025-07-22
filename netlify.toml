@@ -1,8 +1,8 @@
 # example netlify.toml
-# [build]
-  #command = "react-router build"
-  #functions = "netlify/functions"
-  #publish = "build\client"
+[build]
+  command = "react-router build"
+  functions = "netlify/functions"
+  publish = "build\client"
 
   ## Uncomment to use this redirect for Single Page Applications like create-react-app.
   ## Not needed for static site generators.
@@ -19,11 +19,3 @@
   #  publish = "dist" # Folder with the static content for _redirect file
 
   ## more info on configuring this file: https://ntl.fyi/file-based-build-config
-
-[build]
-command = "react-router build"
-public = "build/client"
-
-[dev]
-command = "react-router dev"
-framework = "#auto"
