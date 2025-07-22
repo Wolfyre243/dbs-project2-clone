@@ -1,49 +1,38 @@
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const userModel = require('../models/userModel');
-const sessionModel = require('../models/sessionModel');
+// Import types
 const AppError = require('../utils/AppError');
-const logger = require('../utils/logger');
-const { encryptData, decryptData } = require('../utils/encryption');
-const audioModel = require('../models/audioModel');
-const languageModel = require('../models/languageModel');
-const {
-  cookieOptions,
-  verifySK,
-  verifyTokenDuration,
-  tokenAlgorithm,
-} = require('../configs/authConfig');
-const catchAsync = require('../utils/catchAsync');
 const Roles = require('../configs/roleConfig');
-const ttsService = require('../utils/ttsService');
-const { transcribeAndTranslateAudio, textToSpeech } = ttsService;
-const path = require('path');
 const AuditActions = require('../configs/auditActionConfig');
-const fileUploader = require('../utils/fileUploader');
 const statusCodes = require('../configs/statusCodes');
 
-// Check if transcribe function is available
-if (!transcribeAndTranslateAudio) {
-  throw new AppError(
-    'Transcription and translation service not available',
-    500,
-  );
-} else {
-  logger.info('Transcription and translation service loaded successfully');
-}
+// Import utilities
+const logger = require('../utils/logger');
+const catchAsync = require('../utils/catchAsync');
+const { encryptData, decryptData } = require('../utils/encryption');
+const {
+  transcribeAndTranslateAudio,
+  textToSpeech,
+} = require('../utils/ttsService');
+const fileUploader = require('../utils/fileUploader');
+
+// Impoort Models
+const audioModel = require('../models/audioModel');
+const languageModel = require('../models/languageModel');
 
 module.exports.uploadAudio = catchAsync(async (req, res, next) => {
   if (!req.file) {
     throw new AppError('No audio file uploaded', 400);
   }
 
-  const { filename, path: filePath } = req.file;
+  // const { filename, path: filePath } = req.file;
   const userId = res.locals.user.userId;
   const languageCode = req.body.languageCode;
   const description = req.body.description || 'No description provided';
-  logger.debug(`Received file: ${JSON.stringify(req.file)}`);
+  // TODO Include more file details
+  logger.debug(`Received file: ${req.file.originalname}`);
 
-  const supportedLanguages = await audioModel.getActiveLanguages();
+  // Validation for supported languages
+  const supportedLanguages = await languageModel.getActiveLanguages();
+  // TODO Transfer to validator middlware
   if (!languageCode) {
     throw new AppError('Language code is required', 400);
   }
@@ -58,31 +47,32 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
   }
 
   // Transcribe and translate audio
+  // TODO: Make optional
   const { transcription, translations } = await transcribeAndTranslateAudio(
-    filePath,
+    req.file,
     languageCode,
   );
   if (!transcription) {
-    throw new AppError('Failed to transcribe audio', 500);
+    throw new Error('Failed to transcribe audio');
   }
 
   // Get the translated text for the specified languageCode
   const translatedText = translations[languageCode];
   if (!translatedText) {
-    throw new AppError(
+    throw new Error(
       `No translation available for language code: ${languageCode}`,
-      500,
     );
   }
 
-  // TODO: Add support for supabase
+  const fileLink = await fileUploader.uploadFile(req.file, 'audio');
+
   // Create audio record using the model
   const audio = await audioModel.createAudio({
-    description: description,
-    fileName: filename,
+    description,
+    fileLink,
     createdBy: userId,
-    languageCode: languageCode,
-    statusId: 1, // Assuming 1 is active status
+    languageCode,
+    statusId: statusCodes.ACTIVE,
   });
 
   // Log audit action
@@ -92,7 +82,7 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
     entityName: 'audio',
     entityId: audio.audioId,
     actionTypeId: AuditActions.CREATE,
-    logText: `Uploaded, transcribed, and translated audio file: ${filename} to ${languageCode}`,
+    logText: `Uploaded, transcribed, and translated audio file at ${fileLink} to ${languageCode}`,
   });
 
   // Create subtitle record with translated text
@@ -101,18 +91,16 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
     languageCode,
     createdBy: userId,
     modifiedBy: userId,
-    statusId: 1, // active status
+    statusId: statusCodes.ACTIVE,
   });
 
-  logger.info(
-    `Audio uploaded, transcribed, and translated successfully: ${filename}`,
-  );
+  logger.info(`Audio uploaded, transcribed, and translated successfully`);
 
   res.status(200).json({
     status: 'success',
     data: {
       audioId: audio.audioId,
-      fileName: audio.fileName,
+      fileLink: audio.fileLink,
       languageCode,
       transcription: translatedText, // Return translated text as transcription
       translations,
@@ -121,7 +109,8 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
         'Successfully uploaded audio and saved translated text as subtitle',
     },
   });
-  next();
+
+  // TODO call next
 });
 
 // Convert text to audio
@@ -191,7 +180,7 @@ module.exports.updateSubtitle = catchAsync(async (req, res, next) => {
   }
 
   // Validate language code if provided
-  const supportedLanguages = await audioModel.getActiveLanguages();
+  const supportedLanguages = await languageModel.getActiveLanguages();
   if (languageCode && !supportedLanguages.includes(languageCode)) {
     throw new AppError(
       `Unsupported language code: ${languageCode}. Supported: ${supportedLanguages.join(', ')}`,

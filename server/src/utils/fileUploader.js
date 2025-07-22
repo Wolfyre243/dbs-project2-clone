@@ -3,11 +3,23 @@ const { decode } = require('base64-arraybuffer');
 const crypto = require('crypto');
 
 // Upload file using standard upload
+/**
+ * @param {*} file The file from multer, aka in req.file
+ * @param {*} fileType Either 'audio' or 'images'
+ * @returns {String} The public url of the uploaded file
+ */
 async function uploadFile(file, fileType) {
-  if (fileType !== 'audio' || fileType !== 'images')
+  console.log('[UPLOAD] ☁️ Uploading file to cloud...');
+
+  if (fileType !== 'audio' && fileType !== 'images')
     throw new Error('Error Uploading File: Invalid file type specified');
 
-  const contentType = file.mimetype;
+  let contentType;
+  if (fileType === 'audio') {
+    contentType = 'audio/wav';
+  } else if (fileType === 'images') {
+    contentType = 'image/jpg';
+  }
 
   // Decode file buffer
   const fileBase64 = decode(file.buffer.toString('base64'));
@@ -28,7 +40,7 @@ async function uploadFile(file, fileType) {
   }
 
   // Get public url of the uploaded file
-  const { data: uploadedFile } = await supabase.storage
+  const { data: uploadedFile } = supabase.storage
     .from('uploads')
     .getPublicUrl(data.path);
 
@@ -36,6 +48,10 @@ async function uploadFile(file, fileType) {
   return publicUrl;
 }
 
+/**
+ * @param {*} fileBuffer The generated buffer from the translation client
+ * @returns {String} The public url of the uploaded file
+ */
 // Save generated audio file into supabase
 async function saveAudioFile(fileBuffer) {
   // Decode file buffer
@@ -57,13 +73,15 @@ async function saveAudioFile(fileBuffer) {
   }
 
   // Get public url of the uploaded file
-  const { data: audio } = await supabase.storage
+  const { data: audio } = supabase.storage
     .from('uploads')
     .getPublicUrl(data.path);
 
   const publicUrl = audio.publicUrl;
   return publicUrl;
 }
+
+// TODO: Retrieve audio files
 
 module.exports = {
   uploadFile,

@@ -1,14 +1,17 @@
-const fs = require('fs').promises;
-const path = require('path');
+// Import types
+const AppError = require('../utils/AppError');
+
+// Import translation tools
 const { SpeechClient } = require('@google-cloud/speech');
 const { Translate } = require('@google-cloud/translate').v2;
 const { TextToSpeechClient } = require('@google-cloud/text-to-speech');
-const crypto = require('crypto');
+
+// Import services
 const logger = require('../utils/logger');
-const AppError = require('../utils/AppError');
-const languageModel = require('../models/languageModel');
 const fileUploader = require('../utils/fileUploader');
-// logger.debug(`Credentials path: ${process.env.GOOGLE_APPLICATION_CREDENTIALS}`);
+
+// Import models
+const languageModel = require('../models/languageModel');
 
 // Initialize Google Cloud clients
 const speechClient = new SpeechClient();
@@ -26,40 +29,37 @@ try {
 }
 
 // Transcribe and translate audio
-module.exports.transcribeAndTranslateAudio = async (
-  audioFilePath,
-  languageCode,
-) => {
-  const supportedLanguages = await languageModel.getActiveLanguages();
+module.exports.transcribeAndTranslateAudio = async (file, languageCode) => {
   try {
+    const supportedLanguages = await languageModel.getActiveLanguages();
     // Validate language code
-    if (!supportedLanguages.includes(languageCode)) {
-      throw new AppError(
-        `Unsupported language code: ${languageCode}. Supported: ${supportedLanguages.join(', ')}`,
-        400,
-      );
-    }
+    // if (!supportedLanguages.includes(languageCode)) {
+    //   throw new AppError(
+    //     `Unsupported language code: ${languageCode}. Supported: ${supportedLanguages.join(', ')}`,
+    //     400,
+    //   );
+    // }
 
-    logger.debug(`Attempting to read file: ${audioFilePath}`);
-    const file = await fs.readFile(audioFilePath);
-    logger.debug(`File read successfully, size: ${file.length} bytes`);
+    // logger.debug(`Attempting to read file: ${audioFilePath}`);
+    // const file = await fs.readFile(audioFilePath);
+    // logger.debug(`File read successfully, size: ${file.length} bytes`);
 
     // Step 1: Transcribe audio
     const audio = {
-      content: file.toString('base64'),
+      content: file.buffer.toString('base64'),
     };
 
-    const apiLanguageCode = languageCode;
     const request = {
       config: {
-        languageCode: apiLanguageCode,
+        languageCode,
       },
       audio,
     };
 
     logger.debug(
-      `Sending recognition request with languageCode: ${apiLanguageCode}`,
+      `Sending recognition request with languageCode: ${languageCode}`,
     );
+
     const [response] = await speechClient.recognize(request);
     const transcription = response.results
       .map((result) => result.alternatives[0].transcript)
@@ -79,11 +79,10 @@ module.exports.transcribeAndTranslateAudio = async (
     // Step 3: Translate to other supported languages
     for (const targetLangCode of supportedLanguages) {
       if (targetLangCode !== languageCode) {
-        const apiTargetLangCode = targetLangCode;
-        logger.debug(`Translating to ${targetLangCode} (${apiTargetLangCode})`);
+        logger.debug(`Translating to ${targetLangCode} (${targetLangCode})`);
         const [translatedText] = await translateClient.translate(
           transcription,
-          apiTargetLangCode,
+          targetLangCode,
         );
         translations[targetLangCode] = translatedText;
         logger.debug(
@@ -94,6 +93,7 @@ module.exports.transcribeAndTranslateAudio = async (
 
     return { transcription, translations };
   } catch (error) {
+    // TODO Fix error handling
     logger.error(
       `Error processing audio for ${languageCode}: ${JSON.stringify(error, null, 2)}`,
     );
@@ -164,6 +164,7 @@ module.exports.textToSpeech = async (text, languageCode) => {
 
     return { fileLink: publicUrl };
   } catch (error) {
+    // TODO: Fix error handling
     logger.error(
       `Error generating speech for ${languageCode}: ${JSON.stringify(error, null, 2)}`,
     );

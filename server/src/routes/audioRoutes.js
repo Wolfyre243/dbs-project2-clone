@@ -30,7 +30,11 @@ const storage = multer.memoryStorage();
 const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
-    if (file.mimetype === 'audio/wav') {
+    if (
+      file.mimetype === 'audio/wav' ||
+      file.mimetype === 'audio/x-wav' ||
+      file.mimetype === 'audio/wave'
+    ) {
       cb(null, true);
     } else {
       cb(new Error('Only .wav files are allowed'), false);
@@ -45,7 +49,6 @@ audioRouter.use(jwtMiddleware.verifyToken);
 
 //authRouter.post('/upload', upload.single('file'), audioController.uploadAudio);
 
-// TODO: ! BREAKING CHANGES !
 audioRouter.post(
   '/upload',
   //  TODO: Validation
