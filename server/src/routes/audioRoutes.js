@@ -8,23 +8,10 @@ const crypto = require('crypto');
 // Import controllers
 const audioController = require('../controllers/audioController');
 const jwtMiddleware = require('../middlewares/jwtMiddleware');
+const authMiddleware = require('../middlewares/authMiddleware');
 const rateLimiter = require('../middlewares/rateLimiter');
 
-// const storage = multer.diskStorage({
-//   destination: (req, file, cb) => {
-//     cb(null, path.join(__dirname, '../../Uploads/audio'));
-//   },
-//   filename: (req, file, cb) => {
-//     const buf = crypto.randomBytes(4);
-//     const uniqueName =
-//       Date.now() + '-' + buf.toString('hex') + '-' + file.originalname;
-//     cb(null, uniqueName);
-//   },
-// });
-
 const storage = multer.memoryStorage();
-
-//const upload = multer({ storage });
 
 // The API only allows for wav files
 const upload = multer({
@@ -45,7 +32,7 @@ const upload = multer({
 // Create the router
 const audioRouter = express.Router();
 
-audioRouter.use(jwtMiddleware.verifyToken);
+audioRouter.use(jwtMiddleware.verifyToken, authMiddleware.verifyIsAdmin);
 
 //authRouter.post('/upload', upload.single('file'), audioController.uploadAudio);
 
