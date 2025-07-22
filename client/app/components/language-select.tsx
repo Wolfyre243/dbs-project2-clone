@@ -16,19 +16,27 @@ export function LanguageSelect({
   label,
   fieldName,
   required = false,
+  value,
+  onValueChange,
 }: {
   className?: string;
   placeholder?: string;
   label?: string;
   fieldName: string;
   required?: boolean;
+  value?: string;
+  onValueChange?: (val: string) => void;
 }) {
   // TODO: Fetch language options from backend
-  const [value, setValue] = useState<string>('');
+  const [internalValue, setInternalValue] = useState<string>('');
+
+  const controlled = value !== undefined && onValueChange !== undefined;
+  const selectValue = controlled ? value : internalValue;
+  const selectOnChange = controlled ? onValueChange : setInternalValue;
 
   return (
     <>
-      <Select value={value} onValueChange={setValue}>
+      <Select value={selectValue} onValueChange={selectOnChange}>
         <SelectTrigger className={cn('w-full', className)}>
           <SelectValue placeholder={placeholder ?? 'Select a Language'} />
         </SelectTrigger>
@@ -40,7 +48,12 @@ export function LanguageSelect({
           </SelectGroup>
         </SelectContent>
       </Select>
-      <input type='hidden' name={fieldName} value={value} required={required} />
+      <input
+        type='hidden'
+        name={fieldName}
+        value={selectValue}
+        required={required}
+      />
     </>
   );
 }

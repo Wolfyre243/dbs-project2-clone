@@ -8,7 +8,7 @@ export default function HomeLayout() {
     <RequireAuth
       allowedRoles={[Roles.GUEST, Roles.MEMBER, Roles.ADMIN, Roles.SUPERADMIN]}
     >
-      <main className='flex flex-col h-screen w-full'>
+      <main className='flex flex-col min-h-screen w-full'>
         <div className='sticky top-0 w-full'>
           <AppBar />
         </div>

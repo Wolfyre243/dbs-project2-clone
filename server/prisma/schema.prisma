@@ -99,26 +99,27 @@ model exhibit {
 }
 
 model auditAction {
-  actionType  String     @id @map("action_type") @db.VarChar(100)
-  description String?
-  auditLogs   auditLog[]
+  actionTypeId Int        @id @default(autoincrement()) @map("action_type_id") @db.Integer
+  actionType   String     @unique @map("action_type") @db.VarChar(100)
+  description  String?
+  auditLogs    auditLog[]
 
   @@map("audit_action")
 }
 
 model auditLog {
-  auditLogId  String      @id @default(uuid()) @map("audit_log_id") @db.Uuid
-  userId      String      @map("user_id") @db.Uuid
-  ipAddress   String      @map("ip_address") @db.VarChar(45)
-  entityName  String      @map("entity_name") @db.VarChar(100)
-  entityId    String      @map("entity_id")
-  actionType  String      @map("action_type") @db.VarChar(100)
-  timestamp   DateTime    @db.Timestamptz(6)
-  logText     String      @map("log_text")
-  auditAction auditAction @relation(fields: [actionType], references: [actionType])
-  user        users       @relation(fields: [userId], references: [userId])
+  auditLogId   String      @id @default(uuid()) @map("audit_log_id") @db.Uuid
+  userId       String      @map("user_id") @db.Uuid
+  ipAddress    String      @map("ip_address") @db.VarChar(45)
+  entityName   String      @map("entity_name") @db.VarChar(100)
+  entityId     String      @map("entity_id")
+  actionTypeId Int         @map("action_type_id") @db.Integer
+  logText      String      @map("log_text")
+  timestamp    DateTime    @default(now()) @db.Timestamptz(6)
+  auditAction  auditAction @relation(fields: [actionTypeId], references: [actionTypeId])
+  user         users       @relation(fields: [userId], references: [userId])
 
-  @@index([userId, actionType])
+  @@index([userId, actionTypeId])
   @@map("audit_log")
 }
 
@@ -202,16 +203,27 @@ model image {
   @@index([statusId])
 }
 
-model event {
-  eventId    String   @id @default(uuid()) @map("event_id") @db.Uuid
-  entityId   Int      @map("entity_id")
-  entityName String   @map("entity_name") @db.VarChar(100)
-  timestamp  DateTime @db.Timestamptz(6)
-  details    String
-  userId     String   @map("user_id") @db.Uuid
-  users      users    @relation(fields: [userId], references: [userId])
+model eventType {
+  eventTypeId Int     @id @default(autoincrement()) @map("event_type_id") @db.Integer
+  eventType   String  @unique @map("event_type") @db.VarChar(100)
+  description String
+  event       event[]
 
-  @@index([userId])
+  @@map("event_type")
+}
+
+model event {
+  eventId     String    @id @default(uuid()) @map("event_id") @db.Uuid
+  entityId    Int       @map("entity_id")
+  entityName  String    @map("entity_name") @db.VarChar(100)
+  eventTypeId Int       @map("event_type_id") @db.Integer
+  timestamp   DateTime  @db.Timestamptz(6)
+  details     String
+  userId      String    @map("user_id") @db.Uuid
+  users       users     @relation(fields: [userId], references: [userId])
+  eventType   eventType @relation(fields: [eventTypeId], references: [eventTypeId])
+
+  @@index([userId, eventTypeId])
 }
 
 model session {
@@ -252,7 +264,7 @@ model language {
   audio        audio[]
   status       status        @relation(fields: [statusId], references: [statusId])
   subtitle     subtitle[]
-  user_profile userProfile[]
+  userProfile  userProfile[]
 
   @@index([statusId, languageCode])
 }

@@ -18,6 +18,7 @@ const Roles = require('../configs/roleConfig');
 const ttsService = require('../utils/ttsService');
 const { transcribeAndTranslateAudio, textToSpeech } = ttsService;
 const path = require('path');
+const AuditActions = require('../configs/auditActionConfig');
 
 // Check if transcribe function is available
 if (!transcribeAndTranslateAudio) {
@@ -87,7 +88,7 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
     ipAddress: req.ip || '0.0.0.0',
     entityName: 'audio',
     entityId: audio.audioId,
-    actionType: 'CREATE',
+    actionType: AuditActions.CREATE,
     logText: `Uploaded, transcribed, and translated audio file: ${filename} to ${languageCode}`,
   });
 
