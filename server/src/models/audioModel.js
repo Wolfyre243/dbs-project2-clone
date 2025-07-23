@@ -1,6 +1,7 @@
 const AuditActions = require('../configs/auditActionConfig');
 const statusCodes = require('../configs/statusCodes');
 const { PrismaClient } = require('../generated/prisma');
+const { convertDatesToStrings } = require('../utils/formatters');
 
 const prisma = new PrismaClient();
 
@@ -28,46 +29,46 @@ module.exports.createAudio = async ({
 };
 
 // Create subtitle record with UUID-based subtitleId
-module.exports.createSubtitle = async ({
-  subtitleText,
-  languageCode,
-  createdBy,
-  modifiedBy,
-  statusId = statusCodes.ACTIVE,
-}) => {
-  return await prisma.subtitle.create({
-    data: {
-      subtitleText,
-      languageCode,
-      createdBy,
-      modifiedBy,
-      statusId,
-    },
-  });
-};
+// module.exports.createSubtitle = async ({
+//   subtitleText,
+//   languageCode,
+//   createdBy,
+//   modifiedBy,
+//   statusId = statusCodes.ACTIVE,
+// }) => {
+//   return await prisma.subtitle.create({
+//     data: {
+//       subtitleText,
+//       languageCode,
+//       createdBy,
+//       modifiedBy,
+//       statusId,
+//     },
+//   });
+// };
 
 // Get subtitles for a user
-module.exports.getAllSubtitles = async ({ userId, isAdmin }) => {
-  return await prisma.subtitle.findMany({
-    where: isAdmin ? {} : { createdBy: userId }, // Admins see all subtitles
-    select: {
-      subtitleId: true,
-      subtitleText: true,
-      languageCode: true,
-      createdBy: true,
-      createdAt: true,
-      modifiedAt: true,
-      statusId: true,
-      /*  audio: {
-        select: {
-          audioId: true,
-          description: true,
-          fileName: true,
-        },
-      }, */
-    },
-  });
-};
+// module.exports.getAllSubtitles = async ({ userId, isAdmin }) => {
+//   return await prisma.subtitle.findMany({
+//     where: isAdmin ? {} : { createdBy: userId }, // Admins see all subtitles
+//     select: {
+//       subtitleId: true,
+//       subtitleText: true,
+//       languageCode: true,
+//       createdBy: true,
+//       createdAt: true,
+//       modifiedAt: true,
+//       statusId: true,
+//       /*  audio: {
+//         select: {
+//           audioId: true,
+//           description: true,
+//           fileName: true,
+//         },
+//       }, */
+//     },
+//   });
+// };
 
 module.exports.getAudioById = async function (audioId) {
   return await prisma.audio.findUnique({
@@ -108,31 +109,31 @@ module.exports.softDeleteAudio = async function (audioId, userId, ipAddress) {
 
 //get all audio with pagination, sorting, and filtering
 module.exports.getAllAudio = async ({
-  page = 1,
-  pageSize = 10,
-  sortBy = 'createdAt',
-  order = 'desc',
+  page,
+  pageSize,
+  sortBy,
+  order,
   search,
   filter,
 }) => {
-  let where = { ...filter };
+  let where = {
+    ...filter,
+    statusId: statusCodes.ACTIVE,
+  };
 
   if (search && search.trim() !== '') {
-    where.OR = [{ description: { contains: search, mode: 'insensitive' } }];
+    where.OR = [
+      { description: { contains: search, mode: 'insensitive' } },
+      { fileName: { contains: search, mode: 'insensitive' } },
+    ];
   }
 
   const audioCount = await prisma.audio.count({
-    // where: isAdmin ? {} : { createdBy: userId },
-    where: {
-      statusId: statusCodes.ACTIVE,
-    },
+    where: where,
   });
 
   const audioList = await prisma.audio.findMany({
-    // where: isAdmin ? {} : { createdBy: userId },
-    where: {
-      statusId: statusCodes.ACTIVE,
-    },
+    where: where,
     orderBy: { [sortBy]: order },
     skip: (page - 1) * pageSize,
     take: pageSize,
@@ -140,6 +141,6 @@ module.exports.getAllAudio = async ({
 
   return {
     audioCount,
-    audioList,
+    audioList: audioList.map((audio) => convertDatesToStrings(audio)),
   };
 };
