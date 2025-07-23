@@ -5,16 +5,16 @@ const { body, param, query, check } = require('express-validator');
 // .optional property will be set in the validators middleware.
 
 // Return from functions to prevent mutation
-module.exports.titleValidation = () =>
-  body('title')
+module.exports.textValidation = () =>
+  body('text')
     .trim()
     .matches(/^[a-zA-Z0-9 ]+$/)
-    .withMessage('Title must contain only letters, numbers and spaces')
+    .withMessage('Text must contain only letters, numbers and spaces')
     .escape();
 
-module.exports.descriptionValidation = () =>
-  body('description')
+module.exports.languageCodeValidation = () =>
+  body('languageCode')
     .trim()
-    .matches(/^[a-zA-Z0-9 ]+$/)
-    .withMessage('Description must contain only letters, numbers and spaces')
+    .matches(/^[a-z]{2,3}-[A-Z]{2,3}$/)
+    .withMessage('Language must be in the format ab-CD')
     .escape();

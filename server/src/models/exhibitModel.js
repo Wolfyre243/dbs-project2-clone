@@ -26,6 +26,52 @@ module.exports.createExhibit = async ({
   });
 };
 
+module.exports.createExhibitWithAssets = async ({
+  title,
+  description,
+  createdBy,
+  modifiedBy,
+  subtitleIdArr,
+  audioIdArr,
+  // imageId,
+  statusId = statusCodes.ACTIVE,
+}) => {
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      const exhibit = await tx.exhibit.create({
+        data: {
+          title,
+          description,
+          createdBy,
+          modifiedBy,
+          // imageId,
+          statusId,
+        },
+      });
+
+      // Link all subtitles to exhibit
+      await tx.exhibitSubtitle.createMany({
+        data: subtitleIdArr.map((subtitleId) => {
+          return { exhibitId: exhibit.exhibitId, subtitleId };
+        }),
+      });
+
+      // Link all audio files to exhibit
+      await tx.exhibitAudioRelation.createMany({
+        data: audioIdArr.map((audioId) => {
+          return { exhibitId: exhibit.exhibitId, audioId };
+        }),
+      });
+
+      return exhibit;
+    });
+    return result;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
+
 module.exports.createExhibitSubtitle = async ({ exhibitId, subtitleId }) => {
   return await prisma.exhibitSubtitle.create({
     data: {

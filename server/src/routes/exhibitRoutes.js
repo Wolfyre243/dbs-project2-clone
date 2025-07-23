@@ -72,7 +72,7 @@ exhibitRouter.post(
   authMiddleware.verifyIsAdmin,
   // upload.single('audio'),
   // audioController.uploadAudio,
-  audioController.convertMultiTextToAudio,
+  // audioController.convertMultiTextToAudio,
   exhibitController.createExhibit,
 );
 

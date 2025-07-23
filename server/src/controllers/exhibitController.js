@@ -9,17 +9,23 @@ const AuditActions = require('../configs/auditActionConfig');
 const { logAdminAudit } = require('../utils/auditlogs');
 
 // Create Exhibit controller function
+// Takes in an array of subtitle and audio IDs
 module.exports.createExhibit = catchAsync(async (req, res, next) => {
-  const { title } = req.body;
+  const { title, assetData } = req.body;
   const description = req.body.description;
 
   const userId = res.locals.user.userId;
   // const imageId = res.locals.imageId;
   // const imageId = req.body.imageId; // Assuming imageId is provided in the request
-  const assetData = res.locals.generatedAssetIdsArray; // this Data from audioController
+
   // Validate required fields
-  if (!title) {
-    throw new AppError('Title is required', 400);
+  console.log(assetData);
+  if (!Array.isArray(assetData.subtitleIds)) {
+    throw new AppError('Subtitle IDs must be an array', 400);
+  }
+
+  if (!Array.isArray(assetData.audioIds)) {
+    throw new AppError('Audio IDs must be an array', 400);
   }
 
   // Validate imageId if provided
@@ -33,29 +39,31 @@ module.exports.createExhibit = catchAsync(async (req, res, next) => {
   // }
 
   // Create exhibit
-  const exhibit = await exhibitModel.createExhibit({
+  const exhibit = await exhibitModel.createExhibitWithAssets({
     title,
     description,
     createdBy: userId,
     modifiedBy: userId,
+    subtitleIdArr: assetData.subtitleIds,
+    audioIdArr: assetData.audioIds,
     // TODO: To implement images
     // imageId,
   });
 
-  assetData.forEach(async ({ audioId = null, subtitleId }) => {
-    // Create exhibit-subtitle relation
-    await exhibitModel.createExhibitSubtitle({
-      exhibitId: exhibit.exhibitId,
-      subtitleId,
-    });
+  // assetData.forEach(async ({ audioId = null, subtitleId }) => {
+  //   // Create exhibit-subtitle relation
+  //   await exhibitModel.createExhibitSubtitle({
+  //     exhibitId: exhibit.exhibitId,
+  //     subtitleId,
+  //   });
 
-    if (audioId) {
-      await exhibitModel.createExhibitAudio({
-        exhibitId: exhibit.exhibitId,
-        audioId,
-      });
-    }
-  });
+  //   if (audioId) {
+  //     await exhibitModel.createExhibitAudio({
+  //       exhibitId: exhibit.exhibitId,
+  //       audioId,
+  //     });
+  //   }
+  // });
 
   logger.info(
     `Exhibit created successfully: ${exhibit.exhibitId} by Admin ${userId}`,

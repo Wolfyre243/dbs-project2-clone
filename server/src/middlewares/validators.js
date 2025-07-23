@@ -6,6 +6,8 @@ const {
   check,
 } = require('express-validator');
 const logger = require('../utils/logger');
+const catchAsync = require('../utils/catchAsync');
+const AppError = require('../utils/AppError');
 
 // Import user validators
 const {
@@ -16,15 +18,18 @@ const {
   lastNameValidation,
   dobValidation,
   genderValidation,
-  languageCodeValidation,
+  userLanguageCodeValidation,
 } = require('../validators/userValidators');
 
-const catchAsync = require('../utils/catchAsync');
-const AppError = require('../utils/AppError');
 const {
   titleValidation,
   descriptionValidation,
 } = require('../validators/exhibitValidators');
+
+const {
+  textValidation,
+  languageCodeValidation,
+} = require('../validators/audioValidators');
 
 const validate = catchAsync(async (req, res, next) => {
   const errors = validationResult(req);
@@ -45,7 +50,7 @@ const userValidationRules = () => [
   lastNameValidation().notEmpty().withMessage('Last Name is required'),
   dobValidation().notEmpty().withMessage('Date of Birth is required'),
   genderValidation(),
-  languageCodeValidation(),
+  userLanguageCodeValidation(),
 ];
 
 const loginValidationRules = () => [
@@ -58,6 +63,16 @@ const createExhibitionValidationRules = () => [
   descriptionValidation(),
 ];
 
+const createSubtitleValidationRules = () => [
+  textValidation().notEmpty().withMessage('Text is required'),
+  languageCodeValidation().notEmpty().withMessage('Language Code is required'),
+];
+
+const generateAudioValidationRules = () => [
+  textValidation().notEmpty().withMessage('Text is required'),
+  languageCodeValidation().notEmpty().withMessage('Language Code is required'),
+];
+
 module.exports = {
   validate,
 
@@ -65,4 +80,6 @@ module.exports = {
   userValidationRules,
   loginValidationRules,
   createExhibitionValidationRules,
+  generateAudioValidationRules,
+  createSubtitleValidationRules,
 };

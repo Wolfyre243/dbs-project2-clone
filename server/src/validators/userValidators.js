@@ -80,7 +80,7 @@ module.exports.genderValidation = () =>
     .withMessage("Gender must be either 'M' or 'F'")
     .escape();
 
-module.exports.languageCodeValidation = () =>
+module.exports.userLanguageCodeValidation = () =>
   body('languageCode')
     .trim()
     .notEmpty()
