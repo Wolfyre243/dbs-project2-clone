@@ -25,7 +25,7 @@ subtitleRouter.post(
   subtitleController.createSubtitle,
 );
 
-subtitleRouter.get('/', audioController.getAllSubtitles);
+
 
 // archive subtitle by setting status to archived
 subtitleRouter.put(
