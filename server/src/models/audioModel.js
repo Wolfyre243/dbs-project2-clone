@@ -140,7 +140,7 @@ module.exports.getAllAudio = async ({
   });
 
   return {
-    audioCount,
+    pageCount: Math.ceil(audioCount / pageSize),
     audioList: audioList.map((audio) => convertDatesToStrings(audio)),
   };
 };

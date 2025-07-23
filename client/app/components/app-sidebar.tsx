@@ -124,7 +124,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton size='lg' asChild>
               <a href='/'>
-                <div className='text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg'>
+                <div className='flex aspect-square size-8 items-center justify-center rounded-lg'>
                   <LayoutDashboard className='size-6' />
                 </div>
                 <div className='grid flex-1 text-left text-sm leading-tight'>

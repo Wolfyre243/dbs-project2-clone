@@ -1,6 +1,7 @@
 const AuditActions = require('../configs/auditActionConfig');
 const statusCodes = require('../configs/statusCodes');
 const { PrismaClient } = require('../generated/prisma');
+const { convertDatesToStrings } = require('../utils/formatters');
 
 const prisma = new PrismaClient();
 
@@ -104,7 +105,7 @@ module.exports.getAllSubtitles = async ({
   });
 
   return {
-    subtitles: subtitlesRaw,
+    subtitles: subtitlesRaw.map((subtitle) => convertDatesToStrings(subtitle)),
     subtitleCount,
   };
 };
@@ -122,4 +123,4 @@ module.exports.getSubtitleById = async (subtitleId) => {
       statusId: true,
     },
   });
-}
+};

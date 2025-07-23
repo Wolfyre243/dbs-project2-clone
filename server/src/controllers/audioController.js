@@ -489,10 +489,12 @@ module.exports.getAllAudio = catchAsync(async (req, res, next) => {
     filter,
   });
 
+  logger.info(`Retrieved ${pageSize} audio files for page ${page}.`);
+
   res.status(200).json({
     status: 'success',
     data: {
-      audioList,
+      ...audioList,
       message: 'Successfully retrieved audio list',
     },
   });
