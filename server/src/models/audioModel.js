@@ -112,15 +112,27 @@ module.exports.getAllAudio = async ({
   pageSize = 10,
   sortBy = 'createdAt',
   order = 'desc',
-  userId,
-  isAdmin,
+  search,
+  filter,
 }) => {
+  let where = { ...filter };
+
+  if (search && search.trim() !== '') {
+    where.OR = [{ description: { contains: search, mode: 'insensitive' } }];
+  }
+
   const audioCount = await prisma.audio.count({
-    where: isAdmin ? {} : { createdBy: userId },
+    // where: isAdmin ? {} : { createdBy: userId },
+    where: {
+      statusId: statusCodes.ACTIVE,
+    },
   });
 
   const audioList = await prisma.audio.findMany({
-    where: isAdmin ? {} : { createdBy: userId },
+    // where: isAdmin ? {} : { createdBy: userId },
+    where: {
+      statusId: statusCodes.ACTIVE,
+    },
     orderBy: { [sortBy]: order },
     skip: (page - 1) * pageSize,
     take: pageSize,

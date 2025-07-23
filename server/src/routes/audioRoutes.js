@@ -58,20 +58,20 @@ audioRouter.post(
 
 // audioRouter.get('/subtitles', audioController.getAllSubtitles);
 
-audioRouter.get('/get-single-audio/:audioId', audioController.getSingleAudio);
+audioRouter.get('/:audioId', audioController.getSingleAudio);
 
 // Archive audio
-audioRouter.put('/archive-audio/:audioId', audioController.archiveAudio);
+audioRouter.put('/archive/:audioId', audioController.archiveAudio);
 
 // Hard delete audio by removing the record
-audioRouter.delete('/audio/:audioId', audioController.hardDeleteAudio);
+audioRouter.delete('/hard-delete/:audioId', audioController.hardDeleteAudio);
 
 //unarchive audio
-audioRouter.put('/unarchive-audio/:audioId', audioController.unarchiveAudio);
+audioRouter.put('/unarchive/:audioId', audioController.unarchiveAudio);
 
 //soft delete audio
-audioRouter.put('/soft-delete-audio/:audioId', audioController.softDeleteAudio);
+audioRouter.delete('/:audioId', audioController.softDeleteAudio);
 
 // Get all audio for admin
-audioRouter.get('/all-audio', audioController.getAllAudio);
+audioRouter.get('/', audioController.getAllAudio);
 module.exports = audioRouter;
