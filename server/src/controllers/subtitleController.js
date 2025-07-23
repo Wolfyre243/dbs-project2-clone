@@ -14,6 +14,7 @@ const languageModel = require('../models/languageModel');
 const subtitleModel = require('../models/subtitleModel');
 const { logAdminAudit } = require('../utils/auditlogs');
 
+
 module.exports.createSubtitle = catchAsync(async (req, res, next) => {
   const { text, languageCode } = req.body;
   const userId = res.locals.user.userId;
@@ -56,18 +57,16 @@ module.exports.createSubtitle = catchAsync(async (req, res, next) => {
   });
 });
 
-//archive subtitle by setting status to archived
+// Archive subtitle
 module.exports.archiveSubtitle = catchAsync(async (req, res, next) => {
   const { subtitleId } = req.params;
   const userId = res.locals.user.userId;
 
-  // Check if subtitle exists
   const subtitle = await subtitleModel.getSubtitleById(subtitleId);
   if (!subtitle) {
     throw new AppError('Subtitle not found', 404);
   }
 
-  // Archive the subtitle
   await subtitleModel.archiveSubtitle(subtitleId, userId, req.ip);
 
   await logAdminAudit({
@@ -75,7 +74,7 @@ module.exports.archiveSubtitle = catchAsync(async (req, res, next) => {
     ipAddress: req.ip,
     entityName: 'subtitle',
     entityId: subtitleId,
-    actionTypeId: AuditActions.ARCHIVE,
+    actionTypeId: AuditActions.UPDATE,
     logText: `Archived subtitle entity with ID ${subtitleId}`,
   });
 
@@ -85,18 +84,16 @@ module.exports.archiveSubtitle = catchAsync(async (req, res, next) => {
   });
 });
 
-//unarchive subtitle by setting status to active
+// Unarchive subtitle
 module.exports.unarchiveSubtitle = catchAsync(async (req, res, next) => {
   const { subtitleId } = req.params;
   const userId = res.locals.user.userId;
 
-  // Check if subtitle exists
   const subtitle = await subtitleModel.getSubtitleById(subtitleId);
   if (!subtitle) {
     throw new AppError('Subtitle not found', 404);
   }
 
-  // Unarchive the subtitle
   await subtitleModel.unarchiveSubtitle(subtitleId, userId, req.ip);
 
   await logAdminAudit({
@@ -104,7 +101,7 @@ module.exports.unarchiveSubtitle = catchAsync(async (req, res, next) => {
     ipAddress: req.ip,
     entityName: 'subtitle',
     entityId: subtitleId,
-    actionTypeId: AuditActions.UNARCHIVE,
+    actionTypeId: AuditActions.UPDATE,
     logText: `Unarchived subtitle entity with ID ${subtitleId}`,
   });
 
@@ -114,18 +111,16 @@ module.exports.unarchiveSubtitle = catchAsync(async (req, res, next) => {
   });
 });
 
-//soft delete subtitle by setting status to deleted
+// Soft delete subtitle
 module.exports.softDeleteSubtitle = catchAsync(async (req, res, next) => {
   const { subtitleId } = req.params;
   const userId = res.locals.user.userId;
 
-  // Check if subtitle exists
   const subtitle = await subtitleModel.getSubtitleById(subtitleId);
   if (!subtitle) {
     throw new AppError('Subtitle not found', 404);
   }
 
-  // Soft delete the subtitle
   await subtitleModel.softDeleteSubtitle(subtitleId, userId, req.ip);
 
   await logAdminAudit({
@@ -133,13 +128,40 @@ module.exports.softDeleteSubtitle = catchAsync(async (req, res, next) => {
     ipAddress: req.ip,
     entityName: 'subtitle',
     entityId: subtitleId,
-    actionTypeId: AuditActions.SOFT_DELETE,
+    actionTypeId: AuditActions.DELETE,
     logText: `Soft deleted subtitle entity with ID ${subtitleId}`,
   });
 
   res.status(200).json({
     status: 'success',
     message: 'Subtitle soft deleted successfully',
+  });
+});
+
+// hard delete subtitle
+module.exports.hardDeleteSubtitle = catchAsync(async (req, res, next) => {
+  const { subtitleId } = req.params;
+  const userId = res.locals.user.userId;
+
+  const subtitle = await subtitleModel.getSubtitleById(subtitleId);
+  if (!subtitle) {
+    throw new AppError('Subtitle not found', 404);
+  }
+
+  await subtitleModel.hardDeleteSubtitle(subtitleId, userId, req.ip);
+
+  await logAdminAudit({
+    userId,
+    ipAddress: req.ip,
+    entityName: 'subtitle',
+    entityId: subtitleId,
+    actionTypeId: AuditActions.DELETE,
+    logText: `Hard deleted subtitle entity with ID ${subtitleId}`,
+  });
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Subtitle hard deleted successfully',
   });
 });
 

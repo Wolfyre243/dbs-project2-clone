@@ -51,4 +51,10 @@ subtitleRouter.get(
   subtitleController.getSubtitleById,
 );
 
+// Hard delete subtitle by removing the record
+subtitleRouter.delete(
+  '/:subtitleId',
+  subtitleController.hardDeleteSubtitle,
+);
+
 module.exports = subtitleRouter;

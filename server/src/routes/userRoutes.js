@@ -22,4 +22,24 @@ userRouter.get(
   userController.retrieveUserProfile,
 );
 
+// Soft delete user
+userRouter.delete(
+  '/profile',
+  jwtMiddleware.verifyToken,
+  userController.softDeleteUser
+);
+// Admin soft delete user
+userRouter.delete(
+  '/admin/soft-delete/:userId',
+  jwtMiddleware.verifyToken,
+  userController.adminSoftDeleteUser
+);
+// Admin hard delete user
+userRouter.delete(
+  '/admin/hard-delete/:userId',
+  jwtMiddleware.verifyToken,
+  userController.adminHardDeleteUser
+);
+
+
 module.exports = userRouter;
