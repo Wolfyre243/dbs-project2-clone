@@ -360,7 +360,6 @@ module.exports.archiveAudio = catchAsync(async (req, res, next) => {
     throw new AppError('Audio not found', 404);
   }
 
-  
   await audioModel.archiveAudio(audioId, userId, req.ip);
 
   res.status(200).json({
@@ -431,7 +430,12 @@ module.exports.softDeleteAudio = catchAsync(async (req, res, next) => {
 
 //get all audio with pagination, sorting, and filtering
 module.exports.getAllAudio = catchAsync(async (req, res, next) => {
-  const { page = 1, pageSize = 10, sortBy = 'createdAt', order = 'desc' } = req.query;
+  const {
+    page = 1,
+    pageSize = 10,
+    sortBy = 'createdAt',
+    order = 'desc',
+  } = req.query;
   const userId = res.locals.user.userId;
   const isAdmin = res.locals.user.role === Roles.ADMIN;
 
@@ -441,8 +445,6 @@ module.exports.getAllAudio = catchAsync(async (req, res, next) => {
     pageSize: parseInt(pageSize),
     sortBy,
     order,
-    userId,
-    isAdmin,
   });
 
   res.status(200).json({
