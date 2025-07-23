@@ -5,7 +5,7 @@ const express = require('express');
 // Import controllers
 const userController = require('../controllers/userController');
 const jwtMiddleware = require('../middlewares/jwtMiddleware');
-
+const authMiddleware = require('../middlewares/authMiddleware');
 // const {
 //   getTeamMembersValidationRules,
 //   joinTeamWithCodeValidationRules,
@@ -39,6 +39,14 @@ userRouter.delete(
   '/admin/hard-delete/:userId',
   jwtMiddleware.verifyToken,
   userController.adminHardDeleteUser,
+);
+
+// Get all users for admin
+userRouter.get(
+  '/get-all-users',
+  jwtMiddleware.verifyToken,
+  authMiddleware.verifyIsAdmin,
+  userController.getAllUsers,
 );
 
 module.exports = userRouter;

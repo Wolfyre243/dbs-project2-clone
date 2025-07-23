@@ -58,8 +58,7 @@ module.exports.softDeleteUser = catchAsync(async (req, res, next) => {
 
 // admin soft delete users
 module.exports.adminSoftDeleteUser = catchAsync(async (req, res, next) => {
-   const userId = res.locals.user.userId;
-
+  const userId = res.locals.user.userId;
 
   // Check if user exists
   const user = await userModel.retrieveById(userId);
@@ -115,5 +114,41 @@ module.exports.adminHardDeleteUser = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
     message: 'User hard deleted successfully',
+  });
+});
+
+//get all users for admin
+module.exports.getAllUsers = catchAsync(async (req, res, next) => {
+  const {
+    page = 1,
+    pageSize = 10,
+    sortBy = 'createdAt',
+    order = 'asc',
+    search = '',
+    statusFilter = null,
+    roleFilter = null,
+  } = req.query;
+
+  const filter = {};
+  if (statusFilter) {
+    filter.statusId = parseInt(statusFilter);
+  }
+  if (roleFilter) {
+    filter.roleId = parseInt(roleFilter);
+  }
+
+  const result = await userModel.getAllUsers({
+    page: parseInt(page),
+    pageSize: parseInt(pageSize),
+    sortBy,
+    order,
+    search,
+    filter,
+  });
+
+  res.status(200).json({
+    status: 'success',
+    pageCount: Math.ceil(result.userCount / pageSize),
+    data: result.users,
   });
 });
