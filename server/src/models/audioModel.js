@@ -66,3 +66,24 @@ module.exports.getAllSubtitles = async ({ userId, isAdmin }) => {
     },
   });
 };
+
+module.exports.getAudioById = async function(audioId) {
+  return await prisma.audio.findUnique({
+    where: { audioId },
+  });
+};
+
+//Soft delete audio by setting status to arch
+module.exports.softDeleteAudio = async function(audioId) {
+  return await prisma.audio.update({
+    where: { audioId },
+    data: { statusId: statusCodes.ARCHIVED },
+  });
+};
+
+//Hard delete audio
+module.exports.hardDeleteAudio = async function(audioId) {
+  return await prisma.audio.delete({
+    where: { audioId },
+  });
+};
