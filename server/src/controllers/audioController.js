@@ -326,3 +326,61 @@ module.exports.getAllSubtitles = catchAsync(async (req, res, next) => {
     },
   });
 });
+
+//Get single audio by ID
+module.exports.getSingleAudio = catchAsync(async (req, res, next) => {
+  const { audioId } = req.params;
+
+  const audio = await audioModel.getAudioById(audioId);
+  if (!audio) {
+    throw new AppError('Audio not found', 404);
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      audio,
+      message: 'Successfully retrieved audio',
+    },
+  });
+});
+
+//Soft delete audio
+module.exports.softDeleteAudio = catchAsync(async (req, res, next) => {
+  const { audioId } = req.params;
+  const userId = res.locals.user.userId;
+
+  // Check if audio exists
+  const audio = await audioModel.getAudioById(audioId);
+  if (!audio) {
+    throw new AppError('Audio not found', 404);
+  }
+
+  // Soft delete audio
+  await audioModel.softDeleteAudio(audioId, userId, req.ip);
+
+  res.status(204).json({
+    status: 'success',
+    message: 'Audio soft deleted successfully',
+  });
+});
+
+// Hard delte audio
+module.exports.hardDeleteAudio = catchAsync(async (req, res, next) => {
+  const { audioId } = req.params;
+  const userId = res.locals.user.userId;
+
+  // Check if audio exists
+  const audio = await audioModel.getAudioById(audioId);
+  if (!audio) {
+    throw new AppError('Audio not found', 404);
+  }
+
+  // Hard delete audio
+  await audioModel.hardDeleteAudio(audioId, userId, req.ip);
+
+  res.status(204).json({
+    status: 'success',
+    message: 'Audio hard deleted successfully',
+  });
+});

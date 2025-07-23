@@ -63,4 +63,12 @@ audioRouter.post(
 
 // audioRouter.get('/subtitles', audioController.getAllSubtitles);
 
+audioRouter.get('/audio/:audioId', audioController.getSingleAudio);
+
+//Soft delte audio
+audioRouter.delete('/audio/:audioId', audioController.softDeleteAudio);
+
+// Hard delete audio by removing the record
+audioRouter.delete('/audio/:audioId', audioController.hardDeleteAudio);
+
 module.exports = audioRouter;
