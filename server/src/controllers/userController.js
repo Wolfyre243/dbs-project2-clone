@@ -117,3 +117,39 @@ module.exports.adminHardDeleteUser = catchAsync(async (req, res, next) => {
     message: 'User hard deleted successfully',
   });
 });
+
+//get all users for admin
+module.exports.getAllUsers = catchAsync(async (req, res, next) => {
+  const {
+    page = 1,
+    pageSize = 10,
+    sortBy = 'createdAt',
+    order = 'asc',
+    search = '',
+    statusFilter = null,
+    roleFilter = null,
+  } = req.query;
+
+  const filter = {};
+  if (statusFilter) {
+    filter.statusId = parseInt(statusFilter);
+  }
+  if (roleFilter) {
+    filter.roleId = parseInt(roleFilter);
+  }
+
+  const result = await userModel.getAllUsers({
+    page: parseInt(page),
+    pageSize: parseInt(pageSize),
+    sortBy,
+    order,
+    search,
+    filter,
+  });
+
+  res.status(200).json({
+    status: 'success',
+    pageCount: Math.ceil(result.userCount / pageSize),
+    data: result.users,
+  });
+});
