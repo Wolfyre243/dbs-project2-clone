@@ -27,4 +27,28 @@ subtitleRouter.post(
 
 subtitleRouter.get('/', audioController.getAllSubtitles);
 
+// archive subtitle by setting status to archived
+subtitleRouter.put(
+  '/archive/:subtitleId',
+  subtitleController.archiveSubtitle,
+);
+//unarchive subtitle by setting status to active
+subtitleRouter.put(
+  '/unarchive/:subtitleId',
+  subtitleController.unarchiveSubtitle,
+);
+// soft delete subtitle by setting status to deleted
+subtitleRouter.put(
+  '/soft-delete/:subtitleId',
+  subtitleController.softDeleteSubtitle,
+);
+// Get all subtitles for admin
+subtitleRouter.get('/all', subtitleController.getAllSubtitles);
+
+//get single subtitle by ID
+subtitleRouter.get(
+  '/:subtitleId',
+  subtitleController.getSubtitleById,
+);
+
 module.exports = subtitleRouter;

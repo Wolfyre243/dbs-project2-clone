@@ -73,8 +73,8 @@ module.exports.getAudioById = async function (audioId) {
   });
 };
 
-//Soft delete audio by setting status to arch
-module.exports.softDeleteAudio = async function (audioId) {
+//archive audio by setting status to archived
+module.exports.archiveAudio = async function (audioId) {
   return await prisma.audio.update({
     where: { audioId },
     data: { statusId: statusCodes.ARCHIVED },
@@ -85,5 +85,21 @@ module.exports.softDeleteAudio = async function (audioId) {
 module.exports.hardDeleteAudio = async function (audioId) {
   return await prisma.audio.delete({
     where: { audioId },
+  });
+};
+
+//unarchive audio by setting status to active
+module.exports.unarchiveAudio = async function (audioId) {
+  return await prisma.audio.update({
+    where: { audioId },
+    data: { statusId: statusCodes.ACTIVE },
+  });
+};
+
+// soft delete audio by setting status to deleted
+module.exports.softDeleteAudio = async function (audioId, userId, ipAddress) {
+  return await prisma.audio.update({
+    where: { audioId },
+    data: { statusId: statusCodes.DELETED },
   });
 };

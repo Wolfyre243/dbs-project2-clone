@@ -345,8 +345,8 @@ module.exports.getSingleAudio = catchAsync(async (req, res, next) => {
   });
 });
 
-//Soft delete audio
-module.exports.softDeleteAudio = catchAsync(async (req, res, next) => {
+// archive audio by setting status to archived
+module.exports.archiveAudio = catchAsync(async (req, res, next) => {
   const { audioId } = req.params;
   const userId = res.locals.user.userId;
 
@@ -356,12 +356,12 @@ module.exports.softDeleteAudio = catchAsync(async (req, res, next) => {
     throw new AppError('Audio not found', 404);
   }
 
-  // Soft delete audio
-  await audioModel.softDeleteAudio(audioId, userId, req.ip);
+  
+  await audioModel.archiveAudio(audioId, userId, req.ip);
 
-  res.status(204).json({
+  res.status(200).json({
     status: 'success',
-    message: 'Audio soft deleted successfully',
+    message: 'Audio archived successfully',
   });
 });
 
@@ -379,8 +379,48 @@ module.exports.hardDeleteAudio = catchAsync(async (req, res, next) => {
   // Hard delete audio
   await audioModel.hardDeleteAudio(audioId, userId, req.ip);
 
-  res.status(204).json({
+  res.status(200).json({
     status: 'success',
     message: 'Audio hard deleted successfully',
+  });
+});
+
+// unarchive audio
+module.exports.unarchiveAudio = catchAsync(async (req, res, next) => {
+  const { audioId } = req.params;
+  const userId = res.locals.user.userId;
+
+  // Check if audio exists
+  const audio = await audioModel.getAudioById(audioId);
+  if (!audio) {
+    throw new AppError('Audio not found', 404);
+  }
+
+  // Unarchive audio
+  await audioModel.unarchiveAudio(audioId, userId, req.ip);
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Audio unarchived successfully',
+  });
+});
+
+// soft delte audio
+module.exports.softDeleteAudio = catchAsync(async (req, res, next) => {
+  const { audioId } = req.params;
+  const userId = res.locals.user.userId;
+
+  // Check if audio exists
+  const audio = await audioModel.getAudioById(audioId);
+  if (!audio) {
+    throw new AppError('Audio not found', 404);
+  }
+
+  // Soft delete audio by setting status to deleted
+  await audioModel.softDeleteAudio(audioId, userId, req.ip);
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Audio soft deleted successfully',
   });
 });
