@@ -56,6 +56,7 @@ model audio {
   createdAt      DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
   statusId       Int                   @map("status_id")
   fileLink       String                @unique @map("file_link")
+  fileName       String                @unique @map("file_name")
   languageCode   String                @map("language_code") @db.VarChar(6)
   audioCreatedBy users                 @relation("AudioCreatedBy", fields: [createdBy], references: [userId])
   language       language              @relation(fields: [languageCode], references: [languageCode])
@@ -192,6 +193,7 @@ model image {
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   statusId       Int       @map("status_id")
   fileLink       String    @unique @map("file_link")
+  fileName       String    @unique @map("file_name")
   exhibit        exhibit[]
   imageCreatedBy users     @relation("ImageCreatedBy", fields: [createdBy], references: [userId])
   status         status    @relation(fields: [statusId], references: [statusId])

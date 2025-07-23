@@ -8,6 +8,7 @@ const prisma = new PrismaClient();
 module.exports.createAudio = async ({
   description,
   fileLink,
+  fileName,
   createdBy,
   languageCode,
   statusId = statusCodes.ACTIVE,
@@ -16,6 +17,7 @@ module.exports.createAudio = async ({
     data: {
       description,
       fileLink,
+      fileName,
       createdBy,
       languageCode,
       statusId,

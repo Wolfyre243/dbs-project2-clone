@@ -127,7 +127,9 @@ module.exports.textToSpeech = async (text, languageCode) => {
     throw new Error('No audio content generated');
   }
 
-  const publicUrl = await fileUploader.saveAudioFile(response.audioContent);
+  const { fileLink, fileName } = await fileUploader.saveAudioFile(
+    response.audioContent,
+  );
 
-  return { fileLink: publicUrl };
+  return { fileLink, fileName };
 };

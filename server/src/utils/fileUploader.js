@@ -45,7 +45,7 @@ async function uploadFile(file, fileType) {
     .getPublicUrl(data.path);
 
   const publicUrl = uploadedFile.publicUrl;
-  return publicUrl;
+  return { fileLink: publicUrl, fileName: uniqueName };
 }
 
 /**
@@ -78,10 +78,14 @@ async function saveAudioFile(fileBuffer) {
     .getPublicUrl(data.path);
 
   const publicUrl = audio.publicUrl;
-  return publicUrl;
+  return { fileLink: publicUrl, fileName: uniqueName };
 }
 
-// TODO: Retrieve audio files
+// Delete files
+async function deleteFile(folderName, fileName) {
+  await supabase.storage.from('uploads').remove([`${folderName}/${fileName}`]);
+  return;
+}
 
 module.exports = {
   uploadFile,
