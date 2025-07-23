@@ -143,20 +143,41 @@ module.exports.softDeleteSubtitle = catchAsync(async (req, res, next) => {
   });
 });
 
-// get all subttilesfor admin
+// get all subttilesfor admin using pagination
 module.exports.getAllSubtitles = catchAsync(async (req, res, next) => {
-  const userId = res.locals.user.userId;
-  const isAdmin = res.locals.user.role === Roles.ADMIN;
+  const {
+    page = 1,
+    pageSize = 10,
+    sortBy = 'createdAt',
+    order = 'asc',
+    search = '',
+    statusFilter = null,
+  } = req.query;
 
-  const subtitles = await subtitleModel.getAllSubtitles({ userId, isAdmin });
+  const filter = {};
+  if (statusFilter) {
+    filter.statusId = parseInt(statusFilter);
+  }
 
+  const result = await subtitleModel.getAllSubtitles({
+    page: parseInt(page),
+    pageSize: parseInt(pageSize),
+    sortBy,
+    order,
+    search,
+    filter,
+  });
+
+  logger.info(
+    `Retrieved ${pageSize} subtitles for page ${page}, total ${result.subtitleCount} subtitles.`
+  );
   res.status(200).json({
     status: 'success',
-    data: {
-      subtitles,
-    },
+    pageCount: Math.ceil(result.subtitleCount / pageSize),
+    data: result.subtitles,
   });
 });
+
 // Get a single subtitle by ID
 module.exports.getSubtitleById = catchAsync(async (req, res, next) => {
   const { subtitleId } = req.params;

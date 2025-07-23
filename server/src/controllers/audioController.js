@@ -428,3 +428,28 @@ module.exports.softDeleteAudio = catchAsync(async (req, res, next) => {
     message: 'Audio soft deleted successfully',
   });
 });
+
+//get all audio with pagination, sorting, and filtering
+module.exports.getAllAudio = catchAsync(async (req, res, next) => {
+  const { page = 1, pageSize = 10, sortBy = 'createdAt', order = 'desc' } = req.query;
+  const userId = res.locals.user.userId;
+  const isAdmin = res.locals.user.role === Roles.ADMIN;
+
+  // Fetch all audio for admin or user's own audio
+  const audioList = await audioModel.getAllAudio({
+    page: parseInt(page),
+    pageSize: parseInt(pageSize),
+    sortBy,
+    order,
+    userId,
+    isAdmin,
+  });
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      audioList,
+      message: 'Successfully retrieved audio list',
+    },
+  });
+});

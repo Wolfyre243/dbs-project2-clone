@@ -56,8 +56,32 @@ module.exports.softDeleteSubtitle = async (subtitleId, userId, ipAddress) => {
 }
 
 //get all subtitles forr admin
-module.exports.getAllSubtitles = async () => {
-  return await prisma.subtitle.findMany({
+module.exports.getAllSubtitles = async ({
+  page,
+  pageSize,
+  sortBy,
+  order,
+  search,
+  filter = {},
+}) => {
+  let where = { ...filter };
+
+  // Conditional search terms
+  if (search && search.trim() !== '') {
+    where.OR = [
+      { subtitleText: { contains: search } },
+      { languageCode: { contains: search } },
+    ];
+  }
+
+  const subtitleCount = await prisma.subtitle.count({
+    where: where,
+  });
+
+  const subtitlesRaw = await prisma.subtitle.findMany({
+    skip: (page - 1) * pageSize,
+    take: pageSize,
+    where: where,
     select: {
       subtitleId: true,
       subtitleText: true,
@@ -67,7 +91,15 @@ module.exports.getAllSubtitles = async () => {
       modifiedAt: true,
       statusId: true,
     },
+    orderBy: {
+      [sortBy]: order,
+    },
   });
+
+  return {
+    subtitles: subtitlesRaw,
+    subtitleCount,
+  };
 };
 // Get subtitle by ID
 module.exports.getSubtitleById = async (subtitleId) => {

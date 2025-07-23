@@ -72,4 +72,6 @@ audioRouter.put('/unarchive-audio/:audioId', audioController.unarchiveAudio);
 //soft delete audio
 audioRouter.put('/soft-delete-audio/:audioId', audioController.softDeleteAudio);
 
+// Get all audio for admin
+audioRouter.get('/all-audio', audioController.getAllAudio);
 module.exports = audioRouter;

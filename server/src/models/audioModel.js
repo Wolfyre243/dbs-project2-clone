@@ -105,3 +105,29 @@ module.exports.softDeleteAudio = async function (audioId, userId, ipAddress) {
     data: { statusId: statusCodes.DELETED },
   });
 };
+
+//get all audio with pagination, sorting, and filtering
+module.exports.getAllAudio = async ({
+  page = 1,
+  pageSize = 10,
+  sortBy = 'createdAt',
+  order = 'desc',
+  userId,
+  isAdmin,
+}) => {
+  const audioCount = await prisma.audio.count({
+    where: isAdmin ? {} : { createdBy: userId },
+  });
+
+  const audioList = await prisma.audio.findMany({
+    where: isAdmin ? {} : { createdBy: userId },
+    orderBy: { [sortBy]: order },
+    skip: (page - 1) * pageSize,
+    take: pageSize,
+  });
+
+  return {
+    audioCount,
+    audioList,
+  };
+};
