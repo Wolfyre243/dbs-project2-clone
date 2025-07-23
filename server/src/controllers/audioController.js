@@ -20,6 +20,7 @@ const languageModel = require('../models/languageModel');
 const subtitleModel = require('../models/subtitleModel');
 const { logAdminAudit } = require('../utils/auditlogs');
 
+// FIXME
 module.exports.uploadAudio = catchAsync(async (req, res, next) => {
   if (!req.file) {
     throw new AppError('No audio file uploaded', 400);
@@ -131,11 +132,12 @@ module.exports.convertTextToAudio = catchAsync(async (req, res, next) => {
   }
 
   // Generate audio from text
-  const { fileLink } = await textToSpeech(text, languageCode);
+  const { fileLink, fileName } = await textToSpeech(text, languageCode);
 
   const audio = await audioModel.createAudio({
     description: 'Text-to-speech generated audio',
     fileLink,
+    fileName,
     createdBy: userId,
     languageCode,
   });
@@ -156,6 +158,7 @@ module.exports.convertTextToAudio = catchAsync(async (req, res, next) => {
     data: {
       audioId: audio.audioId,
       fileLink,
+      fileName,
       languageCode,
       text,
       message: 'Successfully converted text to audio and saved as subtitle',
@@ -196,11 +199,12 @@ module.exports.convertMultiTextToAudio = catchAsync(async (req, res, next) => {
     if (tts) {
       // Generate audio from text
       // We are assuming text input is already translated
-      const { fileLink } = await textToSpeech(text, languageCode);
+      const { fileLink, fileName } = await textToSpeech(text, languageCode);
 
       const audio = await audioModel.createAudio({
         description: 'Text-to-speech generated audio',
         fileLink,
+        fileName,
         createdBy: userId,
         languageCode,
       });
