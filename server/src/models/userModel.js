@@ -239,3 +239,44 @@ module.exports.verifyUser = async (userId) => {
     throw error;
   }
 };
+
+// Soft delete user by setting status to deleted
+module.exports.softDeleteUser = async (userId) => {
+  try {
+    const user = await prisma.users.update({
+      where: { userId: userId },
+      data: {
+        statusId: statusCodes.DELETED,
+      },
+    });
+
+    return user;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2025') {
+        throw new AppError('User not found', 404);
+      }
+    }
+    console.log(error);
+    throw error;
+  }
+};
+
+// admin can hard delete user
+module.exports.hardDeleteUser = async (userId) => {
+  try {
+    const user = await prisma.users.delete({
+      where: { userId: userId },
+    });
+
+    return user;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2025') {
+        throw new AppError('User not found', 404);
+      }
+    }
+    console.log(error);
+    throw error;
+  }
+};

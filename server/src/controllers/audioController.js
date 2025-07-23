@@ -362,6 +362,15 @@ module.exports.archiveAudio = catchAsync(async (req, res, next) => {
 
   
   await audioModel.archiveAudio(audioId, userId, req.ip);
+  await logAdminAudit({
+    userId,
+    ipAddress: req.ip,
+    entityName: 'audio',
+    entityId: audioId,
+    actionTypeId: AuditActions.UPDATE,
+    logText: `Archived audio with ID ${audioId}`,
+  });
+
 
   res.status(200).json({
     status: 'success',
@@ -382,6 +391,14 @@ module.exports.hardDeleteAudio = catchAsync(async (req, res, next) => {
 
   // Hard delete audio
   await audioModel.hardDeleteAudio(audioId, userId, req.ip);
+  await logAdminAudit({
+    userId,
+    ipAddress: req.ip,
+    entityName: 'audio',
+    entityId: audioId,
+    actionTypeId: AuditActions.DELETE,
+    logText: `Hard deleted audio with ID ${audioId}`,
+  });
 
   res.status(200).json({
     status: 'success',
@@ -403,6 +420,16 @@ module.exports.unarchiveAudio = catchAsync(async (req, res, next) => {
   // Unarchive audio
   await audioModel.unarchiveAudio(audioId, userId, req.ip);
 
+  await logAdminAudit({
+    userId,
+    ipAddress: req.ip,
+    entityName: 'audio',
+    entityId: audioId,
+    actionTypeId: AuditActions.UPDATE,
+    logText: `Unarchived audio with ID ${audioId}`,
+  });
+
+
   res.status(200).json({
     status: 'success',
     message: 'Audio unarchived successfully',
@@ -422,6 +449,14 @@ module.exports.softDeleteAudio = catchAsync(async (req, res, next) => {
 
   // Soft delete audio by setting status to deleted
   await audioModel.softDeleteAudio(audioId, userId, req.ip);
+   await logAdminAudit({
+    userId,
+    ipAddress: req.ip,
+    entityName: 'audio',
+    entityId: audioId,
+    actionTypeId: AuditActions.DELETE,
+    logText: `Soft deleted audio with ID ${audioId}`,
+  });
 
   res.status(200).json({
     status: 'success',

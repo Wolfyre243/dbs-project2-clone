@@ -22,7 +22,7 @@ module.exports.create = async ({
   });
 };
 
-//archive subtitle by setting status to archived
+// Archive subtitle by setting status to ARCHIVED
 module.exports.archiveSubtitle = async (subtitleId, userId, ipAddress) => {
   return await prisma.subtitle.update({
     where: { subtitleId },
@@ -33,7 +33,7 @@ module.exports.archiveSubtitle = async (subtitleId, userId, ipAddress) => {
   });
 };
 
-//unarchive subtitle by setting status to active
+// Unarchive subtitle by setting status to ACTIVE
 module.exports.unarchiveSubtitle = async (subtitleId, userId, ipAddress) => {
   return await prisma.subtitle.update({
     where: { subtitleId },
@@ -44,7 +44,7 @@ module.exports.unarchiveSubtitle = async (subtitleId, userId, ipAddress) => {
   });
 };
 
-//soft delete subtitle by setting status to deleted
+// Soft delete subtitle by setting status to DELETED
 module.exports.softDeleteSubtitle = async (subtitleId, userId, ipAddress) => {
   return await prisma.subtitle.update({
     where: { subtitleId },
@@ -53,7 +53,14 @@ module.exports.softDeleteSubtitle = async (subtitleId, userId, ipAddress) => {
       modifiedBy: userId,
     },
   });
-}
+};
+
+// Hard delete subtitle
+module.exports.hardDeleteSubtitle = async (subtitleId) => {
+  return await prisma.subtitle.delete({
+    where: { subtitleId },
+  });
+};
 
 //get all subtitles forr admin
 module.exports.getAllSubtitles = async ({
