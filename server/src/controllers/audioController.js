@@ -116,54 +116,52 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
 });
 
 // Convert text to audio
-// module.exports.convertTextToAudio = catchAsync(async (req, res, next) => {
-//   const { text, languageCode, description } = req.body;
-//   const userId = res.locals.user.userId;
+// Creates just one audio entity
+module.exports.convertTextToAudio = catchAsync(async (req, res, next) => {
+  const { text, languageCode } = req.body;
+  const userId = res.locals.user.userId;
 
-//   if (!text || !languageCode) {
-//     throw new AppError('Text and languageCode are required', 400);
-//   }
+  // Validate language code
+  const supportedLanguages = await languageModel.getActiveLanguages();
+  if (!supportedLanguages.includes(languageCode)) {
+    throw new AppError(
+      `Unsupported language code: ${languageCode}. Supported: ${supportedLanguages.join(', ')}`,
+      400,
+    );
+  }
 
-//   // Validate language code
-//   const supportedLanguages = await languageModel.getActiveLanguages();
-//   if (!supportedLanguages.includes(languageCode)) {
-//     throw new AppError(
-//       `Unsupported language code: ${languageCode}. Supported: ${supportedLanguages.join(', ')}`,
-//       400,
-//     );
-//   }
+  // Generate audio from text
+  const { fileLink } = await textToSpeech(text, languageCode);
 
-//   // Define the destination path for the audio file
-//   // const destinationPath = path.join(__dirname, '../../Uploads/audio');
+  const audio = await audioModel.createAudio({
+    description: 'Text-to-speech generated audio',
+    fileLink,
+    createdBy: userId,
+    languageCode,
+  });
 
-//   // Generate audio from text
-//   const { fileLink } = await textToSpeech(text, languageCode);
+  await logAdminAudit({
+    userId,
+    ipAddress: req.ip,
+    entityName: 'audio',
+    entityId: audio.audioId,
+    actionTypeId: AuditActions.CREATE,
+    logText: `Created audio file with ID ${audio.audioId}`,
+  });
 
-//   // Create audio and subtitle records using the model
-//   const { audio, subtitle } = await audioModel.createTextToAudio({
-//     text,
-//     fileLink,
-//     languageCode,
-//     createdBy: userId,
-//     ipAddress: req.ip,
-//     description: description || 'Text-to-speech generated audio',
-//     statusId: statusCodes.ACTIVE,
-//   });
+  logger.debug(`Text converted to audio and saved successfully: ${fileLink}`);
 
-//   logger.info(`Text converted to audio and saved successfully: ${fileLink}`);
-
-//   res.status(200).json({
-//     status: 'success',
-//     data: {
-//       audioId: audio.audioId,
-//       fileLink,
-//       languageCode,
-//       subtitleId: subtitle.subtitleId,
-//       message: 'Successfully converted text to audio and saved as subtitle',
-//     },
-//   });
-//   // next();
-// });
+  res.status(200).json({
+    status: 'success',
+    data: {
+      audioId: audio.audioId,
+      fileLink,
+      languageCode,
+      text,
+      message: 'Successfully converted text to audio and saved as subtitle',
+    },
+  });
+});
 
 module.exports.convertMultiTextToAudio = catchAsync(async (req, res, next) => {
   const { subtitleArr } = req.body;

@@ -10,6 +10,10 @@ const audioController = require('../controllers/audioController');
 const jwtMiddleware = require('../middlewares/jwtMiddleware');
 const authMiddleware = require('../middlewares/authMiddleware');
 const rateLimiter = require('../middlewares/rateLimiter');
+const {
+  generateAudioValidationRules,
+  validate,
+} = require('../middlewares/validators');
 
 const storage = multer.memoryStorage();
 
@@ -44,12 +48,19 @@ audioRouter.post(
   audioController.uploadAudio,
 );
 
+audioRouter.post(
+  '/generate',
+  generateAudioValidationRules(),
+  validate,
+  audioController.convertTextToAudio,
+);
+
 // audioRouter.post(
 //   '/text-to-audio',
 //   // TODO: rateLimiter,
 //   audioController.convertTextToAudio,
 // );
 
-audioRouter.get('/subtitles', audioController.getAllSubtitles);
+// audioRouter.get('/subtitles', audioController.getAllSubtitles);
 
 module.exports = audioRouter;
