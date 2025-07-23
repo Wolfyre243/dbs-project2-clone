@@ -58,8 +58,7 @@ module.exports.softDeleteUser = catchAsync(async (req, res, next) => {
 
 // admin soft delete users
 module.exports.adminSoftDeleteUser = catchAsync(async (req, res, next) => {
-   const userId = res.locals.user.userId;
-
+  const userId = res.locals.user.userId;
 
   // Check if user exists
   const user = await userModel.retrieveById(userId);

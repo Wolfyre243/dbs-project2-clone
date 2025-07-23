@@ -24,27 +24,29 @@ userRouter.get(
 
 // Soft delete user
 userRouter.delete(
-  '/profile',
+  '/',
   jwtMiddleware.verifyToken,
-  userController.softDeleteUser
+  userController.softDeleteUser,
 );
 // Admin soft delete user
 userRouter.delete(
   '/admin/soft-delete/:userId',
   jwtMiddleware.verifyToken,
-  userController.adminSoftDeleteUser
+  userController.adminSoftDeleteUser,
 );
 // Admin hard delete user
 userRouter.delete(
   '/admin/hard-delete/:userId',
   jwtMiddleware.verifyToken,
-  userController.adminHardDeleteUser
+  userController.adminHardDeleteUser,
 );
 
 // Get all users for admin
-userRouter.get('/get-all-users', 
-  jwtMiddleware.verifyToken, 
+userRouter.get(
+  '/get-all-users',
+  jwtMiddleware.verifyToken,
   authMiddleware.verifyIsAdmin,
-   userController.getAllUsers);
+  userController.getAllUsers,
+);
 
 module.exports = userRouter;
