@@ -11,6 +11,10 @@ const jwtMiddleware = require('../middlewares/jwtMiddleware');
 const authMiddleware = require('../middlewares/authMiddleware');
 const rateLimiter = require('../middlewares/rateLimiter');
 const exhibitController = require('../controllers/exhibitController');
+const {
+  createExhibitionValidationRules,
+  validate,
+} = require('../middlewares/validators');
 
 const storage = multer.memoryStorage();
 
@@ -63,6 +67,8 @@ exhibitRouter.delete('/delete/:exhibitId', exhibitController.deleteExhibit); // 
  */
 exhibitRouter.post(
   '/',
+  createExhibitionValidationRules(),
+  validate,
   authMiddleware.verifyIsAdmin,
   // upload.single('audio'),
   // audioController.uploadAudio,

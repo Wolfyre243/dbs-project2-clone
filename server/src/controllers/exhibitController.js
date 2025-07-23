@@ -1,29 +1,17 @@
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const userModel = require('../models/userModel');
-const sessionModel = require('../models/sessionModel');
 const AppError = require('../utils/AppError');
 const logger = require('../utils/logger');
-const { encryptData, decryptData } = require('../utils/encryption');
-const audioModel = require('../models/audioModel');
-const {
-  cookieOptions,
-  verifySK,
-  verifyTokenDuration,
-  tokenAlgorithm,
-} = require('../configs/authConfig');
 const catchAsync = require('../utils/catchAsync');
-const status = require('../configs/statusCodes');
 const validateFields = require('../utils/validateFields');
 const exhibitModel = require('../models/exhibitModel');
 const exhibitModes = require('../configs/exhibitModes');
 const statusCodes = require('../configs/statusCodes');
 const AuditActions = require('../configs/auditActionConfig');
-
 const { logAdminAudit } = require('../utils/auditlogs');
+
 // Create Exhibit controller function
 module.exports.createExhibit = catchAsync(async (req, res, next) => {
-  const { title, description } = req.body;
+  const { title } = req.body;
+  const description = req.body.description;
 
   const userId = res.locals.user.userId;
   // const imageId = res.locals.imageId;
@@ -33,10 +21,6 @@ module.exports.createExhibit = catchAsync(async (req, res, next) => {
   if (!title) {
     throw new AppError('Title is required', 400);
   }
-
-  // if (!audioData) {
-  //   throw new AppError('Audio processing failed or no audio data provided', 500);
-  // }
 
   // Validate imageId if provided
   // if (imageId) {
@@ -48,14 +32,13 @@ module.exports.createExhibit = catchAsync(async (req, res, next) => {
   //   }
   // }
 
-  // const { audioId, fileName, subtitleId, transcription, translations } = audioData;
-
   // Create exhibit
   const exhibit = await exhibitModel.createExhibit({
     title,
     description,
     createdBy: userId,
     modifiedBy: userId,
+    // TODO: To implement images
     // imageId,
   });
 

@@ -21,6 +21,10 @@ const {
 
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/AppError');
+const {
+  titleValidation,
+  descriptionValidation,
+} = require('../validators/exhibitValidators');
 
 const validate = catchAsync(async (req, res, next) => {
   const errors = validationResult(req);
@@ -49,10 +53,16 @@ const loginValidationRules = () => [
   body('password').notEmpty().withMessage('Password is required'),
 ];
 
+const createExhibitionValidationRules = () => [
+  titleValidation().notEmpty().withMessage('Title is required'),
+  descriptionValidation(),
+];
+
 module.exports = {
   validate,
 
   // Export Rulesets
   userValidationRules,
   loginValidationRules,
+  createExhibitionValidationRules,
 };
