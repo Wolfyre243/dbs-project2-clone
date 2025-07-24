@@ -43,9 +43,9 @@ exhibitRouter.use(jwtMiddleware.verifyToken);
 
 // Admin Exhibit Routes
 // router.post('/create-exhibit', exhibitController.createExhibit);             // -- C
-router.get('/get-byId/:exhibitId', exhibitController.getSingleExhibit);     // -- R
-router.put('/update-exhibit', exhibitController.updateExhibit);            // -- U
-router.delete('/delete/:exhibitId', exhibitController.deleteExhibit);     // -- D
+exhibitRouter.get('/:exhibitId', exhibitController.getSingleExhibit); // -- R
+exhibitRouter.put('/', exhibitController.updateExhibit); // -- U
+exhibitRouter.delete('/:exhibitId', exhibitController.deleteExhibit); // -- D
 
 exhibitRouter.post(
   '/',
@@ -58,8 +58,6 @@ exhibitRouter.post(
   exhibitController.createExhibit,
 );
 
-router.get('/get-exhibits', exhibitController.getAllExhibits);
-
-
+exhibitRouter.get('/', exhibitController.getAllExhibits);
 
 module.exports = exhibitRouter;

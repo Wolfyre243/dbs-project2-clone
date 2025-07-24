@@ -170,7 +170,7 @@ module.exports.getAllSubtitles = catchAsync(async (req, res, next) => {
     page = 1,
     pageSize = 10,
     sortBy = 'createdAt',
-    order = 'asc',
+    order = 'desc',
     search = '',
     languageCodeFilter = null,
   } = req.query;
