@@ -17,6 +17,7 @@ export default [
     layout('routes/home/layout.tsx', [
       index('routes/home/page.tsx'),
       route('/settings', 'routes/home/settings.tsx'),
+      ...prefix('exhibits', [index('routes/home/exhibits/page.tsx')]),
     ]),
   ]),
 
