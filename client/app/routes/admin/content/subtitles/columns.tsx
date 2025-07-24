@@ -62,6 +62,10 @@ export const columns: ColumnDef<Subtitle>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='Subtitle Text' />
     ),
+    cell: ({ row }) => {
+      const value = row.original.subtitleText;
+      return value.length > 20 ? value.slice(0, 20) + '...' : value;
+    },
   },
   {
     accessorKey: 'languageCode',

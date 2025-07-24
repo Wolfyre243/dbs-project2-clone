@@ -48,14 +48,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        <ThemeProvider defaultTheme='system' storageKey='sdc-theme'>
-          <AuthProvider>
+        <AuthProvider>
+          <ThemeProvider defaultTheme='system' storageKey='sdc-theme'>
             <main className='max-w-screen flex flex-col justify-center items-center'>
               {children}
               <ScrollRestoration />
             </main>
-          </AuthProvider>
-        </ThemeProvider>
+          </ThemeProvider>
+        </AuthProvider>
         <Scripts />
         <Toaster richColors closeButton expand={true} />
       </body>
@@ -88,13 +88,14 @@ export default function App() {
 
   return (
     <>
-      {loading ? (
+      {/* {loading ? (
         <div className='flex h-full w-full justify-center items-center'>
           <LoadingSpinner />
         </div>
       ) : (
         <Outlet />
-      )}
+      )} */}
+      <Outlet />
     </>
   );
 }

@@ -135,7 +135,7 @@ export default function AdminSubtitlePagination() {
       <div className='flex flex-col md:flex-row w-full gap-3 h-fit'>
         <input
           type='text'
-          placeholder='Search audio...'
+          placeholder='Search subtitles...'
           className='p-2 border rounded-md md:w-1/4 text-sm'
           defaultValue={searchParams.get('search') || ''}
           onChange={(e) => handleSearchChange(e.target.value)}

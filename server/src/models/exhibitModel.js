@@ -146,7 +146,9 @@ module.exports.updateExhibit = async ({
 module.exports.getExhibitById = async (exhibitId) => {
   try {
     const exhibit = await prisma.exhibit.findUnique({
-      where: { exhibitId: parseInt(exhibitId) },
+      where: {
+        exhibitId,
+      },
     });
     return exhibit;
   } catch (error) {
