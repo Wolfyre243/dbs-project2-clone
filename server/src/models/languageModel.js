@@ -9,6 +9,6 @@ module.exports.getActiveLanguages = async () => {
     where: { statusId: statusCodes.ACTIVE },
     select: { languageCode: true },
   });
-  console.log(languagesArr);
+  // console.log(languagesArr);
   return languagesArr.map((lang) => lang.languageCode);
 };

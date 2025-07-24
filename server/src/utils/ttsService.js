@@ -1,13 +1,17 @@
-const fs = require('fs').promises;
-const path = require('path');
+// Import types
+const AppError = require('../utils/AppError');
+
+// Import translation tools
 const { SpeechClient } = require('@google-cloud/speech');
 const { Translate } = require('@google-cloud/translate').v2;
 const { TextToSpeechClient } = require('@google-cloud/text-to-speech');
-const crypto = require('crypto');
+
+// Import services
 const logger = require('../utils/logger');
-const AppError = require('../utils/AppError');
+const fileUploader = require('../utils/fileUploader');
+
+// Import models
 const languageModel = require('../models/languageModel');
-// logger.debug(`Credentials path: ${process.env.GOOGLE_APPLICATION_CREDENTIALS}`);
 
 // Initialize Google Cloud clients
 const speechClient = new SpeechClient();
@@ -25,145 +29,107 @@ try {
 }
 
 // Transcribe and translate audio
-module.exports.transcribeAndTranslateAudio = async (
-  audioFilePath,
-  languageCode,
-) => {
+module.exports.transcribeAndTranslateAudio = async (file, languageCode) => {
   const supportedLanguages = await languageModel.getActiveLanguages();
-  try {
-    // Validate language code
-    if (!supportedLanguages.includes(languageCode)) {
-      throw new AppError(
-        `Unsupported language code: ${languageCode}. Supported: ${supportedLanguages.join(', ')}`,
-        400,
+
+  // Step 1: Transcribe audio
+  const audio = {
+    content: file.buffer.toString('base64'),
+  };
+
+  const request = {
+    config: {
+      languageCode,
+    },
+    audio,
+  };
+
+  logger.debug(
+    `Sending recognition request with languageCode: ${languageCode}`,
+  );
+
+  const [response] = await speechClient.recognize(request);
+  const transcription = response.results
+    .map((result) => result.alternatives[0].transcript)
+    .join('\n');
+
+  if (!transcription) {
+    throw new AppError('No transcription generated', 400);
+  }
+
+  logger.debug(`Transcription (${languageCode}): ${transcription}`);
+
+  // Step 2: Include transcription in translations for the source language
+  const translations = {
+    [languageCode]: transcription, // Include transcription as translation for source language
+  };
+
+  // Step 3: Translate to other supported languages
+  for (const targetLangCode of supportedLanguages) {
+    if (targetLangCode !== languageCode) {
+      logger.debug(`Translating to ${targetLangCode} (${targetLangCode})`);
+      const [translatedText] = await translateClient.translate(
+        transcription,
+        targetLangCode,
+      );
+      translations[targetLangCode] = translatedText;
+      logger.debug(
+        `Translation to ${targetLangCode} [${targetLangCode}]: ${translatedText}`,
       );
     }
-
-    logger.debug(`Attempting to read file: ${audioFilePath}`);
-    const file = await fs.readFile(audioFilePath);
-    logger.debug(`File read successfully, size: ${file.length} bytes`);
-
-    // Step 1: Transcribe audio
-    const audio = {
-      content: file.toString('base64'),
-    };
-
-    const apiLanguageCode = languageCode;
-    const request = {
-      config: {
-        languageCode: apiLanguageCode,
-      },
-      audio,
-    };
-
-    logger.debug(
-      `Sending recognition request with languageCode: ${apiLanguageCode}`,
-    );
-    const [response] = await speechClient.recognize(request);
-    const transcription = response.results
-      .map((result) => result.alternatives[0].transcript)
-      .join('\n');
-
-    if (!transcription) {
-      throw new AppError('No transcription generated', 400);
-    }
-
-    logger.debug(`Transcription (${languageCode}): ${transcription}`);
-
-    // Step 2: Include transcription in translations for the source language
-    const translations = {
-      [languageCode]: transcription, // Include transcription as translation for source language
-    };
-
-    // Step 3: Translate to other supported languages
-    for (const targetLangCode of supportedLanguages) {
-      if (targetLangCode !== languageCode) {
-        const apiTargetLangCode = targetLangCode;
-        logger.debug(`Translating to ${targetLangCode} (${apiTargetLangCode})`);
-        const [translatedText] = await translateClient.translate(
-          transcription,
-          apiTargetLangCode,
-        );
-        translations[targetLangCode] = translatedText;
-        logger.debug(
-          `Translation to ${targetLangCode} [${targetLangCode}]: ${translatedText}`,
-        );
-      }
-    }
-
-    return { transcription, translations };
-  } catch (error) {
-    logger.error(
-      `Error processing audio for ${languageCode}: ${JSON.stringify(error, null, 2)}`,
-    );
-    throw new AppError(`Failed to process audio: ${error.message}`, 500);
   }
+
+  return { transcription, translations };
 };
 
 // Convert text to speech and save to disk
-module.exports.textToSpeech = async (text, languageCode, destinationPath) => {
+module.exports.textToSpeech = async (text, languageCode) => {
   const supportedLanguages = await languageModel.getActiveLanguages();
+  // Validate language code
+  if (!supportedLanguages.includes(languageCode)) {
+    throw new AppError(
+      `Unsupported language code: ${languageCode}. Supported: ${supportedLanguages.join(', ')}`,
+      400,
+    );
+  }
+
+  if (!textToSpeechClient) {
+    logger.error('TextToSpeechClient is not initialized');
+    throw new Error('TextToSpeechClient is not initialized');
+  }
+
+  // Create the text-to-speech request
+  const request = {
+    input: { text },
+    voice: {
+      languageCode,
+      ssmlGender: 'NEUTRAL',
+    },
+    audioConfig: {
+      audioEncoding: 'LINEAR16', // WAV format
+      sampleRateHertz: 16000,
+    },
+  };
+
+  logger.debug(`Generating speech for text in language: ${languageCode}`);
+  let response;
   try {
-    // Validate language code
-    if (!supportedLanguages.includes(languageCode)) {
-      throw new AppError(
-        `Unsupported language code: ${languageCode}. Supported: ${supportedLanguages.join(', ')}`,
-        400,
-      );
-    }
-
-    if (!textToSpeechClient) {
-      logger.error('TextToSpeechClient is not initialized');
-      throw new AppError('TextToSpeechClient is not initialized', 500);
-    }
-
-    const apiLanguageCode = languageCode;
-
-    // Create the text-to-speech request
-    const request = {
-      input: { text },
-      voice: {
-        languageCode: apiLanguageCode,
-        ssmlGender: 'NEUTRAL',
-      },
-      audioConfig: {
-        audioEncoding: 'LINEAR16', // WAV format
-        sampleRateHertz: 16000,
-      },
-    };
-
-    logger.debug(`Generating speech for text in language: ${apiLanguageCode}`);
-    let response;
-    try {
-      [response] = await textToSpeechClient.synthesizeSpeech(request);
-    } catch (error) {
-      logger.error(
-        `Error in synthesizeSpeech: ${JSON.stringify(error, null, 2)}`,
-      );
-      throw new AppError(`Failed to synthesize speech: ${error.message}`, 500);
-    }
-
-    if (!response || !response.audioContent) {
-      logger.error('No audio content returned from synthesizeSpeech');
-      throw new AppError('No audio content generated', 500);
-    }
-
-    // Generate a unique filename
-    const buf = crypto.randomBytes(4);
-    const uniqueName = `${Date.now()}-${buf.toString('hex')}-output.wav`;
-
-    // Define the full file path
-    const filePath = path.join(destinationPath, uniqueName);
-
-    // Save the audio content to disk
-    await fs.writeFile(filePath, response.audioContent, 'binary');
-    logger.debug(`Audio file saved successfully: ${filePath}`);
-
-    return { fileName: uniqueName, filePath };
+    [response] = await textToSpeechClient.synthesizeSpeech(request);
   } catch (error) {
     logger.error(
-      `Error generating speech for ${languageCode}: ${JSON.stringify(error, null, 2)}`,
+      `Error in synthesizeSpeech: ${JSON.stringify(error, null, 2)}`,
     );
-    throw new AppError(`Failed to generate speech: ${error.message}`, 500);
+    throw new Error(`Failed to synthesize speech: ${error.message}`);
   }
+
+  if (!response || !response.audioContent) {
+    logger.error('No audio content returned from synthesizeSpeech');
+    throw new Error('No audio content generated');
+  }
+
+  const { fileLink, fileName } = await fileUploader.saveAudioFile(
+    response.audioContent,
+  );
+
+  return { fileLink, fileName };
 };

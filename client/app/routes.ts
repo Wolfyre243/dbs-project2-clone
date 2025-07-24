@@ -23,7 +23,7 @@ export default [
     layout('routes/admin/layout.tsx', [
       index('routes/admin/page.tsx'),
       route('/analytics', 'routes/admin/analytics.tsx'),
-      route('/content', 'routes/admin/content.tsx'),
+      route('/content', 'routes/admin/content/page.tsx'),
       route('/users', 'routes/admin/user-management/user-pagination.tsx'),
       route('/register', 'routes/admin/register-admin.tsx'),
       route('/site-settings', 'routes/admin/site-settings.tsx'),

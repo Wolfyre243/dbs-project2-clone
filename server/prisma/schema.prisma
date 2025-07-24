@@ -55,12 +55,12 @@ model audio {
   createdBy      String                @map("created_by") @db.Uuid
   createdAt      DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
   statusId       Int                   @map("status_id")
-  fileName       String                @unique @map("file_name") @db.VarChar(150)
+  fileLink       String                @unique @map("file_link")
+  fileName       String                @unique @map("file_name")
   languageCode   String                @map("language_code") @db.VarChar(6)
   audioCreatedBy users                 @relation("AudioCreatedBy", fields: [createdBy], references: [userId])
   language       language              @relation(fields: [languageCode], references: [languageCode])
   status         status                @relation(fields: [statusId], references: [statusId])
-  exhibit        exhibit[]
   exhibits       exhibitAudioRelation?
 
   @@index([statusId, languageCode])
@@ -80,22 +80,20 @@ model exhibit {
   exhibitId            String                 @id @default(uuid()) @map("exhibit_id") @db.Uuid
   title                String                 @db.VarChar(100)
   description          String?
-  audioId              String                 @map("audio_id") @db.Uuid
   createdBy            String                 @map("created_by") @db.Uuid
   modifiedBy           String                 @map("modified_by") @db.Uuid
-  imageId              String?                 @map("image_id") @db.Uuid
+  imageId              String?                @map("image_id") @db.Uuid
   createdAt            DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
   modifiedAt           DateTime               @default(now()) @map("modified_at") @db.Timestamptz(6)
   statusId             Int                    @map("status_id")
-  audio                audio                  @relation(fields: [audioId], references: [audioId])
   exhibitCreatedBy     users                  @relation("ExhibitCreatedBy", fields: [createdBy], references: [userId])
-  image                image?                  @relation(fields: [imageId], references: [imageId])
+  image                image?                 @relation(fields: [imageId], references: [imageId])
   status               status                 @relation(fields: [statusId], references: [statusId])
   exhibitAudioRelation exhibitAudioRelation[]
   subtitles            exhibitSubtitle[]
   qrCode               qrCode?
 
-  @@index([statusId, audioId, imageId])
+  @@index([statusId, imageId])
 }
 
 model auditAction {
@@ -194,7 +192,8 @@ model image {
   createdBy      String    @map("created_by") @db.Uuid
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   statusId       Int       @map("status_id")
-  fileName       String    @unique @map("file_name") @db.VarChar(150)
+  fileLink       String    @unique @map("file_link")
+  fileName       String    @unique @map("file_name")
   exhibit        exhibit[]
   imageCreatedBy users     @relation("ImageCreatedBy", fields: [createdBy], references: [userId])
   status         status    @relation(fields: [statusId], references: [statusId])

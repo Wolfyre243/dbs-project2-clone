@@ -5,34 +5,112 @@ const AppError = require('../utils/AppError');
 const { encryptData, decryptData } = require('../utils/encryption');
 const { convertDatesToStrings } = require('../utils/formatters');
 
-// Create New Exhibit Model
-module.exports.newExhibit = async (title, desc, audioId, createdBy, imageId, statusId) => {
+// TODO: Add back imageId
+module.exports.createExhibit = async ({
+  title,
+  description,
+  createdBy,
+  modifiedBy,
+  // imageId,
+  statusId = statusCodes.ACTIVE,
+}) => {
+  return await prisma.exhibit.create({
+    data: {
+      title,
+      description,
+      createdBy,
+      modifiedBy,
+      // imageId,
+      statusId,
+    },
+  });
+};
+
+module.exports.createExhibitWithAssets = async ({
+  title,
+  description,
+  createdBy,
+  modifiedBy,
+  subtitleIdArr,
+  audioIdArr,
+  // imageId,
+  statusId = statusCodes.ACTIVE,
+}) => {
   try {
-    const exhibit = await prisma.exhibit.create({
-      data: {
-        title: title,
-        description: desc,
-        audioId: audioId,
-        createdBy: createdBy,
-        imageId: imageId,
-        statusId: statusId,
-      },
-    });
+    const result = await prisma.$transaction(async (tx) => {
+      const exhibit = await tx.exhibit.create({
+        data: {
+          title,
+          description,
+          createdBy,
+          modifiedBy,
+          // imageId,
+          statusId,
+        },
+      });
 
-    // Add a record in the exhibitAudioRelation table
-    await prisma.exhibitAudioRelation.create({
-      data: {
-        exhibitId: exhibit.exhibitId,
-        audioId: audioId,
-      },
-    });
+      // Link all subtitles to exhibit
+      await tx.exhibitSubtitle.createMany({
+        data: subtitleIdArr.map((subtitleId) => {
+          return { exhibitId: exhibit.exhibitId, subtitleId };
+        }),
+      });
 
-    return exhibit;
+      // Link all audio files to exhibit
+      await tx.exhibitAudioRelation.createMany({
+        data: audioIdArr.map((audioId) => {
+          return { exhibitId: exhibit.exhibitId, audioId };
+        }),
+      });
+
+      return exhibit;
+    });
+    return result;
   } catch (error) {
-    // Log error and throw a custom AppError for upstream handling
-    console.error('Error creating new exhibit:', error);
-    throw new AppError('Failed to create new exhibit', 500);
+    console.log(error);
+    throw error;
   }
+};
+
+module.exports.createExhibitSubtitle = async ({ exhibitId, subtitleId }) => {
+  return await prisma.exhibitSubtitle.create({
+    data: {
+      exhibitId,
+      subtitleId,
+    },
+  });
+};
+
+module.exports.createExhibitAudio = async ({ exhibitId, audioId }) => {
+  return await prisma.exhibitAudioRelation.create({
+    data: {
+      exhibitId,
+      audioId,
+    },
+  });
+};
+
+module.exports.createAuditLog = async ({
+  userId,
+  ipAddress,
+  entityName,
+  entityId,
+  actionType,
+  logText,
+}) => {
+  return await prisma.auditLog.create({
+    data: {
+      userId,
+      ipAddress,
+      entityName,
+      entityId,
+      actionTypeId: (
+        await prisma.auditAction.findFirst({ where: { actionType } })
+      ).actionTypeId,
+      logText,
+      timestamp: new Date(),
+    },
+  });
 };
 
 // Update exhibit
@@ -94,7 +172,9 @@ module.exports.softDeleteExhibit = async (exhibitId, statusCode) => {
       return null;
     }
 
-    logger.info(`Exhibit with ID ${exhibitId} soft deleted (status set to ${statusCode}).`);
+    logger.info(
+      `Exhibit with ID ${exhibitId} soft deleted (status set to ${statusCode}).`,
+    );
     return { id: exhibitId, status: statusCode };
   } catch (error) {
     logger.error(`Error soft deleting exhibit with ID ${exhibitId}:`, error);
@@ -124,4 +204,3 @@ module.exports.getEveryExhibit = async () => {
     throw new AppError('Error fetching all teams', 500);
   }
 };
-

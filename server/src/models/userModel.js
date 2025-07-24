@@ -239,3 +239,110 @@ module.exports.verifyUser = async (userId) => {
     throw error;
   }
 };
+
+// Soft delete user by setting status to deleted
+module.exports.softDeleteUser = async (userId) => {
+  try {
+    const user = await prisma.users.update({
+      where: { userId: userId },
+      data: {
+        statusId: statusCodes.DELETED,
+      },
+    });
+
+    return user;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2025') {
+        throw new AppError('User not found', 404);
+      }
+    }
+    console.log(error);
+    throw error;
+  }
+};
+
+// admin can hard delete user
+module.exports.hardDeleteUser = async (userId) => {
+  try {
+    const user = await prisma.users.delete({
+      where: { userId: userId },
+    });
+
+    return user;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2025') {
+        throw new AppError('User not found', 404);
+      }
+    }
+    console.log(error);
+    throw error;
+  }
+};
+
+//get all users for admin
+module.exports.getAllUsers = async ({
+  page,
+  pageSize,
+  sortBy,
+  order,
+  search,
+  filter = {},
+}) => {
+  let where = { ...filter };
+
+  // Conditional search terms
+  if (search && search.trim() !== '') {
+    where.OR = [
+      { username: { contains: search } },
+      { userProfile: { firstName: { contains: search } } },
+      { userProfile: { lastName: { contains: search } } },
+    ];
+  }
+
+  const userCount = await prisma.users.count({ where });
+
+  const usersRaw = await prisma.users.findMany({
+    skip: (page - 1) * pageSize,
+    take: pageSize,
+    where,
+    select: {
+      userId: true,
+      username: true,
+      createdAt: true,
+      modifiedAt: true,
+      statusId: true,
+      userProfile: {
+        select: {
+          firstName: true,
+          lastName: true,
+        },
+      },
+      userRoles: {
+        select: {
+          role: {
+            select: {
+              roleName: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: {
+      [sortBy]: order,
+    },
+  });
+
+  const users = usersRaw.map((user) => ({
+    ...user,
+    firstName: user.userProfile?.firstName,
+    lastName: user.userProfile?.lastName,
+    role: user.userRoles?.role?.roleName,
+  }));
+
+  return {
+    users,
+    userCount,
+  };
+};

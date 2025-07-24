@@ -1,47 +1,41 @@
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const userModel = require('../models/userModel');
-const sessionModel = require('../models/sessionModel');
+// Import types
 const AppError = require('../utils/AppError');
+const Roles = require('../configs/roleConfig');
+const AuditActions = require('../configs/auditActionConfig');
+const statusCodes = require('../configs/statusCodes');
+
+// Import utilities
 const logger = require('../utils/logger');
+const catchAsync = require('../utils/catchAsync');
 const { encryptData, decryptData } = require('../utils/encryption');
+const {
+  transcribeAndTranslateAudio,
+  textToSpeech,
+} = require('../utils/ttsService');
+const fileUploader = require('../utils/fileUploader');
+
+// Impoort Models
 const audioModel = require('../models/audioModel');
 const languageModel = require('../models/languageModel');
-const {
-  cookieOptions,
-  verifySK,
-  verifyTokenDuration,
-  tokenAlgorithm,
-} = require('../configs/authConfig');
-const catchAsync = require('../utils/catchAsync');
-const Roles = require('../configs/roleConfig');
-const ttsService = require('../utils/ttsService');
-const { transcribeAndTranslateAudio, textToSpeech } = ttsService;
-const path = require('path');
-const AuditActions = require('../configs/auditActionConfig');
+const subtitleModel = require('../models/subtitleModel');
+const { logAdminAudit } = require('../utils/auditlogs');
 
-// Check if transcribe function is available
-if (!transcribeAndTranslateAudio) {
-  throw new AppError(
-    'Transcription and translation service not available',
-    500,
-  );
-} else {
-  logger.info('Transcription and translation service loaded successfully');
-}
-
+// FIXME
 module.exports.uploadAudio = catchAsync(async (req, res, next) => {
   if (!req.file) {
     throw new AppError('No audio file uploaded', 400);
   }
 
-  const { filename, path: filePath } = req.file;
+  // const { filename, path: filePath } = req.file;
   const userId = res.locals.user.userId;
   const languageCode = req.body.languageCode;
   const description = req.body.description || 'No description provided';
-  logger.info(`Uploaded file: ${JSON.stringify(req.file)}`);
+  // TODO Include more file details
+  logger.debug(`Received file: ${req.file.originalname}`);
 
-  const supportedLanguages = await audioModel.getActiveLanguages();
+  // Validation for supported languages
+  const supportedLanguages = await languageModel.getActiveLanguages();
+  // TODO Transfer to validator middlware
   if (!languageCode) {
     throw new AppError('Language code is required', 400);
   }
@@ -56,40 +50,42 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
   }
 
   // Transcribe and translate audio
+  // TODO: Make optional
   const { transcription, translations } = await transcribeAndTranslateAudio(
-    filePath,
+    req.file,
     languageCode,
   );
   if (!transcription) {
-    throw new AppError('Failed to transcribe audio', 500);
+    throw new Error('Failed to transcribe audio');
   }
 
   // Get the translated text for the specified languageCode
   const translatedText = translations[languageCode];
   if (!translatedText) {
-    throw new AppError(
+    throw new Error(
       `No translation available for language code: ${languageCode}`,
-      500,
     );
   }
 
+  const fileLink = await fileUploader.uploadFile(req.file, 'audio');
+
   // Create audio record using the model
   const audio = await audioModel.createAudio({
-    description: description,
-    fileName: filename,
+    description,
+    fileLink,
     createdBy: userId,
-    languageCode: languageCode,
-    statusId: 1, // Assuming 1 is active status
+    languageCode,
+    statusId: statusCodes.ACTIVE,
   });
 
   // Log audit action
-  await audioModel.createAuditLog({
+  await logAdminAudit({
     userId,
-    ipAddress: req.ip || '0.0.0.0',
+    ipAddress: req.ip,
     entityName: 'audio',
     entityId: audio.audioId,
-    actionType: AuditActions.CREATE,
-    logText: `Uploaded, transcribed, and translated audio file: ${filename} to ${languageCode}`,
+    actionTypeId: AuditActions.CREATE,
+    logText: `Uploaded, transcribed, and translated audio file at ${fileLink} to ${languageCode}`,
   });
 
   // Create subtitle record with translated text
@@ -98,18 +94,16 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
     languageCode,
     createdBy: userId,
     modifiedBy: userId,
-    statusId: 1, // active status
+    statusId: statusCodes.ACTIVE,
   });
 
-  logger.info(
-    `Audio uploaded, transcribed, and translated successfully: ${filename}`,
-  );
+  logger.info(`Audio uploaded, transcribed, and translated successfully`);
 
   res.status(200).json({
     status: 'success',
     data: {
       audioId: audio.audioId,
-      fileName: audio.fileName,
+      fileLink: audio.fileLink,
       languageCode,
       transcription: translatedText, // Return translated text as transcription
       translations,
@@ -118,16 +112,15 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
         'Successfully uploaded audio and saved translated text as subtitle',
     },
   });
+
+  // TODO call next
 });
 
 // Convert text to audio
+// Creates just one audio entity
 module.exports.convertTextToAudio = catchAsync(async (req, res, next) => {
-  const { text, languageCode, description } = req.body;
+  const { text, languageCode } = req.body;
   const userId = res.locals.user.userId;
-
-  if (!text || !languageCode) {
-    throw new AppError('Text and languageCode are required', 400);
-  }
 
   // Validate language code
   const supportedLanguages = await languageModel.getActiveLanguages();
@@ -138,39 +131,123 @@ module.exports.convertTextToAudio = catchAsync(async (req, res, next) => {
     );
   }
 
-  // Define the destination path for the audio file
-  const destinationPath = path.join(__dirname, '../../Uploads/audio');
-
   // Generate audio from text
-  const { fileName, filePath } = await textToSpeech(
-    text,
-    languageCode,
-    destinationPath,
-  );
+  const { fileLink, fileName } = await textToSpeech(text, languageCode);
 
-  // Create audio and subtitle records using the model
-  const { audio, subtitle } = await audioModel.createTextToAudio({
-    text,
+  const audio = await audioModel.createAudio({
+    description: 'Text-to-speech generated audio',
+    fileLink,
     fileName,
-    languageCode,
     createdBy: userId,
-    ipAddress: req.ip,
-    description: description || 'Text-to-speech generated audio',
-    statusId: 1,
+    languageCode,
   });
 
-  logger.info(`Text converted to audio and saved successfully: ${fileName}`);
+  await logAdminAudit({
+    userId,
+    ipAddress: req.ip,
+    entityName: 'audio',
+    entityId: audio.audioId,
+    actionTypeId: AuditActions.CREATE,
+    logText: `Created audio file with ID ${audio.audioId}`,
+  });
+
+  logger.debug(`Text converted to audio and saved successfully: ${fileLink}`);
 
   res.status(200).json({
     status: 'success',
     data: {
       audioId: audio.audioId,
+      fileLink,
       fileName,
       languageCode,
-      subtitleId: subtitle.subtitleId,
+      text,
       message: 'Successfully converted text to audio and saved as subtitle',
     },
   });
+});
+
+module.exports.convertMultiTextToAudio = catchAsync(async (req, res, next) => {
+  const { subtitleArr } = req.body;
+  const userId = res.locals.user.userId;
+
+  const supportedLanguages = await languageModel.getActiveLanguages();
+
+  if (!Array.isArray(subtitleArr)) {
+    throw new AppError('subtitleArr must be an array', 400);
+  }
+
+  // Create an array of audio + subtitle
+  const generatedAssetIdsArray = subtitleArr.map(async (subtitleObj) => {
+    const { text, languageCode, tts } = subtitleObj;
+    if (!text || !languageCode || !tts) {
+      throw new AppError(
+        'Text, languageCode and TTS options are required',
+        400,
+      );
+    }
+
+    // Validate language code
+    if (!supportedLanguages.includes(languageCode)) {
+      throw new AppError(
+        `Unsupported language code: ${languageCode}. Supported: ${supportedLanguages.join(', ')}`,
+        400,
+      );
+    }
+
+    let assetObj = {};
+    // If user wants TTS
+    if (tts) {
+      // Generate audio from text
+      // We are assuming text input is already translated
+      const { fileLink, fileName } = await textToSpeech(text, languageCode);
+
+      const audio = await audioModel.createAudio({
+        description: 'Text-to-speech generated audio',
+        fileLink,
+        fileName,
+        createdBy: userId,
+        languageCode,
+      });
+      // console.log('Generated Audio: ', audio)
+      assetObj['audioId'] = audio.audioId;
+
+      await logAdminAudit({
+        userId,
+        ipAddress: req.ip,
+        entityName: 'audio',
+        entityId: audio.audioId,
+        actionTypeId: AuditActions.CREATE,
+        logText: `Created audio file with ID ${audio.audioId}`,
+      });
+
+      logger.debug(
+        `Text converted to audio and saved successfully: ${fileLink}`,
+      );
+    }
+
+    const subtitle = await subtitleModel.create({
+      subtitleText: text,
+      languageCode,
+      createdBy: userId,
+      modifiedBy: userId,
+    });
+    assetObj['subtitleId'] = subtitle.subtitleId;
+
+    await logAdminAudit({
+      userId,
+      ipAddress: req.ip,
+      entityName: 'subtitle',
+      entityId: subtitle.subtitleId,
+      actionTypeId: AuditActions.CREATE,
+      logText: `Created subtitle entity with ID ${subtitle.subtitleId}`,
+    });
+
+    return assetObj;
+  });
+
+  // Pass on the IDs of the generated assets
+  res.locals.generatedAssetIdsArray = await Promise.all(generatedAssetIdsArray);
+  return next();
 });
 
 module.exports.updateSubtitle = catchAsync(async (req, res, next) => {
@@ -190,7 +267,7 @@ module.exports.updateSubtitle = catchAsync(async (req, res, next) => {
   }
 
   // Validate language code if provided
-  const supportedLanguages = await audioModel.getActiveLanguages();
+  const supportedLanguages = await languageModel.getActiveLanguages();
   if (languageCode && !supportedLanguages.includes(languageCode)) {
     throw new AppError(
       `Unsupported language code: ${languageCode}. Supported: ${supportedLanguages.join(', ')}`,
@@ -226,30 +303,199 @@ module.exports.updateSubtitle = catchAsync(async (req, res, next) => {
   });
 });
 
-module.exports.getAllSubtitles = catchAsync(async (req, res, next) => {
-  const userId = res.locals.user.userId;
-  const role = res.locals.user.role;
+// Pagination
+// module.exports.getAllSubtitles = catchAsync(async (req, res, next) => {
+//   const userId = res.locals.user.userId;
+//   const roleId = res.locals.user.roleId;
 
-  // Restrict to admins only
-  if (role !== Roles.ADMIN) {
-    throw new AppError('Only admins can view subtitles', 403);
+//   // Restrict to admins only
+//   if (roleId !== Roles.ADMIN) {
+//     throw new AppError('Only admins can view subtitles', 403);
+//   }
+
+//   // Fetch all subtitles for admins
+//   const subtitles = await audioModel.getAllSubtitles({
+//     userId,
+//     isAdmin: true,
+//   });
+
+//   logger.info(
+//     `Fetched ${subtitles.length} subtitles for admin userId=${userId}`,
+//   );
+
+//   res.status(200).json({
+//     status: 'success',
+//     data: {
+//       subtitles,
+//       message: 'Successfully retrieved subtitles',
+//     },
+//   });
+// });
+
+//Get single audio by ID
+module.exports.getSingleAudio = catchAsync(async (req, res, next) => {
+  const { audioId } = req.params;
+
+  const audio = await audioModel.getAudioById(audioId);
+  if (!audio) {
+    throw new AppError('Audio not found', 404);
   }
-
-  // Fetch all subtitles for admins
-  const subtitles = await audioModel.getAllSubtitles({
-    userId,
-    isAdmin: true,
-  });
-
-  logger.info(
-    `Fetched ${subtitles.length} subtitles for admin userId=${userId}`,
-  );
 
   res.status(200).json({
     status: 'success',
     data: {
-      subtitles,
-      message: 'Successfully retrieved subtitles',
+      audio,
+      message: 'Successfully retrieved audio',
+    },
+  });
+});
+
+// archive audio by setting status to archived
+module.exports.archiveAudio = catchAsync(async (req, res, next) => {
+  const { audioId } = req.params;
+  const userId = res.locals.user.userId;
+
+  // Check if audio exists
+  const audio = await audioModel.getAudioById(audioId);
+  if (!audio) {
+    throw new AppError('Audio not found', 404);
+  }
+
+  await audioModel.archiveAudio(audioId, userId, req.ip);
+  await logAdminAudit({
+    userId,
+    ipAddress: req.ip,
+    entityName: 'audio',
+    entityId: audioId,
+    actionTypeId: AuditActions.UPDATE,
+    logText: `Archived audio with ID ${audioId}`,
+  });
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Audio archived successfully',
+  });
+});
+
+// Hard delte audio
+module.exports.hardDeleteAudio = catchAsync(async (req, res, next) => {
+  const { audioId } = req.params;
+  const userId = res.locals.user.userId;
+
+  // Check if audio exists
+  const audio = await audioModel.getAudioById(audioId);
+  if (!audio) {
+    throw new AppError('Audio not found', 404);
+  }
+
+  // Hard delete audio
+  await audioModel.hardDeleteAudio(audioId, userId, req.ip);
+  await logAdminAudit({
+    userId,
+    ipAddress: req.ip,
+    entityName: 'audio',
+    entityId: audioId,
+    actionTypeId: AuditActions.DELETE,
+    logText: `Hard deleted audio with ID ${audioId}`,
+  });
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Audio hard deleted successfully',
+  });
+});
+
+// unarchive audio
+module.exports.unarchiveAudio = catchAsync(async (req, res, next) => {
+  const { audioId } = req.params;
+  const userId = res.locals.user.userId;
+
+  // Check if audio exists
+  const audio = await audioModel.getAudioById(audioId);
+  if (!audio) {
+    throw new AppError('Audio not found', 404);
+  }
+
+  // Unarchive audio
+  await audioModel.unarchiveAudio(audioId, userId, req.ip);
+
+  await logAdminAudit({
+    userId,
+    ipAddress: req.ip,
+    entityName: 'audio',
+    entityId: audioId,
+    actionTypeId: AuditActions.UPDATE,
+    logText: `Unarchived audio with ID ${audioId}`,
+  });
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Audio unarchived successfully',
+  });
+});
+
+// soft delte audio
+module.exports.softDeleteAudio = catchAsync(async (req, res, next) => {
+  const { audioId } = req.params;
+  const userId = res.locals.user.userId;
+
+  // Check if audio exists
+  const audio = await audioModel.getAudioById(audioId);
+  if (!audio) {
+    throw new AppError('Audio not found', 404);
+  }
+
+  // Soft delete audio by setting status to deleted
+  await audioModel.softDeleteAudio(audioId, userId, req.ip);
+  await logAdminAudit({
+    userId,
+    ipAddress: req.ip,
+    entityName: 'audio',
+    entityId: audioId,
+    actionTypeId: AuditActions.DELETE,
+    logText: `Soft deleted audio with ID ${audioId}`,
+  });
+
+  res.status(200).json({
+    status: 'success',
+    message: 'Audio soft deleted successfully',
+  });
+});
+
+// get all audio with pagination, sorting, and filtering
+module.exports.getAllAudio = catchAsync(async (req, res, next) => {
+  const {
+    page = 1,
+    pageSize = 10,
+    sortBy = 'createdAt',
+    order = 'desc',
+    search = '',
+    languageCodeFilter = null,
+  } = req.query;
+
+  // TODO: Multi-filter?
+  const filter = {};
+  if (languageCodeFilter) {
+    filter.languageCode = languageCodeFilter;
+  }
+
+  // Fetch all audio for admin or user's own audio
+  const audioList = await audioModel.getAllAudio({
+    page: parseInt(page),
+    pageSize: parseInt(pageSize),
+    sortBy,
+    order,
+    search,
+    filter,
+  });
+
+  logger.info(`Retrieved ${pageSize} audio files for page ${page}.`);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      ...audioList,
+      message: 'Successfully retrieved audio list',
     },
   });
 });

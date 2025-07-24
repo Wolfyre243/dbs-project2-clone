@@ -1,6 +1,5 @@
-// User Settings Page with Profile and Settings sections
-
 import { isAxiosError } from 'axios';
+import { toast } from 'sonner';
 import { useEffect, useState } from 'react';
 import LoadingSpinner from '~/components/LoadingSpinner';
 import { Button } from '~/components/ui/button';
@@ -37,20 +36,27 @@ export function VerifyEmailButton({
   emailId: number;
 }) {
   const apiPrivate = useApiPrivate();
-  const [msg, setMsg] = useState<string | null>(null);
+  // const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleVerify = async () => {
     try {
-      const { data: responseData, status: responseStatus } =
-        await apiPrivate.post('/auth/send-verification', { emailId });
+      const promise = apiPrivate.post('/auth/send-verification', { emailId });
 
-      if (responseStatus === 200) {
-        setMsg('Verification Email Sent!');
-      }
+      toast.promise(promise, {
+        loading: 'Loading...',
+        success: (data) => {
+          if (data.status === 200) {
+            return `Verification email sent!`;
+          }
+        },
+        error: 'Failed to send verification email',
+      });
+
+      // const { data: responseData, status: responseStatus } = await promise;
     } catch (error) {
       if (isAxiosError(error)) {
-        setError(error.response?.data.message);
+        toast.error(error.response?.data.message);
       }
     }
   };
@@ -66,7 +72,6 @@ export function VerifyEmailButton({
         <MailCheck className='w-4 h-4' />
         <span className='hidden sm:inline'>{btnText ?? 'Verify Email'}</span>
       </Button>
-      <p className='text-green-400'>{msg}</p>
       <p className='text-red-400'>{error}</p>
     </>
   );

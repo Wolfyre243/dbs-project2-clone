@@ -4,14 +4,21 @@ const prisma = new PrismaClient();
 
 /**
  * @param {Object} params
- * @param {String} params.userId 
- * @param {String} params.ipAddress 
- * @param {String} params.entityName 
- * @param {String} params.entityId 
- * @param {Int} params.actionTypeId 
+ * @param {String} params.userId
+ * @param {String} params.ipAddress
+ * @param {String} params.entityName
+ * @param {String} params.entityId
+ * @param {Int} params.actionTypeId
  * @param {String} params.logText
  */
-module.exports.logAdminAudit = async function({ userId, ipAddress, entityName, entityId, actionTypeId, logText }) {
+module.exports.logAdminAudit = async function ({
+  userId,
+  ipAddress,
+  entityName,
+  entityId,
+  actionTypeId,
+  logText,
+}) {
   try {
     await prisma.auditLog.create({
       data: {
@@ -21,11 +28,10 @@ module.exports.logAdminAudit = async function({ userId, ipAddress, entityName, e
         entityId,
         actionTypeId,
         logText,
-        timestamp: new Date(),
       },
     });
+    // TODO: Log info here too
   } catch (error) {
     console.error('Error logging admin audit action:', error);
   }
-}
-
+};

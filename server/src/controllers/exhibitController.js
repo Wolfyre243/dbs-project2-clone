@@ -1,83 +1,97 @@
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const userModel = require('../models/userModel');
-const sessionModel = require('../models/sessionModel');
 const AppError = require('../utils/AppError');
 const logger = require('../utils/logger');
-const { encryptData, decryptData } = require('../utils/encryption');
-const audioModel = require('../models/audioModel');
-const {
-  cookieOptions,
-  verifySK,
-  verifyTokenDuration,
-  tokenAlgorithm,
-} = require('../configs/authConfig');
 const catchAsync = require('../utils/catchAsync');
-const status = require('../configs/statusCodes');
 const validateFields = require('../utils/validateFields');
 const exhibitModel = require('../models/exhibitModel');
 const exhibitModes = require('../configs/exhibitModes');
 const statusCodes = require('../configs/statusCodes');
-const adminAudit = require('../utils/auditlogs')
+const AuditActions = require('../configs/auditActionConfig');
+const { logAdminAudit } = require('../utils/auditlogs');
 
 // Create Exhibit controller function
+// Takes in an array of subtitle and audio IDs
 module.exports.createExhibit = catchAsync(async (req, res, next) => {
-  // Extract mode (transcribe or synthesize) from request body
-  const { mode, title, description, imageId, languageCode } = req.body;
-  const userId = res.locals.user.userId;
+  const { title, assetData } = req.body;
+  const description = req.body.description;
 
-  // Use validateFields utility for required fields
-  validateFields({
-    mode,
+  const userId = res.locals.user.userId;
+  // const imageId = res.locals.imageId;
+  // const imageId = req.body.imageId; // Assuming imageId is provided in the request
+
+  // Validate required fields
+  console.log(assetData);
+  if (!Array.isArray(assetData.subtitleIds)) {
+    throw new AppError('Subtitle IDs must be an array', 400);
+  }
+
+  if (!Array.isArray(assetData.audioIds)) {
+    throw new AppError('Audio IDs must be an array', 400);
+  }
+
+  // Validate imageId if provided
+  // if (imageId) {
+  //   const image = await prisma.image.findUnique({
+  //     where: { imageId },
+  //   });
+  //   if (!image) {
+  //     throw new AppError('Invalid imageId provided', 400);
+  //   }
+  // }
+
+  // Create exhibit
+  const exhibit = await exhibitModel.createExhibitWithAssets({
     title,
     description,
-    imageId,
-    languageCode,
+    createdBy: userId,
+    modifiedBy: userId,
+    subtitleIdArr: assetData.subtitleIds,
+    audioIdArr: assetData.audioIds,
+    // TODO: To implement images
+    // imageId,
   });
 
-  // Validate mode
-  if (!exhibitModes.values.includes(mode)) {
-    throw new AppError('Invalid exhibit mode', 400);
-  }
+  // assetData.forEach(async ({ audioId = null, subtitleId }) => {
+  //   // Create exhibit-subtitle relation
+  //   await exhibitModel.createExhibitSubtitle({
+  //     exhibitId: exhibit.exhibitId,
+  //     subtitleId,
+  //   });
 
-  let audioId;
+  //   if (audioId) {
+  //     await exhibitModel.createExhibitAudio({
+  //       exhibitId: exhibit.exhibitId,
+  //       audioId,
+  //     });
+  //   }
+  // });
 
-  // --- AUDIO LOGIC PLACEHOLDER ---
-  // If mode is TRANSCRIBE, require audio file and handle audio upload/transcription
-  // If mode is SYNTHESIZE, require text and handle text-to-speech
-  // Set audioId after audio is created
-  // ------------------------------------------------
-
-  // Require audioId before creating exhibit
-  if (!audioId) {
-    throw new AppError('Audio creation failed or missing audioId', 500);
-  }
-
-  // Create the exhibit
-  const exhibit = await exhibitModel.newExhibit(
-    title,
-    description,
-    audioId,
-    userId,
-    imageId,
-    status.ACTIVE // or another status as needed
+  logger.info(
+    `Exhibit created successfully: ${exhibit.exhibitId} by Admin ${userId}`,
   );
 
-  // Add a record in the exhibitAudioRelation table
-  await exhibitModel.createExhibitAudioRelation(exhibit.exhibitId, audioId);
+  // Log audit action
+  await logAdminAudit({
+    userId,
+    ipAddress: req.ip,
+    entityName: 'exhibit',
+    entityId: exhibit.exhibitId,
+    actionTypeId: AuditActions.CREATE,
+    logText: `Exhibit created successfully: ${exhibit.exhibitId} by Admin ${userId}`,
+  });
 
   res.status(201).json({
     status: 'success',
     data: {
-      exhibit,
-      message: 'Exhibit created successfully',
+      exhibitId: exhibit.exhibitId,
+      message: 'Successfully created exhibit with audio and subtitle',
     },
   });
 });
 
 // Get exhibit controller function
 module.exports.updateExhibit = catchAsync(async (req, res, next) => {
-  const { exhibitId, title, description, audioId, imageId, statusId } = req.body;
+  const { exhibitId, title, description, audioId, imageId, statusId } =
+    req.body;
   const createdBy = res.locals.user.userId;
 
   validateFields({
@@ -145,30 +159,34 @@ module.exports.getSingleExhibit = catchAsync(async (req, res, next) => {
 
 // Soft delete
 module.exports.deleteExhibit = catchAsync(async (req, res, next) => {
-    const exhibitId = req.params.exhibitId;
-    const statusCode = statusCodes.ARCHIVED;
+  const exhibitId = req.params.exhibitId;
+  const statusCode = statusCodes.ARCHIVED;
 
-    validateFields({
-        exhibitId
-    });
+  validateFields({
+    exhibitId,
+  });
 
-    try {
-        const softDelete = await exhibitModel.softDeleteExhibit(exhibitId, statusCode);
+  try {
+    const softDelete = await exhibitModel.softDeleteExhibit(
+      exhibitId,
+      statusCode,
+    );
 
-        if (!softDelete) {
-            return next(new AppError('Exhibit not found or already deleted.', 404));
-        }
-
-        res.status(200).json({
-            status: 'success',
-            message: 'Exhibit deleted',
-            deletedRecord: softDelete,
-        });
-
-    } catch (error) {
-        logger.error('Error deleting exhibit:', error);
-        return next(new AppError('Failed to delete exhibit. Please try again later.', 500));
+    if (!softDelete) {
+      return next(new AppError('Exhibit not found or already deleted.', 404));
     }
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Exhibit deleted',
+      deletedRecord: softDelete,
+    });
+  } catch (error) {
+    logger.error('Error deleting exhibit:', error);
+    return next(
+      new AppError('Failed to delete exhibit. Please try again later.', 500),
+    );
+  }
 });
 
 // Getting all exhibit data
@@ -187,5 +205,3 @@ module.exports.getAllExhibits = catchAsync(async (req, res, next) => {
     },
   });
 });
-
-
