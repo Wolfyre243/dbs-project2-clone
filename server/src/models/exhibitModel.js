@@ -175,8 +175,8 @@ module.exports.getAllExhibits = async ({
   // Conditional search terms
   if (search && search.trim() !== '') {
     where.OR = [
-      { title: { contains: search } },
-      { description: { contains: search } },
+      { title: { contains: search, mode: 'insensitive' } },
+      { description: { contains: search, mode: 'insensitive' } },
     ];
   }
 

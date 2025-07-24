@@ -628,12 +628,11 @@ export default function TourEditorCreateExhibitPage() {
                       )}
                     </div>
 
-                    {
+                    {subtitle.audioId && (
                       <div className='text-sm text-muted-foreground'>
-                        Audio ID: {subtitle.audioId} <br />
-                        Subtitle ID: {subtitle.id}
+                        Audio ID: {subtitle.audioId}
                       </div>
-                    }
+                    )}
                   </div>
                 ))}
 
