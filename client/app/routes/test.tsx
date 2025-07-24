@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from 'react';
 interface Subtitle {
   subtitleId: string;
   subtitleText: string;
-  languageCode: string;
   startTime?: number;
   endTime?: number;
 }
@@ -16,28 +15,26 @@ const AudioPlayer: React.FC = () => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const lastSpokenId = useRef<string | null>(null);
 
-  // Hardcoded audio data (replace with dynamic URL from API if needed)
+  // Hardcoded audio data with new file link
   // TODO: Add API call or route to fetch audioData dynamically (e.g., from a server endpoint)
   const audioData = {
-    fileLink: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', // Using fallback as hardcoded audio
-    languageCode: 'en-US',
+    fileLink: 'https://pygnekejfoydmllojohm.supabase.co/storage/v1/object/public/uploads/audio/1753374366112-3446f88c-output.wav', // New hardcoded audio file
+    languageCode: 'en', // Added language code for subtitles track
   };
 
-  // Hardcoded subtitles with longer text
+  // Hardcoded subtitles synchronized with the new audio, split into 8-word segments
   // TODO: Add API call or route to fetch subtitles dynamically (e.g., /api/subtitles)
   useEffect(() => {
-    const mockSubtitles: Subtitle[] = [
-      {
-        subtitleId: '1',
-        subtitleText: 'testing',
-        languageCode: 'en-US',
-      },
-      {
-        subtitleId: '2',
-        subtitleText: 'This is an example subtitle that is also quite long. It includes more information to test the limits of the display area and the speech synthesis capabilities. We might talk about the weather, the time, or even a short story about a journey through a forest on a sunny day, with birds chirping and a gentle breeze.',
-        languageCode: 'en-US',
-      },
-    ];
+    const fullText = 'Gear up with your family and friends for an adrenaline rush and heart-stopping adventure as many surprises await you in the most immersive laser tag arena in Singapore';
+    const words = fullText.split(' ');
+    const mockSubtitles: Subtitle[] = [];
+    for (let i = 0; i < words.length; i += 8) {
+      const segment = words.slice(i, i + 8).join(' ');
+      mockSubtitles.push({
+        subtitleId: `${i / 8 + 1}`, // Unique ID for each 8-word segment
+        subtitleText: segment,
+      });
+    }
     setSubtitles(mockSubtitles);
   }, []);
 
@@ -52,10 +49,11 @@ const AudioPlayer: React.FC = () => {
             setError('Failed to load audio duration.');
             return;
           }
+          const segmentDuration = duration / subtitles.length; // Divide duration by number of 8-word segments
           const estimatedSubtitles = subtitles.map((subtitle, index) => ({
             ...subtitle,
-            startTime: (index * duration) / subtitles.length,
-            endTime: ((index + 1) * duration) / subtitles.length,
+            startTime: index * segmentDuration, // Start time for each segment
+            endTime: (index + 1) * segmentDuration, // End time for each segment
           }));
           setSubtitles(estimatedSubtitles);
         }
@@ -65,7 +63,7 @@ const AudioPlayer: React.FC = () => {
     }
   }, [subtitles]);
 
-  // Highlight and speak subtitles during playback
+  // Highlight subtitles during playback (speech synthesis removed)
   const handleTimeUpdate = () => {
     if (audioRef.current) {
       const currentTime = audioRef.current.currentTime;
@@ -80,30 +78,18 @@ const AudioPlayer: React.FC = () => {
       if (active && active.subtitleId !== lastSpokenId.current) {
         setCurrentSubtitleId(active.subtitleId);
         lastSpokenId.current = active.subtitleId;
-        if ('speechSynthesis' in window) {
-          window.speechSynthesis.cancel();
-          const utterance = new SpeechSynthesisUtterance(active.subtitleText);
-          utterance.lang = active.languageCode;
-          utterance.rate = 1;
-          utterance.onend = () => {
-            lastSpokenId.current = null;
-          };
-          window.speechSynthesis.speak(utterance);
-        }
       } else if (!active && lastSpokenId.current) {
         setCurrentSubtitleId(null);
         lastSpokenId.current = null;
-        window.speechSynthesis.cancel();
       }
     }
   };
 
-  // Stop speech when audio pauses or ends
+  // Stop highlighting when audio pauses or ends
   const handlePauseOrEnd = () => {
     if (audioRef.current) {
       setCurrentSubtitleId(null);
       lastSpokenId.current = null;
-      window.speechSynthesis.cancel();
     }
   };
 
@@ -142,26 +128,26 @@ const AudioPlayer: React.FC = () => {
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-      <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '16px' }}>
+      <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '16px', color: '#e0e0e0' }}>
         Audio Player with Subtitles
       </h2>
-      {error && <p style={{ color: 'red', marginBottom: '16px' }}>{error}</p>}
+      {error && <p style={{ color: '#ff4444', marginBottom: '16px' }}>{error}</p>}
       <audio
         ref={audioRef}
         controls
-        style={{ width: '100%', marginBottom: '16px' }}
+        style={{ width: '100%', marginBottom: '16px', borderRadius: '8px', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)' }}
         onTimeUpdate={handleTimeUpdate}
         onPause={handlePauseOrEnd}
         onEnded={handlePauseOrEnd}
         onError={handleAudioError}
       >
-        <source src={audioData.fileLink} type="audio/mp3" />
+        <source src={audioData.fileLink} type="audio/wav" />
         {subtitles.length > 0 && (
           <track kind="subtitles" src={generateVTT()} srcLang={audioData.languageCode} default />
         )}
         Your browser does not support the audio element.
       </audio>
-      <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '8px' }}>
+      <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '8px', color: '#a0dfff' }}>
         Welcome to SDC!
       </h3>
       <div
@@ -169,8 +155,10 @@ const AudioPlayer: React.FC = () => {
           maxHeight: '300px',
           overflowY: 'auto',
           padding: '15px',
-          backgroundColor: '#f0f0f0',
-          borderRadius: '5px',
+          backgroundColor: '#000000', // Black background
+          borderRadius: '10px',
+          color: '#ffffff',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)', // Subtle shadow for depth
         }}
       >
         {subtitles.length > 0 ? (
@@ -178,15 +166,20 @@ const AudioPlayer: React.FC = () => {
             <p
               key={sub.subtitleId}
               style={{
-                padding: '10px',
-                margin: '5px 0',
-                borderRadius: '3px',
-                backgroundColor: sub.subtitleId === currentSubtitleId ? '#ffeeba' : 'transparent',
-                fontWeight: sub.subtitleId === currentSubtitleId ? 'bold' : 'normal',
+                padding: '12px',
+                margin: '7px 0',
+                borderRadius: '8px',
+                background: sub.subtitleId === currentSubtitleId 
+                  ? 'linear-gradient(90deg, #ffeb3b, #ffca28)' // Gradient from yellow to orange
+                  : 'transparent',
+                fontWeight: sub.subtitleId === currentSubtitleId ? '500' : '300',
                 whiteSpace: 'pre-wrap', // Allows text to wrap and display fully
+                transition: 'all 0.3s ease', // Smooth transition for appealing effect
+                boxShadow: sub.subtitleId === currentSubtitleId ? '0 2px 6px rgba(255, 215, 0, 0.4)' : 'none', // Shadow on highlight
+                color: sub.subtitleId === currentSubtitleId ? '#1a1a1a' : '#ffffff', // Darker text on highlight for contrast
               }}
             >
-              {sub.subtitleText} ({sub.languageCode})
+              {sub.subtitleText}
             </p>
           ))
         ) : (
