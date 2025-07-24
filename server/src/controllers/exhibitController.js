@@ -18,6 +18,7 @@ const validateFields = require('../utils/validateFields');
 const exhibitModel = require('../models/exhibitModel');
 const exhibitModes = require('../configs/exhibitModes');
 const statusCodes = require('../configs/statusCodes');
+const adminAudit = require('../utils/auditlogs')
 
 // Create Exhibit controller function
 module.exports.createExhibit = catchAsync(async (req, res, next) => {

@@ -23,7 +23,7 @@ router.get('/get-byId/:exhibitId', exhibitController.getSingleExhibit);     // -
 router.put('/update-exhibit', exhibitController.updateExhibit);            // -- U
 router.delete('/delete/:exhibitId', exhibitController.deleteExhibit);     // -- D
 
-router.get('/get-everything', exhibitController.getAllExhibits);
+router.get('/get-exhibits', exhibitController.getAllExhibits);
 
 
 

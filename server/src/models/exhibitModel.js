@@ -102,7 +102,7 @@ module.exports.softDeleteExhibit = async (exhibitId, statusCode) => {
   }
 };
 
-module.exports.getAllTeams = async () => {
+module.exports.getEveryExhibit = async () => {
   try {
     const exhibit = await prisma.exhibit.findMany({
       select: {
