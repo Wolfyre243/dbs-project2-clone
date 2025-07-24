@@ -12,12 +12,15 @@ export default [
   route('/verify', 'routes/verify.tsx'),
   route('/unauthorized', 'routes/unauthorized.tsx'),
   route('/test', 'routes/test.tsx'),
+  route('/exhibits', 'routes/home/exhibits/page.tsx'),
 
   ...prefix('home', [
     layout('routes/home/layout.tsx', [
       index('routes/home/page.tsx'),
       route('/settings', 'routes/home/settings.tsx'),
-      ...prefix('exhibits', [index('routes/home/exhibits/page.tsx')]),
+      ...prefix('exhibits', [
+        route('/:exhibitId', 'routes/home/exhibits/single-exhibit.tsx'),
+      ]),
     ]),
   ]),
 

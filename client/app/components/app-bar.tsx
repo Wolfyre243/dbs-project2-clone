@@ -27,6 +27,11 @@ const links = [
     name: 'Home',
     auth: true,
   },
+  {
+    to: '/exhibits',
+    name: 'Exhibits',
+    auth: false,
+  },
 ];
 
 export function LoginButton() {
