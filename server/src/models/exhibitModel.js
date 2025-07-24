@@ -134,32 +134,6 @@ module.exports.updateExhibit = async ({
   }
 };
 
-// Get Exhibits By Exhibit ID
-module.exports.getExhibitById = async (exhibitId) => {
-  try {
-    const exhibit = await prisma.exhibit.findUnique({
-      where: {
-        exhibitId,
-      },
-      include: {
-        subtitles: {
-          select: {
-            subtitle: {
-              include: {
-                audio: true,
-              },
-            },
-          },
-        },
-      },
-    });
-    return convertDatesToStrings(exhibit);
-  } catch (error) {
-    console.error('Error fetching exhibit:', error);
-    throw new AppError('Failed to fetch exhibit', 500);
-  }
-};
-
 // Soft delete
 module.exports.softDeleteExhibit = async (exhibitId, statusCode) => {
   try {
@@ -220,7 +194,11 @@ module.exports.getAllExhibits = async ({
       image: true,
       status: true,
       exhibitCreatedBy: true,
-      // Add other relations if needed
+      subtitles: {
+        select: {
+          subtitle: true,
+        },
+      },
     },
     orderBy: {
       [sortBy]: order,
@@ -228,7 +206,60 @@ module.exports.getAllExhibits = async ({
   });
 
   return {
-    exhibits: exhibitsRaw.map((exhibit) => convertDatesToStrings(exhibit)),
+    exhibits: exhibitsRaw
+      .map((exhibit) => {
+        let supportedLangArr = null;
+        if (exhibit.subtitles && exhibit.subtitles.length > 0) {
+          supportedLangArr = exhibit.subtitles.map(
+            (s) => s.subtitle.languageCode,
+          );
+        }
+
+        return {
+          ...exhibit,
+          subtitles: undefined,
+          supportedLanguages: supportedLangArr,
+          status: exhibit.status.statusName,
+          exhibitCreatedBy: exhibit.exhibitCreatedBy.username,
+        };
+      })
+      .map((exhibit) => convertDatesToStrings(exhibit)),
     exhibitCount,
   };
+};
+
+// Get Exhibits By Exhibit ID
+module.exports.getExhibitById = async (exhibitId) => {
+  try {
+    const exhibit = await prisma.exhibit.findUnique({
+      where: {
+        exhibitId,
+      },
+      include: {
+        subtitles: {
+          select: {
+            subtitle: {
+              include: {
+                audio: true,
+              },
+            },
+          },
+        },
+        status: true,
+        exhibitCreatedBy: true,
+      },
+    });
+    return convertDatesToStrings({
+      ...exhibit,
+      statusId: undefined,
+      exhibitCreatedBy: undefined,
+      supportedLanguages: exhibit.subtitles.map((s) => s.subtitle.languageCode),
+      subtitles: exhibit.subtitles.map((s) => ({ ...s.subtitle })),
+      status: exhibit.status.statusName,
+      createdBy: exhibit.exhibitCreatedBy.username,
+    });
+  } catch (error) {
+    console.error('Error fetching exhibit:', error);
+    throw new AppError('Failed to fetch exhibit', 500);
+  }
 };
