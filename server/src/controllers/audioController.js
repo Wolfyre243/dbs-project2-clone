@@ -303,33 +303,34 @@ module.exports.updateSubtitle = catchAsync(async (req, res, next) => {
   });
 });
 
-module.exports.getAllSubtitles = catchAsync(async (req, res, next) => {
-  const userId = res.locals.user.userId;
-  const role = res.locals.user.role;
+// Pagination
+// module.exports.getAllSubtitles = catchAsync(async (req, res, next) => {
+//   const userId = res.locals.user.userId;
+//   const roleId = res.locals.user.roleId;
 
-  // Restrict to admins only
-  if (role !== Roles.ADMIN) {
-    throw new AppError('Only admins can view subtitles', 403);
-  }
+//   // Restrict to admins only
+//   if (roleId !== Roles.ADMIN) {
+//     throw new AppError('Only admins can view subtitles', 403);
+//   }
 
-  // Fetch all subtitles for admins
-  const subtitles = await audioModel.getAllSubtitles({
-    userId,
-    isAdmin: true,
-  });
+//   // Fetch all subtitles for admins
+//   const subtitles = await audioModel.getAllSubtitles({
+//     userId,
+//     isAdmin: true,
+//   });
 
-  logger.info(
-    `Fetched ${subtitles.length} subtitles for admin userId=${userId}`,
-  );
+//   logger.info(
+//     `Fetched ${subtitles.length} subtitles for admin userId=${userId}`,
+//   );
 
-  res.status(200).json({
-    status: 'success',
-    data: {
-      subtitles,
-      message: 'Successfully retrieved subtitles',
-    },
-  });
-});
+//   res.status(200).json({
+//     status: 'success',
+//     data: {
+//       subtitles,
+//       message: 'Successfully retrieved subtitles',
+//     },
+//   });
+// });
 
 //Get single audio by ID
 module.exports.getSingleAudio = catchAsync(async (req, res, next) => {
@@ -369,7 +370,6 @@ module.exports.archiveAudio = catchAsync(async (req, res, next) => {
     actionTypeId: AuditActions.UPDATE,
     logText: `Archived audio with ID ${audioId}`,
   });
-
 
   res.status(200).json({
     status: 'success',
@@ -428,7 +428,6 @@ module.exports.unarchiveAudio = catchAsync(async (req, res, next) => {
     logText: `Unarchived audio with ID ${audioId}`,
   });
 
-
   res.status(200).json({
     status: 'success',
     message: 'Audio unarchived successfully',
@@ -448,7 +447,7 @@ module.exports.softDeleteAudio = catchAsync(async (req, res, next) => {
 
   // Soft delete audio by setting status to deleted
   await audioModel.softDeleteAudio(audioId, userId, req.ip);
-   await logAdminAudit({
+  await logAdminAudit({
     userId,
     ipAddress: req.ip,
     entityName: 'audio',
@@ -463,16 +462,22 @@ module.exports.softDeleteAudio = catchAsync(async (req, res, next) => {
   });
 });
 
-//get all audio with pagination, sorting, and filtering
+// get all audio with pagination, sorting, and filtering
 module.exports.getAllAudio = catchAsync(async (req, res, next) => {
   const {
     page = 1,
     pageSize = 10,
     sortBy = 'createdAt',
     order = 'desc',
+    search = '',
+    languageCodeFilter = null,
   } = req.query;
-  const userId = res.locals.user.userId;
-  const isAdmin = res.locals.user.role === Roles.ADMIN;
+
+  // TODO: Multi-filter?
+  const filter = {};
+  if (languageCodeFilter) {
+    filter.languageCode = languageCodeFilter;
+  }
 
   // Fetch all audio for admin or user's own audio
   const audioList = await audioModel.getAllAudio({
@@ -480,12 +485,16 @@ module.exports.getAllAudio = catchAsync(async (req, res, next) => {
     pageSize: parseInt(pageSize),
     sortBy,
     order,
+    search,
+    filter,
   });
+
+  logger.info(`Retrieved ${pageSize} audio files for page ${page}.`);
 
   res.status(200).json({
     status: 'success',
     data: {
-      audioList,
+      ...audioList,
       message: 'Successfully retrieved audio list',
     },
   });

@@ -2,6 +2,7 @@ import { Separator } from '~/components/ui/separator';
 import { SidebarTrigger } from '~/components/ui/sidebar';
 import LayoutBreadcrumb from './layout-breadcrumb';
 import { useEffect, useState } from 'react';
+import ThemeSwitcher from './theme-switch';
 // import ThemeSwitcher from './theme-switch';
 
 export function SiteHeader() {
@@ -20,7 +21,7 @@ export function SiteHeader() {
         <LayoutBreadcrumb href={windowHref} />
         <div className='ml-auto flex items-center gap-2'>
           {/* Light/Dark mode toggler */}
-          {/* <ThemeSwitcher /> */}
+          <ThemeSwitcher />
         </div>
       </div>
     </header>

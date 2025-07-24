@@ -14,7 +14,6 @@ const languageModel = require('../models/languageModel');
 const subtitleModel = require('../models/subtitleModel');
 const { logAdminAudit } = require('../utils/auditlogs');
 
-
 module.exports.createSubtitle = catchAsync(async (req, res, next) => {
   const { text, languageCode } = req.body;
   const userId = res.locals.user.userId;
@@ -44,7 +43,7 @@ module.exports.createSubtitle = catchAsync(async (req, res, next) => {
     logText: `Created subtitle entity with ID ${subtitle.subtitleId}`,
   });
 
-  logger.debug(`Text converted to audio and saved successfully: ${fileLink}`);
+  logger.debug(`Subtitle created successfully with ID: ${subtitle.subtitleId}`);
 
   res.status(201).json({
     status: 'success',
@@ -165,20 +164,20 @@ module.exports.hardDeleteSubtitle = catchAsync(async (req, res, next) => {
   });
 });
 
-// get all subttilesfor admin using pagination
+// get all subttiles for admin using pagination
 module.exports.getAllSubtitles = catchAsync(async (req, res, next) => {
   const {
     page = 1,
     pageSize = 10,
     sortBy = 'createdAt',
-    order = 'asc',
+    order = 'desc',
     search = '',
-    statusFilter = null,
+    languageCodeFilter = null,
   } = req.query;
 
   const filter = {};
-  if (statusFilter) {
-    filter.statusId = parseInt(statusFilter);
+  if (languageCodeFilter) {
+    filter.languageCode = languageCodeFilter;
   }
 
   const result = await subtitleModel.getAllSubtitles({
@@ -191,8 +190,9 @@ module.exports.getAllSubtitles = catchAsync(async (req, res, next) => {
   });
 
   logger.info(
-    `Retrieved ${pageSize} subtitles for page ${page}, total ${result.subtitleCount} subtitles.`
+    `Retrieved ${pageSize} subtitles for page ${page}, total ${result.subtitleCount} subtitles.`,
   );
+
   res.status(200).json({
     status: 'success',
     pageCount: Math.ceil(result.subtitleCount / pageSize),
@@ -206,7 +206,11 @@ module.exports.getSubtitleById = catchAsync(async (req, res, next) => {
   const userId = res.locals.user.userId;
   const isAdmin = res.locals.user.role === Roles.ADMIN;
 
-  const subtitle = await subtitleModel.getSubtitleById({ subtitleId, userId, isAdmin });
+  const subtitle = await subtitleModel.getSubtitleById({
+    subtitleId,
+    userId,
+    isAdmin,
+  });
   if (!subtitle) {
     return next(new AppError('Subtitle not found', 404));
   }
@@ -218,4 +222,3 @@ module.exports.getSubtitleById = catchAsync(async (req, res, next) => {
     },
   });
 });
-

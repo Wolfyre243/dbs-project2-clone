@@ -42,29 +42,11 @@ const exhibitRouter = express.Router();
 exhibitRouter.use(jwtMiddleware.verifyToken);
 
 // Admin Exhibit Routes
-exhibitRouter.get('/get-byId/:exhibitId', exhibitController.getSingleExhibit); // -- R
-exhibitRouter.put('/update-exhibit', exhibitController.updateExhibit); // -- U
-exhibitRouter.delete('/delete/:exhibitId', exhibitController.deleteExhibit); // -- D
-// router.post(
-//   '/create-exhibit',
-//   authMiddleware.verifyIsAdmin,
-//   upload.single('audio'),
-//   audioController.uploadAudio,
-//   audioController.convertTextToAudio,
-//   exhibitController.createExhibit
-// );
+// router.post('/create-exhibit', exhibitController.createExhibit);             // -- C
+exhibitRouter.get('/:exhibitId', exhibitController.getSingleExhibit); // -- R
+exhibitRouter.put('/', exhibitController.updateExhibit); // -- U
+exhibitRouter.delete('/:exhibitId', exhibitController.deleteExhibit); // -- D
 
-// Creating exhibit with TTS in mind first (add STT next time)
-/**
- * Request Body:
- * {
- *   ...
- *   tts: [
- *     { text: String, languageCode: String },
- *     ...
- *   ]
- * }
- */
 exhibitRouter.post(
   '/',
   createExhibitionValidationRules(),
@@ -76,6 +58,6 @@ exhibitRouter.post(
   exhibitController.createExhibit,
 );
 
-exhibitRouter.get('/get-everything', exhibitController.getAllExhibits);
+exhibitRouter.get('/', exhibitController.getAllExhibits);
 
 module.exports = exhibitRouter;

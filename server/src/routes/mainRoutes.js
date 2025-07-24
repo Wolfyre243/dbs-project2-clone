@@ -7,6 +7,7 @@ const audioRouter = require('./audioRoutes');
 const userRouter = require('./userRoutes');
 const exhibitRouter = require('./exhibitRoutes');
 const subtitleRouter = require('./subtitleRoutes');
+const languageRouter = require('./languageRoutes');
 
 // Create the main router and register routers
 const mainRouter = express.Router();
@@ -16,6 +17,7 @@ mainRouter.use('/audio', audioRouter);
 mainRouter.use('/user', userRouter);
 mainRouter.use('/exhibit', exhibitRouter);
 mainRouter.use('/subtitle', subtitleRouter);
+mainRouter.use('/language', languageRouter);
 mainRouter.get('/', (req, res) => {
   res.redirect('/docs');
 });

@@ -16,6 +16,7 @@ import useRefreshToken from './hooks/useRefreshToken';
 import { useLayoutEffect } from 'react';
 import { isAxiosError } from 'node_modules/axios';
 import LoadingSpinner from './components/LoadingSpinner';
+import { Toaster } from 'sonner';
 
 export const links: Route.LinksFunction = () => [
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
@@ -56,6 +57,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </AuthProvider>
         </ThemeProvider>
         <Scripts />
+        <Toaster richColors closeButton expand={true} />
       </body>
     </html>
   );
