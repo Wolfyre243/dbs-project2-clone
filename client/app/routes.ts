@@ -11,6 +11,7 @@ export default [
   route('/*', 'routes/notFound.tsx'),
   route('/verify', 'routes/verify.tsx'),
   route('/unauthorized', 'routes/unauthorized.tsx'),
+  route('/test', 'routes/test.tsx'),
 
   ...prefix('home', [
     layout('routes/home/layout.tsx', [
