@@ -48,6 +48,16 @@ const data = {
       title: 'Tour Editor',
       url: '/admin/tour-editor',
       icon: Hammer,
+      items: [
+        {
+          title: 'View Exhibits',
+          url: '/admin/tour-editor',
+        },
+        {
+          title: 'Create Exhibit',
+          url: '/admin/tour-editor/create-exhibit',
+        },
+      ],
     },
     {
       title: 'Analytics',

@@ -8,8 +8,8 @@ const { body, param, query, check } = require('express-validator');
 module.exports.textValidation = () =>
   body('text')
     .trim()
-    .matches(/^[a-zA-Z0-9 @#$%'"!?.,;:/-_]+$/)
-    .withMessage('Text must contain only letters, numbers and spaces')
+    // .matches(/^[a-zA-Z0-9 @#$%'"!?.,;:/-_]+$/)
+    // .withMessage('Text must contain only letters, numbers and spaces')
     .escape();
 
 module.exports.languageCodeValidation = () =>

@@ -30,6 +30,14 @@ export default [
       ...prefix('tour-editor', [
         layout('routes/admin/tour-editor/layout.tsx', [
           index('routes/admin/tour-editor/page.tsx'),
+          route(
+            '/create-exhibit',
+            'routes/admin/tour-editor/create-exhibit.tsx',
+          ),
+          route(
+            '/view-exhibit/:exhibitId',
+            'routes/admin/tour-editor/view-exhibit.tsx',
+          ),
         ]),
       ]),
     ]),
