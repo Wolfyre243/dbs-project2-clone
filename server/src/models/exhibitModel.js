@@ -32,7 +32,6 @@ module.exports.createExhibitWithAssets = async ({
   createdBy,
   modifiedBy,
   subtitleIdArr,
-  audioIdArr,
   // imageId,
   statusId = statusCodes.ACTIVE,
 }) => {
@@ -53,13 +52,6 @@ module.exports.createExhibitWithAssets = async ({
       await tx.exhibitSubtitle.createMany({
         data: subtitleIdArr.map((subtitleId) => {
           return { exhibitId: exhibit.exhibitId, subtitleId };
-        }),
-      });
-
-      // Link all audio files to exhibit
-      await tx.exhibitAudioRelation.createMany({
-        data: audioIdArr.map((audioId) => {
-          return { exhibitId: exhibit.exhibitId, audioId };
         }),
       });
 
@@ -149,8 +141,19 @@ module.exports.getExhibitById = async (exhibitId) => {
       where: {
         exhibitId,
       },
+      include: {
+        subtitles: {
+          select: {
+            subtitle: {
+              include: {
+                audio: true,
+              },
+            },
+          },
+        },
+      },
     });
-    return exhibit;
+    return convertDatesToStrings(exhibit);
   } catch (error) {
     console.error('Error fetching exhibit:', error);
     throw new AppError('Failed to fetch exhibit', 500);
@@ -225,8 +228,7 @@ module.exports.getAllExhibits = async ({
   });
 
   return {
-    exhibits: exhibitsRaw,
+    exhibits: exhibitsRaw.map((exhibit) => convertDatesToStrings(exhibit)),
     exhibitCount,
   };
 };
-

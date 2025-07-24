@@ -11,7 +11,6 @@ import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 import { Textarea } from '~/components/ui/textarea';
 import { LanguageSelect } from '~/components/language-select';
-import { Separator } from '~/components/ui/separator';
 import { apiPrivate } from '~/services/api';
 import { Trash2, Plus, Play, Loader2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
@@ -19,7 +18,7 @@ import { toast } from 'sonner';
 interface SubtitleItem {
   id: string;
   text: string;
-  language: string;
+  languageCode: string;
   audioId?: string;
   fileLink?: string;
   isGenerating?: boolean;
@@ -27,11 +26,10 @@ interface SubtitleItem {
 
 interface AssetData {
   subtitleIds: string[];
-  audioIds?: string[]; // optional for creation
 }
 
 interface ExhibitMetadata {
-  name: string;
+  title: string;
   description: string;
   imageUrl?: string;
 }
@@ -42,7 +40,7 @@ interface ValidationErrors {
 
 export default function TourEditorCreateExhibitPage() {
   const [exhibitMetadata, setExhibitMetadata] = useState<ExhibitMetadata>({
-    name: '',
+    title: '',
     description: '',
     imageUrl: undefined,
   });
@@ -115,14 +113,14 @@ export default function TourEditorCreateExhibitPage() {
     const errors: ValidationErrors = {};
 
     // Validate exhibit name
-    if (!exhibitMetadata.name.trim()) {
+    if (!exhibitMetadata.title.trim()) {
       errors.exhibitName = 'Exhibit name is required';
     } else if (
-      exhibitMetadata.name.trim().length < VALIDATION_LIMITS.EXHIBIT_NAME_MIN
+      exhibitMetadata.title.trim().length < VALIDATION_LIMITS.EXHIBIT_NAME_MIN
     ) {
       errors.exhibitName = `Exhibit name must be at least ${VALIDATION_LIMITS.EXHIBIT_NAME_MIN} characters`;
     } else if (
-      exhibitMetadata.name.trim().length > VALIDATION_LIMITS.EXHIBIT_NAME_MAX
+      exhibitMetadata.title.trim().length > VALIDATION_LIMITS.EXHIBIT_NAME_MAX
     ) {
       errors.exhibitName = `Exhibit name must not exceed ${VALIDATION_LIMITS.EXHIBIT_NAME_MAX} characters`;
     }
@@ -161,26 +159,27 @@ export default function TourEditorCreateExhibitPage() {
   const addSubtitle = () => {
     setSubtitles((prev) => [
       ...prev,
-      { id: `temp-${crypto.randomUUID()}`, text: '', language: '' }, // temp id
+      { id: `temp-${crypto.randomUUID()}`, text: '', languageCode: '' }, // temp id
     ]);
   };
 
   // Remove a subtitle item and delete its audio/subtitle if present
+  // FIXME
   const removeSubtitle = async (id: string) => {
     const subtitle = subtitles.find((s) => s.id === id);
     if (!subtitle) return;
     // Delete audio if present
-    if (subtitle.audioId) {
-      try {
-        await apiPrivate.delete(`/audio/hard-delete/${subtitle.audioId}`);
-      } catch (err) {
-        console.warn('Failed to delete audio for removed subtitle:', err);
-      }
-    }
+    // if (subtitle.audioId) {
+    //   try {
+    //     await apiPrivate.delete(`/audio/hard-delete/${subtitle.audioId}`);
+    //   } catch (err) {
+    //     console.warn('Failed to delete audio for removed subtitle:', err);
+    //   }
+    // }
     // Delete subtitle from backend if it has a backend id (assume not a temp id)
     if (subtitle.id && !subtitle.id.startsWith('temp-')) {
       try {
-        await apiPrivate.delete(`/subtitle/${subtitle.id}`);
+        await apiPrivate.delete(`/subtitle/hard-delete/${subtitle.id}`);
       } catch (err) {
         console.warn('Failed to delete subtitle from backend:', err);
       }
@@ -210,10 +209,10 @@ export default function TourEditorCreateExhibitPage() {
   };
 
   // Update subtitle language
-  const updateSubtitleLanguage = (id: string, language: string) => {
+  const updateSubtitleLanguage = (id: string, languageCode: string) => {
     setSubtitles((prev) =>
       prev.map((subtitle) =>
-        subtitle.id === id ? { ...subtitle, language } : subtitle,
+        subtitle.id === id ? { ...subtitle, languageCode } : subtitle,
       ),
     );
   };
@@ -221,7 +220,7 @@ export default function TourEditorCreateExhibitPage() {
   // Generate TTS audio for a subtitle
   const generateAudio = async (subtitleId: string) => {
     let subtitle = subtitles.find((s) => s.id === subtitleId);
-    if (!subtitle || !subtitle.text.trim() || !subtitle.language) {
+    if (!subtitle || !subtitle.text.trim() || !subtitle.languageCode) {
       toast.error('Please enter subtitle text and select a language');
       return;
     }
@@ -232,21 +231,6 @@ export default function TourEditorCreateExhibitPage() {
     );
 
     try {
-      // If subtitle does not have a backend id, create it first
-      if (!subtitle.id || subtitle.id.startsWith('temp-')) {
-        const { data: responseData } = await apiPrivate.post('/subtitle', {
-          text: subtitle.text,
-          languageCode: subtitle.language,
-        });
-        const backendId = responseData.data.subtitleId;
-        // Update the subtitle in state with the backend id
-        setSubtitles((prev) =>
-          prev.map((s) => (s.id === subtitleId ? { ...s, id: backendId } : s)),
-        );
-        subtitle = { ...subtitle, id: backendId };
-        subtitleId = backendId;
-      }
-
       // Delete old audio if exists
       if (subtitle.audioId) {
         try {
@@ -258,8 +242,22 @@ export default function TourEditorCreateExhibitPage() {
 
       const { data: responseData } = await apiPrivate.post('/audio/generate', {
         text: subtitle.text,
-        languageCode: subtitle.language,
+        languageCode: subtitle.languageCode,
       });
+
+      const generatedSubtitleId = responseData.data.subtitleId;
+
+      // If subtitle does not have a backend id, create it first
+      // if (!subtitle.id || subtitle.id.startsWith('temp-')) {
+      // Update the subtitle in state with the backend id
+      setSubtitles((prev) =>
+        prev.map((s) =>
+          s.id === subtitleId ? { ...s, id: generatedSubtitleId } : s,
+        ),
+      );
+      subtitle = { ...subtitle, id: generatedSubtitleId };
+      subtitleId = generatedSubtitleId;
+      // }
 
       const { audioId, fileLink } = responseData.data;
 
@@ -318,7 +316,7 @@ export default function TourEditorCreateExhibitPage() {
         hasSubtitleErrors = true;
       }
 
-      if (!subtitle.language) {
+      if (!subtitle.languageCode) {
         subtitleErrors[`subtitle-${subtitle.id}-language`] =
           'Language is required';
         hasSubtitleErrors = true;
@@ -342,7 +340,7 @@ export default function TourEditorCreateExhibitPage() {
     }
 
     const assetData: AssetData = {
-      subtitleIds: subtitles.map((s) => s.id).filter(Boolean),
+      subtitleIds: subtitles.map((s) => s.id),
     };
 
     const exhibitData = {
@@ -360,14 +358,14 @@ export default function TourEditorCreateExhibitPage() {
 
       // Reset form on success
       setExhibitMetadata({
-        name: '',
+        title: '',
         description: '',
       });
-      setSubtitles([{ id: crypto.randomUUID(), text: '', language: '' }]);
+      setSubtitles([]);
       setValidationErrors({});
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating exhibit:', error);
-      toast.error('Failed to create exhibit');
+      toast.error('Failed to create exhibit: ' + error.response?.data.message);
     } finally {
       setIsCreatingExhibit(false);
     }
@@ -408,13 +406,13 @@ export default function TourEditorCreateExhibitPage() {
                     <Input
                       id='exhibit-name'
                       placeholder='Enter exhibit name...'
-                      value={exhibitMetadata.name}
+                      value={exhibitMetadata.title}
                       onChange={(e) =>
-                        updateExhibitMetadata('name', e.target.value)
+                        updateExhibitMetadata('title', e.target.value)
                       }
                     />
                     <div className='text-xs text-muted-foreground'>
-                      {exhibitMetadata.name.length}/
+                      {exhibitMetadata.title.length}/
                       {VALIDATION_LIMITS.EXHIBIT_NAME_MAX} characters
                     </div>
                     {validationErrors.exhibitName && (
@@ -581,9 +579,9 @@ export default function TourEditorCreateExhibitPage() {
                         <Label>Language *</Label>
                         <LanguageSelect
                           fieldName={`language-${subtitle.id}`}
-                          value={subtitle.language}
-                          onValueChange={(language) =>
-                            updateSubtitleLanguage(subtitle.id, language)
+                          value={subtitle.languageCode}
+                          onValueChange={(languageCode) =>
+                            updateSubtitleLanguage(subtitle.id, languageCode)
                           }
                           placeholder='Select language'
                         />
@@ -595,7 +593,7 @@ export default function TourEditorCreateExhibitPage() {
                         onClick={() => generateAudio(subtitle.id)}
                         disabled={
                           !subtitle.text.trim() ||
-                          !subtitle.language ||
+                          !subtitle.languageCode ||
                           subtitle.isGenerating
                         }
                         variant='outline'
@@ -662,7 +660,7 @@ export default function TourEditorCreateExhibitPage() {
               disabled={
                 isCreatingExhibit ||
                 subtitles.every((s) => !s.audioId) ||
-                !exhibitMetadata.name.trim() ||
+                !exhibitMetadata.title.trim() ||
                 !exhibitMetadata.description.trim()
               }
               size='lg'

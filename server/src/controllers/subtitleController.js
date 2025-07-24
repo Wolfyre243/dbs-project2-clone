@@ -14,59 +14,56 @@ const languageModel = require('../models/languageModel');
 const subtitleModel = require('../models/subtitleModel');
 const { logAdminAudit } = require('../utils/auditlogs');
 
-module.exports.createSubtitle = catchAsync(async (req, res, next) => {
-  const { text, languageCode } = req.body;
-  const userId = res.locals.user.userId;
+// module.exports.createSubtitle = catchAsync(async (req, res, next) => {
+//   const { text, languageCode } = req.body;
+//   const userId = res.locals.user.userId;
 
-  // Validate language code
-  const supportedLanguages = await languageModel.getActiveLanguages();
-  if (!supportedLanguages.includes(languageCode)) {
-    throw new AppError(
-      `Unsupported language code: ${languageCode}. Supported: ${supportedLanguages.join(', ')}`,
-      400,
-    );
-  }
+//   // Validate language code
+//   const supportedLanguages = await languageModel.getActiveLanguages();
+//   if (!supportedLanguages.includes(languageCode)) {
+//     throw new AppError(
+//       `Unsupported language code: ${languageCode}. Supported: ${supportedLanguages.join(', ')}`,
+//       400,
+//     );
+//   }
 
-  const subtitle = await subtitleModel.create({
-    subtitleText: text,
-    languageCode,
-    createdBy: userId,
-    modifiedBy: userId,
-  });
+//   const subtitle = await subtitleModel.create({
+//     subtitleText: text,
+//     languageCode,
+//     createdBy: userId,
+//     modifiedBy: userId,
+//   });
 
-  await logAdminAudit({
-    userId,
-    ipAddress: req.ip,
-    entityName: 'subtitle',
-    entityId: subtitle.subtitleId,
-    actionTypeId: AuditActions.CREATE,
-    logText: `Created subtitle entity with ID ${subtitle.subtitleId}`,
-  });
+//   await logAdminAudit({
+//     userId,
+//     ipAddress: req.ip,
+//     entityName: 'subtitle',
+//     entityId: subtitle.subtitleId,
+//     actionTypeId: AuditActions.CREATE,
+//     logText: `Created subtitle entity with ID ${subtitle.subtitleId}`,
+//   });
 
-  logger.debug(`Subtitle created successfully with ID: ${subtitle.subtitleId}`);
+//   logger.debug(`Subtitle created successfully with ID: ${subtitle.subtitleId}`);
 
-  res.status(201).json({
-    status: 'success',
-    data: {
-      subtitleId: subtitle.subtitleId,
-      languageCode,
-      text,
-      message: 'Successfully created subtitle',
-    },
-  });
-});
+//   res.status(201).json({
+//     status: 'success',
+//     data: {
+//       subtitleId: subtitle.subtitleId,
+//       languageCode,
+//       text,
+//       message: 'Successfully created subtitle',
+//     },
+//   });
+// });
 
 // Archive subtitle
 module.exports.archiveSubtitle = catchAsync(async (req, res, next) => {
   const { subtitleId } = req.params;
   const userId = res.locals.user.userId;
 
-  const subtitle = await subtitleModel.getSubtitleById(subtitleId);
-  if (!subtitle) {
-    throw new AppError('Subtitle not found', 404);
-  }
+  await subtitleModel.archiveSubtitle(subtitleId, userId);
 
-  await subtitleModel.archiveSubtitle(subtitleId, userId, req.ip);
+  logger.info(`Archived subtitle ${subtitleId}`);
 
   await logAdminAudit({
     userId,
@@ -88,12 +85,9 @@ module.exports.unarchiveSubtitle = catchAsync(async (req, res, next) => {
   const { subtitleId } = req.params;
   const userId = res.locals.user.userId;
 
-  const subtitle = await subtitleModel.getSubtitleById(subtitleId);
-  if (!subtitle) {
-    throw new AppError('Subtitle not found', 404);
-  }
+  await subtitleModel.unarchiveSubtitle(subtitleId, userId);
 
-  await subtitleModel.unarchiveSubtitle(subtitleId, userId, req.ip);
+  logger.info(`Unarchived subtitle ${subtitleId}`);
 
   await logAdminAudit({
     userId,
@@ -115,12 +109,9 @@ module.exports.softDeleteSubtitle = catchAsync(async (req, res, next) => {
   const { subtitleId } = req.params;
   const userId = res.locals.user.userId;
 
-  const subtitle = await subtitleModel.getSubtitleById(subtitleId);
-  if (!subtitle) {
-    throw new AppError('Subtitle not found', 404);
-  }
+  await subtitleModel.softDeleteSubtitle(subtitleId, userId);
 
-  await subtitleModel.softDeleteSubtitle(subtitleId, userId, req.ip);
+  logger.info(`Soft deleted subtitle ${subtitleId}`);
 
   await logAdminAudit({
     userId,
@@ -142,12 +133,9 @@ module.exports.hardDeleteSubtitle = catchAsync(async (req, res, next) => {
   const { subtitleId } = req.params;
   const userId = res.locals.user.userId;
 
-  const subtitle = await subtitleModel.getSubtitleById(subtitleId);
-  if (!subtitle) {
-    throw new AppError('Subtitle not found', 404);
-  }
+  await subtitleModel.hardDeleteSubtitle(subtitleId, userId);
 
-  await subtitleModel.hardDeleteSubtitle(subtitleId, userId, req.ip);
+  logger.info(`Hard deleted subtitle ${subtitleId}`);
 
   await logAdminAudit({
     userId,
@@ -203,22 +191,18 @@ module.exports.getAllSubtitles = catchAsync(async (req, res, next) => {
 // Get a single subtitle by ID
 module.exports.getSubtitleById = catchAsync(async (req, res, next) => {
   const { subtitleId } = req.params;
-  const userId = res.locals.user.userId;
-  const isAdmin = res.locals.user.role === Roles.ADMIN;
 
-  const subtitle = await subtitleModel.getSubtitleById({
-    subtitleId,
-    userId,
-    isAdmin,
-  });
+  const subtitle = await subtitleModel.getSubtitleById(subtitleId);
   if (!subtitle) {
     return next(new AppError('Subtitle not found', 404));
   }
 
+  logger.info(`Fetched subtitle ${subtitleId}`);
+
   res.status(200).json({
     status: 'success',
     data: {
-      subtitle,
+      ...subtitle,
     },
   });
 });

@@ -18,12 +18,12 @@ const subtitleRouter = express.Router();
 
 subtitleRouter.use(jwtMiddleware.verifyToken, authMiddleware.verifyIsAdmin);
 
-subtitleRouter.post(
-  '/',
-  createSubtitleValidationRules(),
-  validate,
-  subtitleController.createSubtitle,
-);
+// subtitleRouter.post(
+//   '/',
+//   createSubtitleValidationRules(),
+//   validate,
+//   subtitleController.createSubtitle,
+// );
 
 // archive subtitle by setting status to archived
 subtitleRouter.put('/archive/:subtitleId', subtitleController.archiveSubtitle);
@@ -33,10 +33,7 @@ subtitleRouter.put(
   subtitleController.unarchiveSubtitle,
 );
 // soft delete subtitle by setting status to deleted
-subtitleRouter.put(
-  '/soft-delete/:subtitleId',
-  subtitleController.softDeleteSubtitle,
-);
+subtitleRouter.delete('/:subtitleId', subtitleController.softDeleteSubtitle);
 // Get all subtitles for admin
 subtitleRouter.get('/', subtitleController.getAllSubtitles);
 
@@ -44,6 +41,9 @@ subtitleRouter.get('/', subtitleController.getAllSubtitles);
 subtitleRouter.get('/:subtitleId', subtitleController.getSubtitleById);
 
 // Hard delete subtitle by removing the record
-subtitleRouter.delete('/:subtitleId', subtitleController.hardDeleteSubtitle);
+subtitleRouter.delete(
+  '/hard-delete/:subtitleId',
+  subtitleController.hardDeleteSubtitle,
+);
 
 module.exports = subtitleRouter;

@@ -19,13 +19,8 @@ module.exports.createExhibit = catchAsync(async (req, res, next) => {
   // const imageId = req.body.imageId; // Assuming imageId is provided in the request
 
   // Validate required fields
-  console.log(assetData);
   if (!Array.isArray(assetData.subtitleIds)) {
     throw new AppError('Subtitle IDs must be an array', 400);
-  }
-
-  if (!Array.isArray(assetData.audioIds)) {
-    throw new AppError('Audio IDs must be an array', 400);
   }
 
   // Validate imageId if provided
@@ -45,25 +40,9 @@ module.exports.createExhibit = catchAsync(async (req, res, next) => {
     createdBy: userId,
     modifiedBy: userId,
     subtitleIdArr: assetData.subtitleIds,
-    audioIdArr: assetData.audioIds,
     // TODO: To implement images
     // imageId,
   });
-
-  // assetData.forEach(async ({ audioId = null, subtitleId }) => {
-  //   // Create exhibit-subtitle relation
-  //   await exhibitModel.createExhibitSubtitle({
-  //     exhibitId: exhibit.exhibitId,
-  //     subtitleId,
-  //   });
-
-  //   if (audioId) {
-  //     await exhibitModel.createExhibitAudio({
-  //       exhibitId: exhibit.exhibitId,
-  //       audioId,
-  //     });
-  //   }
-  // });
 
   logger.info(
     `Exhibit created successfully: ${exhibit.exhibitId} by Admin ${userId}`,
@@ -76,7 +55,10 @@ module.exports.createExhibit = catchAsync(async (req, res, next) => {
     entityName: 'exhibit',
     entityId: exhibit.exhibitId,
     actionTypeId: AuditActions.CREATE,
-    logText: `Exhibit created successfully: ${exhibit.exhibitId} by Admin ${userId}`,
+    logText: `
+      Exhibit created successfully: ${exhibit.exhibitId} by Admin ${userId}.\n
+      Subtitles: ${assetData.subtitleIds.join(', ')}
+    `,
   });
 
   res.status(201).json({
@@ -215,7 +197,7 @@ module.exports.getAllExhibits = catchAsync(async (req, res, next) => {
   });
 
   logger.info(
-    `Retrieved ${pageSize} exhibits for page ${page}, total ${result.exhibitCount} exhibits.`
+    `Retrieved ${pageSize} exhibits for page ${page}, total ${result.exhibitCount} exhibits.`,
   );
 
   res.status(200).json({
@@ -224,4 +206,3 @@ module.exports.getAllExhibits = catchAsync(async (req, res, next) => {
     data: result.exhibits,
   });
 });
-

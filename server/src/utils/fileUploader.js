@@ -90,4 +90,5 @@ async function deleteFile(folderName, fileName) {
 module.exports = {
   uploadFile,
   saveAudioFile,
+  deleteFile,
 };

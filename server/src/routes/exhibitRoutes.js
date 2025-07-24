@@ -52,9 +52,6 @@ exhibitRouter.post(
   createExhibitionValidationRules(),
   validate,
   authMiddleware.verifyIsAdmin,
-  // upload.single('audio'),
-  // audioController.uploadAudio,
-  // audioController.convertMultiTextToAudio,
   exhibitController.createExhibit,
 );
 

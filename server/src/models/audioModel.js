@@ -2,6 +2,9 @@ const AuditActions = require('../configs/auditActionConfig');
 const statusCodes = require('../configs/statusCodes');
 const { PrismaClient } = require('../generated/prisma');
 const { convertDatesToStrings } = require('../utils/formatters');
+const { logAdminAudit } = require('../utils/auditlogs');
+const { deleteFile } = require('../utils/fileUploader');
+const AppError = require('../utils/AppError');
 
 const prisma = new PrismaClient();
 
@@ -14,97 +17,162 @@ module.exports.createAudio = async ({
   languageCode,
   statusId = statusCodes.ACTIVE,
 }) => {
-  const audio = await prisma.audio.create({
-    data: {
-      description,
-      fileLink,
-      fileName,
-      createdBy,
-      languageCode,
-      statusId,
-    },
-  });
-
-  return audio;
+  try {
+    const audio = await prisma.audio.create({
+      data: {
+        description,
+        fileLink,
+        fileName,
+        createdBy,
+        languageCode,
+        statusId,
+      },
+    });
+    return audio;
+  } catch (error) {
+    if (error.code === 'P2002') {
+      // Unique constraint failed
+      throw new AppError(
+        'Audio with this file link or file name already exists.',
+        409,
+      );
+    }
+    throw error;
+  }
 };
 
-// Create subtitle record with UUID-based subtitleId
-// module.exports.createSubtitle = async ({
-//   subtitleText,
-//   languageCode,
-//   createdBy,
-//   modifiedBy,
-//   statusId = statusCodes.ACTIVE,
-// }) => {
-//   return await prisma.subtitle.create({
-//     data: {
-//       subtitleText,
-//       languageCode,
-//       createdBy,
-//       modifiedBy,
-//       statusId,
-//     },
-//   });
-// };
+module.exports.createAudioWithSubtitles = async ({
+  description,
+  fileLink,
+  fileName,
+  createdBy,
+  languageCode,
+  subtitleText,
+  statusId = statusCodes.ACTIVE,
+}) => {
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const audio = await tx.audio.create({
+        data: {
+          description,
+          fileLink,
+          fileName,
+          createdBy,
+          languageCode,
+          statusId,
+        },
+      });
 
-// Get subtitles for a user
-// module.exports.getAllSubtitles = async ({ userId, isAdmin }) => {
-//   return await prisma.subtitle.findMany({
-//     where: isAdmin ? {} : { createdBy: userId }, // Admins see all subtitles
-//     select: {
-//       subtitleId: true,
-//       subtitleText: true,
-//       languageCode: true,
-//       createdBy: true,
-//       createdAt: true,
-//       modifiedAt: true,
-//       statusId: true,
-//       /*  audio: {
-//         select: {
-//           audioId: true,
-//           description: true,
-//           fileName: true,
-//         },
-//       }, */
-//     },
-//   });
-// };
+      const subtitle = await tx.subtitle.create({
+        data: {
+          subtitleText,
+          languageCode,
+          createdBy,
+          modifiedBy: createdBy,
+          audioId: audio.audioId,
+          statusId,
+        },
+      });
+
+      return { audio, subtitle };
+    });
+  } catch (error) {
+    if (error.code === 'P2002') {
+      throw new AppError(
+        'Audio with this file link or file name already exists.',
+        409,
+      );
+    }
+    throw error;
+  }
+};
 
 module.exports.getAudioById = async function (audioId) {
-  return await prisma.audio.findUnique({
-    where: { audioId },
-  });
+  try {
+    const audio = await prisma.audio.findUnique({
+      where: { audioId },
+    });
+    if (!audio) {
+      throw new AppError('Audio not found', 404);
+    }
+    return audio;
+  } catch (error) {
+    throw error;
+  }
 };
 
 //archive audio by setting status to archived
 module.exports.archiveAudio = async function (audioId) {
-  return await prisma.audio.update({
-    where: { audioId },
-    data: { statusId: statusCodes.ARCHIVED },
-  });
+  try {
+    const audio = await prisma.audio.update({
+      where: { audioId },
+      data: { statusId: statusCodes.ARCHIVED },
+    });
+    return audio;
+  } catch (error) {
+    if (error.code === 'P2025') {
+      throw new AppError('Audio not found', 404);
+    }
+    throw error;
+  }
 };
 
 //Hard delete audio
 module.exports.hardDeleteAudio = async function (audioId) {
-  return await prisma.audio.delete({
-    where: { audioId },
-  });
+  try {
+    const { fileName } = await prisma.audio.findUnique({
+      where: { audioId },
+      select: { fileName: true },
+    });
+
+    // Delete from supabase
+    await deleteFile('audio', fileName);
+
+    // Delete from database
+    const audio = await prisma.audio.delete({
+      where: { audioId },
+    });
+
+    return audio;
+  } catch (error) {
+    if (error.code === 'P2025') {
+      throw new AppError('Audio not found', 404);
+    }
+    throw error;
+  }
 };
 
 //unarchive audio by setting status to active
 module.exports.unarchiveAudio = async function (audioId) {
-  return await prisma.audio.update({
-    where: { audioId },
-    data: { statusId: statusCodes.ACTIVE },
-  });
+  try {
+    const audio = await prisma.audio.update({
+      where: { audioId },
+      data: { statusId: statusCodes.ACTIVE },
+    });
+    return audio;
+  } catch (error) {
+    if (error.code === 'P2025') {
+      throw new AppError('Audio not found', 404);
+    }
+    throw error;
+  }
 };
 
 // soft delete audio by setting status to deleted
 module.exports.softDeleteAudio = async function (audioId, userId, ipAddress) {
-  return await prisma.audio.update({
-    where: { audioId },
-    data: { statusId: statusCodes.DELETED },
-  });
+  try {
+    const audio = await prisma.audio.update({
+      where: { audioId },
+      data: { statusId: statusCodes.DELETED },
+    });
+
+    return audio;
+  } catch (error) {
+    if (error.code === 'P2025') {
+      throw new AppError('Audio not found', 404);
+    }
+    throw error;
+  }
 };
 
 //get all audio with pagination, sorting, and filtering
@@ -116,31 +184,35 @@ module.exports.getAllAudio = async ({
   search,
   filter,
 }) => {
-  let where = {
-    ...filter,
-    statusId: statusCodes.ACTIVE,
-  };
+  try {
+    let where = {
+      ...filter,
+      statusId: statusCodes.ACTIVE,
+    };
 
-  if (search && search.trim() !== '') {
-    where.OR = [
-      { description: { contains: search, mode: 'insensitive' } },
-      { fileName: { contains: search, mode: 'insensitive' } },
-    ];
+    if (search && search.trim() !== '') {
+      where.OR = [
+        { description: { contains: search, mode: 'insensitive' } },
+        { fileName: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    const audioCount = await prisma.audio.count({
+      where: where,
+    });
+
+    const audioList = await prisma.audio.findMany({
+      where: where,
+      orderBy: { [sortBy]: order },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    });
+
+    return {
+      pageCount: Math.ceil(audioCount / pageSize),
+      audioList: audioList.map((audio) => convertDatesToStrings(audio)),
+    };
+  } catch (error) {
+    throw error;
   }
-
-  const audioCount = await prisma.audio.count({
-    where: where,
-  });
-
-  const audioList = await prisma.audio.findMany({
-    where: where,
-    orderBy: { [sortBy]: order },
-    skip: (page - 1) * pageSize,
-    take: pageSize,
-  });
-
-  return {
-    pageCount: Math.ceil(audioCount / pageSize),
-    audioList: audioList.map((audio) => convertDatesToStrings(audio)),
-  };
 };
