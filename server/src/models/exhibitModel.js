@@ -184,25 +184,49 @@ module.exports.softDeleteExhibit = async (exhibitId, statusCode) => {
   }
 };
 
-module.exports.getEveryExhibit = async () => {
-  try {
-    const exhibit = await prisma.exhibit.findMany({
-      select: {
-        exhibitId: true,
-        title: true,
-        description: true,
-        createdAt: true,
-      },
-      include: {
-        audio: true,
-        exhibitCreatedBy: true,
-        image: true,
-        status: true,
-      },
-    });
-    return teams;
-  } catch (e) {
-    console.error(e);
-    throw new AppError('Error fetching all teams', 500);
+// Get all exhibits with pagination, sorting, and search
+module.exports.getAllExhibits = async ({
+  page,
+  pageSize,
+  sortBy,
+  order,
+  search,
+  filter = {},
+}) => {
+  let where = { ...filter };
+
+  // Conditional search terms
+  if (search && search.trim() !== '') {
+    where.OR = [
+      { title: { contains: search } },
+      { description: { contains: search } },
+    ];
   }
+
+  const exhibitCount = await prisma.exhibit.count({ where });
+
+  const exhibitsRaw = await prisma.exhibit.findMany({
+    skip: (page - 1) * pageSize,
+    take: pageSize,
+    where,
+    select: {
+      exhibitId: true,
+      title: true,
+      description: true,
+      createdAt: true,
+      image: true,
+      status: true,
+      exhibitCreatedBy: true,
+      // Add other relations if needed
+    },
+    orderBy: {
+      [sortBy]: order,
+    },
+  });
+
+  return {
+    exhibits: exhibitsRaw,
+    exhibitCount,
+  };
 };
+

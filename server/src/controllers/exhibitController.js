@@ -189,19 +189,39 @@ module.exports.deleteExhibit = catchAsync(async (req, res, next) => {
   }
 });
 
-// Getting all exhibit data
+// Get all exhibits with pagination, sorting, and search
 module.exports.getAllExhibits = catchAsync(async (req, res, next) => {
-  const exhibits = await exhibitModel.getEveryExhibit();
-  if (!exhibits || exhibits.length === 0) {
-    logger.warning('No exhibits found');
-    return next(new AppError('No exhibits found', 404));
+  const {
+    page = 1,
+    pageSize = 10,
+    sortBy = 'createdAt',
+    order = 'desc',
+    search = '',
+    statusFilter = null,
+  } = req.query;
+
+  const filter = {};
+  if (statusFilter) {
+    filter.statusId = parseInt(statusFilter);
   }
 
-  logger.info('All exhibits retrieved successfully');
+  const result = await exhibitModel.getAllExhibits({
+    page: parseInt(page),
+    pageSize: parseInt(pageSize),
+    sortBy,
+    order,
+    search,
+    filter,
+  });
+
+  logger.info(
+    `Retrieved ${pageSize} exhibits for page ${page}, total ${result.exhibitCount} exhibits.`
+  );
+
   res.status(200).json({
     status: 'success',
-    data: {
-      exhibits,
-    },
+    pageCount: Math.ceil(result.exhibitCount / pageSize),
+    data: result.exhibits,
   });
 });
+
