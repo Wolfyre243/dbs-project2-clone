@@ -73,18 +73,26 @@ module.exports.reGenerateQRcode = async(qrCodeId, createdBy) => {
    );
 
    //Creating new image record beofre creating qrcode record
-   const newImage = await require('./imageModel').createImage({
-  fileLink,
-  fileName,
-  createdBy,
-  statusId: statusCodes.ACTIVE,
-});
+  await require('./imageModel').updateImage(qrCode.imageId, {
+        fileLink,
+        fileName,
+        createdBy: createdBy,
+        createdAt: new Date(),
+    });
+
+        await logAdminAudit({
+        userId: createdBy,
+        ipAddress: req.ip,
+        entityName: 'image',
+        entityId: qrCode.imageId,
+        actionTypeId: 3,
+        logText: 'Image updated successfully',
+      });
 
 // Updating qrcode table record
 await prisma.qrCode.update({
     where: { qrCodeId },
     data: {
-        imageId: newImage.imageId,
         createdAt: new Date(),
     },
 });
