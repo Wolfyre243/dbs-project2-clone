@@ -87,6 +87,20 @@ export default function SingleExhibit() {
   }, [exhibit]);
 
   useEffect(() => {
+    // Reset indices for unselected subtitles when language changes
+    if (exhibit) {
+      const validSubtitleIds = exhibit.subtitles
+        .filter(sub => sub.languageCode === selectedLanguage)
+        .map(sub => sub.subtitleId);
+      setCurrentWordIndices(prev => {
+        const newIndices = { ...prev };
+        Object.keys(newIndices).forEach(id => {
+          if (!validSubtitleIds.includes(id)) delete newIndices[id];
+        });
+        return newIndices;
+      });
+    }
+
     const handleTimeUpdate = (subtitleId: string) => {
       const audioElement = audioRefs.current[subtitleId];
       if (audioElement && exhibit) {
@@ -94,15 +108,16 @@ export default function SingleExhibit() {
         if (isFinite(duration) && duration > 0) {
           const subtitle = exhibit.subtitles.find(s => s.subtitleId === subtitleId);
           if (subtitle) {
-            const words = subtitle.subtitleText.split(' ');
-            // Line 150-151: Changed to handle 5-word segments
-            const segmentSize = 5;
-            const segmentDuration = duration / Math.ceil(words.length / segmentSize);
+            const isSpaceSeparated = ['en-GB', 'es-ES', 'fr-FR', 'de-DE', 'ru-RU', 'it-IT', 'ms-MY', 'ta-IN', 'hi-IN'].includes(subtitle.languageCode);
+            const units = isSpaceSeparated ? subtitle.subtitleText.split(' ') : subtitle.subtitleText.split(''); // Dynamic splitting
+            // Line 150-151: Adjusted for language-specific units
+            const segmentSize = 8;
+            const segmentDuration = duration / Math.ceil(units.length / segmentSize);
             const currentTime = audioElement.currentTime;
             const index = Math.floor(currentTime / segmentDuration);
             setCurrentWordIndices(prev => ({
               ...prev,
-              [subtitleId]: index >= 0 && index * segmentSize < words.length ? index : null
+              [subtitleId]: index >= 0 && index * segmentSize < units.length ? index : null
             }));
           }
         }
@@ -128,7 +143,7 @@ export default function SingleExhibit() {
         }
       });
     };
-  }, [exhibit]);
+  }, [exhibit, selectedLanguage]);
 
   if (loading) {
     return (
@@ -214,27 +229,33 @@ export default function SingleExhibit() {
               </audio>
               <div className='flex items-center gap-3 mb-2 p-4 rounded-lg border bg-muted'>
                 <span className='text-base'>
-                  {subtitle.subtitleText.split(' ').reduce((acc, word, index) => {
-                    const segmentIndex = Math.floor(index / 5);
-                    if (index % 5 === 0) acc.push([]);
-                    acc[acc.length - 1].push(word);
-                    return acc;
-                  }, [] as string[][]).map((group, groupIndex) => (
-                    <span
-                      key={groupIndex}
-                      style={{
-                        padding: '2px 4px',
-                        borderRadius: '4px',
-                        background: groupIndex === currentWordIndices[subtitle.subtitleId] ? 'linear-gradient(90deg, #ffeb3b, #ffca28)' : 'transparent',
-                        fontWeight: groupIndex === currentWordIndices[subtitle.subtitleId] ? '500' : '300',
-                        transition: 'all 0.3s ease',
-                        boxShadow: groupIndex === currentWordIndices[subtitle.subtitleId] ? '0 2px 6px rgba(255, 215, 0, 0.4)' : 'none',
-                        color: groupIndex === currentWordIndices[subtitle.subtitleId] ? '#1a1a1a' : '#ffffff',
-                      }}
-                    >
-                      {group.join(' ') + ' '}
-                    </span>
-                  ))}
+                  {(() => {
+                    const isSpaceSeparated = ['en-GB', 'es-ES', 'fr-FR', 'de-DE', 'ru-RU', 'it-IT', 'ms-MY', 'ta-IN', 'hi-IN'].includes(subtitle.languageCode);
+                    return subtitle.subtitleText
+                      .split(isSpaceSeparated ? ' ' : '')
+                      .reduce((acc, unit, index) => { // Dynamic splitting
+                        const segmentIndex = Math.floor(index / 8);
+                        if (index % 8 === 0) acc.push([]);
+                        acc[acc.length - 1].push(unit);
+                        return acc;
+                      }, [] as string[][])
+                      .map((group, groupIndex) => (
+                        <span
+                          key={groupIndex}
+                          style={{
+                            padding: '2px 4px',
+                            borderRadius: '4px',
+                            background: groupIndex === currentWordIndices[subtitle.subtitleId] ? 'linear-gradient(90deg, #ffeb3b, #ffca28)' : 'transparent',
+                            fontWeight: groupIndex === currentWordIndices[subtitle.subtitleId] ? '500' : '300',
+                            transition: 'all 0.3s ease',
+                            boxShadow: groupIndex === currentWordIndices[subtitle.subtitleId] ? '0 2px 6px rgba(255, 215, 0, 0.4)' : 'none',
+                            color: groupIndex === currentWordIndices[subtitle.subtitleId] ? '#1a1a1a' : '#ffffff',
+                          }}
+                        >
+                          {group.join(isSpaceSeparated ? ' ' : '') + ' '} {/* Dynamic joining */}
+                        </span>
+                      ));
+                  })()}
                 </span>
               </div>
             </motion.div>
