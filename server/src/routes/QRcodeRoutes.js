@@ -12,9 +12,9 @@ const rateLimiter = require('../middlewares/rateLimiter');
 // Create the router
 const QRcodeRouter = express.Router();
 
-QRcodeRouter.use(jwtMiddleware.verifyToken/* , authMiddleware.verifyIsAdmin */);
+QRcodeRouter.use(jwtMiddleware.verifyToken , authMiddleware.verifyIsAdmin);
 
-// Admin routes
+
 QRcodeRouter.post('/generate', QRcodeController.generateQRCode);
 QRcodeRouter.post('/re-generate', QRcodeController.reGenerateQRcode);
 

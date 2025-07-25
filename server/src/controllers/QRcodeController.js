@@ -1,4 +1,4 @@
-// IMPORTS
+// IMPORTS-----------------------------------------------------------------
 
 const AppError = require('../utils/AppError');
 const Roles = require('../configs/roleConfig');
@@ -12,6 +12,10 @@ const { encryptData, decryptData } = require('../utils/encryption');
 const qrModel = require('../models/QRcodeModel');
 const { logAdminAudit } = require('../utils/auditlogs');
 const { error } = require('winston');
+
+//========================================================================
+// CONTROLLER FUNCTIONS
+//========================================================================
 
 module.exports.generateQRCode = catchAsync( async(req, res, next) => {
     try {
@@ -77,3 +81,4 @@ module.exports.reGenerateQRcode = catchAsync( async(req, res, next) => {
         next(error);
     }
 });
+

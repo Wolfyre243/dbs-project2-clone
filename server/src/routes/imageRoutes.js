@@ -13,7 +13,7 @@ const { createImageValidationRules, validate } = require('../middlewares/validat
 // Create the router
 const imageRouter = express.Router();
 
-imageRouter.use(jwtMiddleware.verifyToken /* ,authMiddleware.verifyIsAdmin */);
+imageRouter.use(jwtMiddleware.verifyToken, authMiddleware.verifyIsAdmin);
 
 // Tested
 imageRouter.get('/', imageController.getAllImages);
@@ -31,7 +31,10 @@ imageRouter.post('/create',
 imageRouter.put('/update-image/:imageId', 
     imageController.updateImage);
     
+// Tested
 imageRouter.delete('/archive/:imageId', imageController.archiveImage);
+
+// Tested
 imageRouter.delete('/delete/:imageId', imageController.deleteImage);
 
 module.exports = imageRouter;

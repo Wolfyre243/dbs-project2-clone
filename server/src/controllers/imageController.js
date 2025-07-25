@@ -34,6 +34,15 @@ module.exports.getImageById = catchAsync( async(req, res, next) => {
         const imageId = req.params.imageId;
         const imageData = await imageModel.getImageById(imageId);
 
+            await logAdminAudit({
+    userId: res.locals.user.userId,
+    ipAddress: req.ip,
+    entityName: 'image',
+    entityId: imageId,
+    actionTypeId: 2,
+    logText: 'Image retrieved by ID successfully',
+  });
+
         res.status(200).json({
             status: 'success',
             message: `Image with ID ${imageId} retrieved successfully`,
@@ -59,6 +68,15 @@ module.exports.createImage = catchAsync( async(req, res, next) => {
             createdBy,
             statusId, 
         });
+
+            await logAdminAudit({
+    userId: res.locals.user.userId,
+    ipAddress: req.ip,
+    entityName: 'image',
+    entityId: image.imageId,
+    actionTypeId: 1,
+    logText: 'Image created successfully',
+  });
 
         logger.info(`Image created successfully by user ${createdBy}`);
 
@@ -90,6 +108,15 @@ module.exports.updateImage = catchAsync( async(req, res, next) => {
             throw new AppError('Image not found', 404);
         }
 
+            await logAdminAudit({
+    userId: res.locals.user.userId,
+    ipAddress: req.ip,
+    entityName: 'image',
+    entityId: imageId,
+    actionTypeId: 3,
+    logText: 'Image updated successfully',
+  });
+
         logger.info(`Image with ID ${imageId} updated`);
 
         res.status(200).json({
@@ -115,6 +142,15 @@ module.exports.archiveImage = catchAsync( async(req, res, next) => {
             throw new AppError('Image not found', 404);
         }
 
+            await logAdminAudit({
+    userId: res.locals.user.userId,
+    ipAddress: req.ip,
+    entityName: 'image',
+    entityId: imageId,
+    actionTypeId: 4,
+    logText: 'Image archived successfully',
+  });
+
         logger.info(`Image with ID ${imageId} archived`);
 
         res.status(200).json({
@@ -138,6 +174,15 @@ module.exports.deleteImage = catchAsync( async(req, res, next) => {
             logger.warn(`Image with ID ${imageId} not found for deletion`);
             throw new AppError('Image not found', 404);
         }
+
+            await logAdminAudit({
+    userId: res.locals.user.userId,
+    ipAddress: req.ip,
+    entityName: 'image',
+    entityId: imageId,
+    actionTypeId: 4,
+    logText: 'Image deleted successfully',
+  });
 
         logger.info(`Image with ID ${imageId} deleted successfully`);
         res.status(200).json({
