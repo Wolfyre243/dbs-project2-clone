@@ -32,7 +32,7 @@ export default function LoginPage() {
 
         setAccessToken(responseData.accessToken);
         await JWTDecode(responseData.accessToken);
-        // TOFIX: How come user is taken to /admin
+        // FIXME: How come user is taken to /admin
         navigate('/');
         // If auth successful, redirect to dashboard
       } catch (error) {
@@ -47,10 +47,37 @@ export default function LoginPage() {
     }
   };
 
+  const handleGuestLogin = async () => {
+    try {
+      const { data: responseData } = await api.post(
+        '/auth/guest-login',
+        {},
+        { withCredentials: true },
+      );
+
+      setAccessToken(responseData.accessToken);
+      await JWTDecode(responseData.accessToken);
+      // TOFIX: How come user is taken to /admin
+      navigate('/');
+    } catch (error) {
+      let message;
+      if (isAxiosError(error)) {
+        message =
+          error.response?.data.message ||
+          'Something went wrong. Please try again later.';
+      }
+      setError(message);
+    }
+  };
+
   return (
     <div className='bg-background flex w-full sm:w-1/2 md:w-1/3 lg:w-1/4 min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10'>
       <div className='flex flex-col gap-5 w-full'>
-        <LoginForm ref={loginFormRef} submitCb={handleSubmit} />
+        <LoginForm
+          ref={loginFormRef}
+          submitCb={handleSubmit}
+          guestLoginCb={handleGuestLogin}
+        />
         {error ? (
           <div className='bg-red-500 px-2 py-1 rounded-md'>{error}</div>
         ) : (

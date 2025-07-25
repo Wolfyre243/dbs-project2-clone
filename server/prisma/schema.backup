@@ -50,75 +50,65 @@ model status {
 }
 
 model audio {
-  audioId        String                @id @default(uuid()) @map("audio_id") @db.Uuid
+  audioId        String    @id @default(uuid()) @map("audio_id") @db.Uuid
   description    String?
-  createdBy      String                @map("created_by") @db.Uuid
-  createdAt      DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
-  statusId       Int                   @map("status_id")
-  fileName       String                @unique @map("file_name") @db.VarChar(150)
-  languageCode   String                @map("language_code") @db.VarChar(6)
-  audioCreatedBy users                 @relation("AudioCreatedBy", fields: [createdBy], references: [userId])
-  language       language              @relation(fields: [languageCode], references: [languageCode])
-  status         status                @relation(fields: [statusId], references: [statusId])
-  exhibit        exhibit[]
-  exhibits       exhibitAudioRelation?
+  createdBy      String    @map("created_by") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  statusId       Int       @map("status_id")
+  fileLink       String    @unique @map("file_link")
+  fileName       String    @unique @map("file_name")
+  languageCode   String    @map("language_code") @db.VarChar(6)
+  audioCreatedBy users     @relation("AudioCreatedBy", fields: [createdBy], references: [userId])
+  language       language  @relation(fields: [languageCode], references: [languageCode])
+  status         status    @relation(fields: [statusId], references: [statusId])
+  // exhibits       exhibitAudioRelation?
+  subtitle       subtitle?
 
   @@index([statusId, languageCode])
 }
 
-model exhibitAudioRelation {
-  audioId   String  @unique @map("audio_id") @db.Uuid
-  exhibitId String  @map("exhibit_id") @db.Uuid
-  audio     audio   @relation(fields: [audioId], references: [audioId])
-  exhibit   exhibit @relation(fields: [exhibitId], references: [exhibitId])
-
-  @@id([audioId, exhibitId])
-  @@map("exhibit_audio_relation")
-}
-
 model exhibit {
-  exhibitId            String                 @id @default(uuid()) @map("exhibit_id") @db.Uuid
-  title                String                 @db.VarChar(100)
-  description          String?
-  audioId              String                 @map("audio_id") @db.Uuid
-  createdBy            String                 @map("created_by") @db.Uuid
-  modifiedBy           String                 @map("modified_by") @db.Uuid
-  imageId              String                 @map("image_id") @db.Uuid
-  createdAt            DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
-  modifiedAt           DateTime               @default(now()) @map("modified_at") @db.Timestamptz(6)
-  statusId             Int                    @map("status_id")
-  audio                audio                  @relation(fields: [audioId], references: [audioId])
-  exhibitCreatedBy     users                  @relation("ExhibitCreatedBy", fields: [createdBy], references: [userId])
-  image                image                  @relation(fields: [imageId], references: [imageId])
-  status               status                 @relation(fields: [statusId], references: [statusId])
-  exhibitAudioRelation exhibitAudioRelation[]
-  subtitles            exhibitSubtitle[]
-  qrCode               qrCode?
+  exhibitId        String            @id @default(uuid()) @map("exhibit_id") @db.Uuid
+  title            String            @db.VarChar(100)
+  description      String?
+  createdBy        String            @map("created_by") @db.Uuid
+  modifiedBy       String            @map("modified_by") @db.Uuid
+  imageId          String?           @map("image_id") @db.Uuid
+  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  modifiedAt       DateTime          @default(now()) @map("modified_at") @db.Timestamptz(6)
+  statusId         Int               @map("status_id")
+  exhibitCreatedBy users             @relation("ExhibitCreatedBy", fields: [createdBy], references: [userId])
+  image            image?            @relation(fields: [imageId], references: [imageId])
+  status           status            @relation(fields: [statusId], references: [statusId])
+  // exhibitAudioRelation exhibitAudioRelation[]
+  subtitles        exhibitSubtitle[]
+  qrCode           qrCode?
 
-  @@index([statusId, audioId, imageId])
+  @@index([statusId, imageId])
 }
 
 model auditAction {
-  actionType  String     @id @map("action_type") @db.VarChar(100)
-  description String?
-  auditLogs   auditLog[]
+  actionTypeId Int        @id @default(autoincrement()) @map("action_type_id") @db.Integer
+  actionType   String     @unique @map("action_type") @db.VarChar(100)
+  description  String?
+  auditLogs    auditLog[]
 
   @@map("audit_action")
 }
 
 model auditLog {
-  auditLogId  String      @id @default(uuid()) @map("audit_log_id") @db.Uuid
-  userId      String      @map("user_id") @db.Uuid
-  ipAddress   String      @map("ip_address") @db.VarChar(45)
-  entityName  String      @map("entity_name") @db.VarChar(100)
-  entityId    String      @map("entity_id")
-  actionType  String      @map("action_type") @db.VarChar(100)
-  timestamp   DateTime    @db.Timestamptz(6)
-  logText     String      @map("log_text")
-  auditAction auditAction @relation(fields: [actionType], references: [actionType])
-  user        users       @relation(fields: [userId], references: [userId])
+  auditLogId   String      @id @default(uuid()) @map("audit_log_id") @db.Uuid
+  userId       String      @map("user_id") @db.Uuid
+  ipAddress    String      @map("ip_address") @db.VarChar(45)
+  entityName   String      @map("entity_name") @db.VarChar(100)
+  entityId     String      @map("entity_id")
+  actionTypeId Int         @map("action_type_id") @db.Integer
+  logText      String      @map("log_text")
+  timestamp    DateTime    @default(now()) @db.Timestamptz(6)
+  auditAction  auditAction @relation(fields: [actionTypeId], references: [actionTypeId])
+  user         users       @relation(fields: [userId], references: [userId])
 
-  @@index([userId, actionType])
+  @@index([userId, actionTypeId])
   @@map("audit_log")
 }
 
@@ -193,7 +183,8 @@ model image {
   createdBy      String    @map("created_by") @db.Uuid
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   statusId       Int       @map("status_id")
-  fileName       String    @unique @map("file_name") @db.VarChar(150)
+  fileLink       String    @unique @map("file_link")
+  fileName       String    @unique @map("file_name")
   exhibit        exhibit[]
   imageCreatedBy users     @relation("ImageCreatedBy", fields: [createdBy], references: [userId])
   status         status    @relation(fields: [statusId], references: [statusId])
@@ -202,16 +193,27 @@ model image {
   @@index([statusId])
 }
 
-model event {
-  eventId    String   @id @default(uuid()) @map("event_id") @db.Uuid
-  entityId   Int      @map("entity_id")
-  entityName String   @map("entity_name") @db.VarChar(100)
-  timestamp  DateTime @db.Timestamptz(6)
-  details    String
-  userId     String   @map("user_id") @db.Uuid
-  users      users    @relation(fields: [userId], references: [userId])
+model eventType {
+  eventTypeId Int     @id @default(autoincrement()) @map("event_type_id") @db.Integer
+  eventType   String  @unique @map("event_type") @db.VarChar(100)
+  description String
+  event       event[]
 
-  @@index([userId])
+  @@map("event_type")
+}
+
+model event {
+  eventId     String    @id @default(uuid()) @map("event_id") @db.Uuid
+  entityId    Int       @map("entity_id")
+  entityName  String    @map("entity_name") @db.VarChar(100)
+  eventTypeId Int       @map("event_type_id") @db.Integer
+  timestamp   DateTime  @db.Timestamptz(6)
+  details     String
+  userId      String    @map("user_id") @db.Uuid
+  users       users     @relation(fields: [userId], references: [userId])
+  eventType   eventType @relation(fields: [eventTypeId], references: [eventTypeId])
+
+  @@index([userId, eventTypeId])
 }
 
 model session {
@@ -252,7 +254,7 @@ model language {
   audio        audio[]
   status       status        @relation(fields: [statusId], references: [statusId])
   subtitle     subtitle[]
-  user_profile userProfile[]
+  userProfile  userProfile[]
 
   @@index([statusId, languageCode])
 }
@@ -263,6 +265,7 @@ model subtitle {
   languageCode      String            @map("language_code") @db.VarChar(6)
   createdBy         String            @map("created_by") @db.Uuid
   modifiedBy        String            @map("modified_by") @db.Uuid
+  audioId           String?           @unique @map("audio_id") @db.Uuid
   createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
   modifiedAt        DateTime          @default(now()) @map("modified_at") @db.Timestamptz(6)
   statusId          Int               @map("status_id")
@@ -270,6 +273,7 @@ model subtitle {
   subtitleCreatedBy users             @relation("SubtitleCreatedBy", fields: [createdBy], references: [userId])
   language          language          @relation(fields: [languageCode], references: [languageCode])
   status            status            @relation(fields: [statusId], references: [statusId])
+  audio             audio?            @relation(fields: [audioId], references: [audioId], onDelete: Cascade)
 
   @@index([statusId, languageCode])
 }
@@ -278,8 +282,8 @@ model exhibitSubtitle {
   exhibitId  String   @map("exhibit_id") @db.Uuid
   subtitleId String   @map("subtitle_id") @db.Uuid
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  exhibit    exhibit  @relation(fields: [exhibitId], references: [exhibitId])
-  subtitle   subtitle @relation(fields: [subtitleId], references: [subtitleId])
+  exhibit    exhibit  @relation(fields: [exhibitId], references: [exhibitId], onDelete: Cascade)
+  subtitle   subtitle @relation(fields: [subtitleId], references: [subtitleId], onDelete: Cascade)
 
   @@id([exhibitId, subtitleId])
   @@index([exhibitId, subtitleId])

@@ -32,7 +32,6 @@ module.exports.createExhibitWithAssets = async ({
   createdBy,
   modifiedBy,
   subtitleIdArr,
-  audioIdArr,
   // imageId,
   statusId = statusCodes.ACTIVE,
 }) => {
@@ -53,13 +52,6 @@ module.exports.createExhibitWithAssets = async ({
       await tx.exhibitSubtitle.createMany({
         data: subtitleIdArr.map((subtitleId) => {
           return { exhibitId: exhibit.exhibitId, subtitleId };
-        }),
-      });
-
-      // Link all audio files to exhibit
-      await tx.exhibitAudioRelation.createMany({
-        data: audioIdArr.map((audioId) => {
-          return { exhibitId: exhibit.exhibitId, audioId };
         }),
       });
 
@@ -142,19 +134,6 @@ module.exports.updateExhibit = async ({
   }
 };
 
-// Get Exhibits By Exhibit ID
-module.exports.getExhibitById = async (exhibitId) => {
-  try {
-    const exhibit = await prisma.exhibit.findUnique({
-      where: { exhibitId: parseInt(exhibitId) },
-    });
-    return exhibit;
-  } catch (error) {
-    console.error('Error fetching exhibit:', error);
-    throw new AppError('Failed to fetch exhibit', 500);
-  }
-};
-
 // Soft delete
 module.exports.softDeleteExhibit = async (exhibitId, statusCode) => {
   try {
@@ -182,25 +161,105 @@ module.exports.softDeleteExhibit = async (exhibitId, statusCode) => {
   }
 };
 
-module.exports.getEveryExhibit = async () => {
+// Get all exhibits with pagination, sorting, and search
+module.exports.getAllExhibits = async ({
+  page,
+  pageSize,
+  sortBy,
+  order,
+  search,
+  filter = {},
+}) => {
+  let where = { ...filter };
+
+  // Conditional search terms
+  if (search && search.trim() !== '') {
+    where.OR = [
+      { title: { contains: search, mode: 'insensitive' } },
+      { description: { contains: search, mode: 'insensitive' } },
+    ];
+  }
+
+  const exhibitCount = await prisma.exhibit.count({ where });
+
+  const exhibitsRaw = await prisma.exhibit.findMany({
+    skip: (page - 1) * pageSize,
+    take: pageSize,
+    where,
+    select: {
+      exhibitId: true,
+      title: true,
+      description: true,
+      createdAt: true,
+      image: true,
+      status: true,
+      exhibitCreatedBy: true,
+      subtitles: {
+        select: {
+          subtitle: true,
+        },
+      },
+    },
+    orderBy: {
+      [sortBy]: order,
+    },
+  });
+
+  return {
+    exhibits: exhibitsRaw
+      .map((exhibit) => {
+        let supportedLangArr = null;
+        if (exhibit.subtitles && exhibit.subtitles.length > 0) {
+          supportedLangArr = exhibit.subtitles.map(
+            (s) => s.subtitle.languageCode,
+          );
+        }
+
+        return {
+          ...exhibit,
+          subtitles: undefined,
+          supportedLanguages: supportedLangArr,
+          status: exhibit.status.statusName,
+          exhibitCreatedBy: exhibit.exhibitCreatedBy.username,
+        };
+      })
+      .map((exhibit) => convertDatesToStrings(exhibit)),
+    exhibitCount,
+  };
+};
+
+// Get Exhibits By Exhibit ID
+module.exports.getExhibitById = async (exhibitId) => {
   try {
-    const exhibit = await prisma.exhibit.findMany({
-      select: {
-        exhibitId: true,
-        title: true,
-        description: true,
-        createdAt: true,
+    const exhibit = await prisma.exhibit.findUnique({
+      where: {
+        exhibitId,
       },
       include: {
-        audio: true,
-        exhibitCreatedBy: true,
-        image: true,
+        subtitles: {
+          select: {
+            subtitle: {
+              include: {
+                audio: true,
+              },
+            },
+          },
+        },
         status: true,
+        exhibitCreatedBy: true,
       },
     });
-    return teams;
-  } catch (e) {
-    console.error(e);
-    throw new AppError('Error fetching all teams', 500);
+    return convertDatesToStrings({
+      ...exhibit,
+      statusId: undefined,
+      exhibitCreatedBy: undefined,
+      supportedLanguages: exhibit.subtitles.map((s) => s.subtitle.languageCode),
+      subtitles: exhibit.subtitles.map((s) => ({ ...s.subtitle })),
+      status: exhibit.status.statusName,
+      createdBy: exhibit.exhibitCreatedBy.username,
+    });
+  } catch (error) {
+    console.error('Error fetching exhibit:', error);
+    throw new AppError('Failed to fetch exhibit', 500);
   }
 };

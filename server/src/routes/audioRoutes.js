@@ -51,7 +51,7 @@ audioRouter.post(
 audioRouter.post(
   '/generate',
   // TODO: Rate limit
-  generateAudioValidationRules(),
+  //generateAudioValidationRules(),
   validate,
   audioController.convertTextToAudio,
 );

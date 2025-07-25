@@ -8,11 +8,11 @@ export default function HomeLayout() {
     <RequireAuth
       allowedRoles={[Roles.GUEST, Roles.MEMBER, Roles.ADMIN, Roles.SUPERADMIN]}
     >
-      <main className='flex flex-col min-h-screen w-full'>
+      <main className='flex flex-col justify-between md:justify-start min-h-screen w-full'>
         <div className='sticky top-0 w-full'>
           <AppBar />
         </div>
-        <div className='flex px-6 py-2 justify-stretch flex-col h-full '>
+        <div className='flex flex-col h-full'>
           <Outlet />
         </div>
         <div className='sticky bottom-0 w-full block md:hidden'>

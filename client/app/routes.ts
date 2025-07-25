@@ -11,11 +11,16 @@ export default [
   route('/*', 'routes/notFound.tsx'),
   route('/verify', 'routes/verify.tsx'),
   route('/unauthorized', 'routes/unauthorized.tsx'),
+  route('/test', 'routes/test.tsx'),
+  route('/exhibits', 'routes/home/exhibits/page.tsx'),
 
   ...prefix('home', [
     layout('routes/home/layout.tsx', [
       index('routes/home/page.tsx'),
       route('/settings', 'routes/home/settings.tsx'),
+      ...prefix('exhibits', [
+        route('/:exhibitId', 'routes/home/exhibits/single-exhibit.tsx'),
+      ]),
     ]),
   ]),
 
@@ -30,6 +35,14 @@ export default [
       ...prefix('tour-editor', [
         layout('routes/admin/tour-editor/layout.tsx', [
           index('routes/admin/tour-editor/page.tsx'),
+          route(
+            '/create-exhibit',
+            'routes/admin/tour-editor/create-exhibit.tsx',
+          ),
+          route(
+            '/view-exhibit/:exhibitId',
+            'routes/admin/tour-editor/view-exhibit.tsx',
+          ),
         ]),
       ]),
     ]),

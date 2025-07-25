@@ -1,18 +1,20 @@
 import { useEffect, useState } from 'react';
-import { columns, type Subtitle } from './columns';
+import { columns, type Exhibit } from './columns';
 import { type SortingState } from '@tanstack/react-table';
 import { DataTable } from '~/components/ui/data-table';
 import useApiPrivate from '~/hooks/useApiPrivate';
 import useAuth from '~/hooks/useAuth';
-import { useSearchParams } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { Button } from '~/components/ui/button';
 import { PaginationFilterDropdown } from '~/components/pagination-filters';
+import { Plus } from 'lucide-react';
 
-export default function AdminSubtitlePagination() {
+export default function AdminExhibitPagination() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [data, setData] = useState<Subtitle[]>([]);
+  const [data, setData] = useState<Exhibit[]>([]);
   const [pageCount, setPageCount] = useState<number>();
   const [currentPage, setCurrentPage] = useState<number>();
+  // For supportedLanguages filter
   const [languageData, setLanguageData] = useState<any[]>([]);
   const [languageFilterValue, setLanguageFilterValue] = useState('');
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -46,7 +48,7 @@ export default function AdminSubtitlePagination() {
   useEffect(() => {
     (async () => {
       try {
-        const { data: responseData } = await apiPrivate.get('/subtitle', {
+        const { data: responseData } = await apiPrivate.get('/exhibit', {
           params: {
             page: searchParams.get('page') || null,
             pageSize: searchParams.get('pageSize') || null,
@@ -133,17 +135,18 @@ export default function AdminSubtitlePagination() {
   return (
     <div className='flex flex-col gap-3'>
       <div className='flex flex-col md:flex-row w-full gap-3 h-fit'>
-        <input
-          type='text'
-          placeholder='Search subtitles...'
-          className='p-2 border rounded-md md:w-1/4 text-sm'
-          defaultValue={searchParams.get('search') || ''}
-          onChange={(e) => handleSearchChange(e.target.value)}
-        />
-        <div className='flex flex-row items-center gap-3'>
+        <div className='w-full'>
+          <input
+            type='text'
+            placeholder='Search exhibits...'
+            className='p-2 border rounded-md md:w-1/4 text-sm'
+            defaultValue={searchParams.get('search') || ''}
+            onChange={(e) => handleSearchChange(e.target.value)}
+          />
+          {/* <div className='flex flex-row items-center gap-3'>
           <PaginationFilterDropdown
             filterTitle={'Language'}
-            filterOptionList={languageData}
+            filterOptionList={languageData.map((lang) => ({ languageCode: lang }))}
             valueAccessor='languageCode'
             nameAccessor='languageCode'
             selectedValue={languageFilterValue}
@@ -157,7 +160,15 @@ export default function AdminSubtitlePagination() {
           ) : (
             ''
           )}
+        </div> */}
         </div>
+        <Link
+          to={'/admin/tour-editor/create-exhibit'}
+          className='flex flex-row items-center gap-2 min-w-fit h-fit px-3 py-1.5 text-muted bg-primary rounded-lg text-sm'
+        >
+          <Plus />
+          Create New
+        </Link>
       </div>
       <DataTable
         columns={columns}

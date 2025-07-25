@@ -95,6 +95,7 @@ export default function App() {
       ) : (
         <Outlet />
       )}
+      {/* <Outlet /> */}
     </>
   );
 }

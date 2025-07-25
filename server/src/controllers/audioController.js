@@ -97,7 +97,7 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
     statusId: statusCodes.ACTIVE,
   });
 
-  logger.info(`Audio uploaded, transcribed, and translated successfully`);
+  logger.info(`Uploaded audio ${audio.audioId}`);
 
   res.status(200).json({
     status: 'success',
@@ -134,12 +134,13 @@ module.exports.convertTextToAudio = catchAsync(async (req, res, next) => {
   // Generate audio from text
   const { fileLink, fileName } = await textToSpeech(text, languageCode);
 
-  const audio = await audioModel.createAudio({
+  const { audio, subtitle } = await audioModel.createAudioWithSubtitles({
     description: 'Text-to-speech generated audio',
     fileLink,
     fileName,
     createdBy: userId,
     languageCode,
+    subtitleText: text,
   });
 
   await logAdminAudit({
@@ -151,157 +152,82 @@ module.exports.convertTextToAudio = catchAsync(async (req, res, next) => {
     logText: `Created audio file with ID ${audio.audioId}`,
   });
 
-  logger.debug(`Text converted to audio and saved successfully: ${fileLink}`);
+  await logAdminAudit({
+    userId,
+    ipAddress: req.ip,
+    entityName: 'subtitle',
+    entityId: subtitle.subtitleId,
+    actionTypeId: AuditActions.CREATE,
+    logText: `Created subtitle with ID ${subtitle.subtitleId}`,
+  });
+
+  logger.info(`Converted text to audio ${audio.audioId}`);
 
   res.status(200).json({
     status: 'success',
     data: {
       audioId: audio.audioId,
+      subtitleId: subtitle.subtitleId,
       fileLink,
       fileName,
       languageCode,
       text,
-      message: 'Successfully converted text to audio and saved as subtitle',
     },
   });
 });
 
-module.exports.convertMultiTextToAudio = catchAsync(async (req, res, next) => {
-  const { subtitleArr } = req.body;
-  const userId = res.locals.user.userId;
+// module.exports.updateSubtitle = catchAsync(async (req, res, next) => {
+//   const { subtitleId } = req.params;
+//   const { subtitleText, languageCode } = req.body;
+//   const userId = res.locals.user.userId;
+//   const role = res.locals.user.role; // Assuming role is stored in JWT payload
 
-  const supportedLanguages = await languageModel.getActiveLanguages();
+//   // Restrict to admins only
+//   if (role !== Roles.ADMIN) {
+//     throw new AppError('Only admins can update subtitles', 403);
+//   }
 
-  if (!Array.isArray(subtitleArr)) {
-    throw new AppError('subtitleArr must be an array', 400);
-  }
+//   // Validate inputs
+//   if (!subtitleText || !subtitleText.trim()) {
+//     throw new AppError('Subtitle text is required and cannot be empty', 400);
+//   }
 
-  // Create an array of audio + subtitle
-  const generatedAssetIdsArray = subtitleArr.map(async (subtitleObj) => {
-    const { text, languageCode, tts } = subtitleObj;
-    if (!text || !languageCode || !tts) {
-      throw new AppError(
-        'Text, languageCode and TTS options are required',
-        400,
-      );
-    }
+//   // Validate language code if provided
+//   const supportedLanguages = await languageModel.getActiveLanguages();
+//   if (languageCode && !supportedLanguages.includes(languageCode)) {
+//     throw new AppError(
+//       `Unsupported language code: ${languageCode}. Supported: ${supportedLanguages.join(', ')}`,
+//       400,
+//     );
+//   }
 
-    // Validate language code
-    if (!supportedLanguages.includes(languageCode)) {
-      throw new AppError(
-        `Unsupported language code: ${languageCode}. Supported: ${supportedLanguages.join(', ')}`,
-        400,
-      );
-    }
+//   // Check if subtitle exists
+//   const subtitle = await audioModel.getSubtitleById(subtitleId);
+//   if (!subtitle) {
+//     throw new AppError('Subtitle not found', 404);
+//   }
 
-    let assetObj = {};
-    // If user wants TTS
-    if (tts) {
-      // Generate audio from text
-      // We are assuming text input is already translated
-      const { fileLink, fileName } = await textToSpeech(text, languageCode);
+//   // Update subtitle
+//   const updatedSubtitle = await audioModel.updateSubtitle({
+//     subtitleId,
+//     subtitleText,
+//     languageCode: languageCode || subtitle.languageCode, // Keep existing languageCode if not provided
+//     modifiedBy: userId,
+//     ipAddress: req.ip || '0.0.0.0',
+//   });
 
-      const audio = await audioModel.createAudio({
-        description: 'Text-to-speech generated audio',
-        fileLink,
-        fileName,
-        createdBy: userId,
-        languageCode,
-      });
-      // console.log('Generated Audio: ', audio)
-      assetObj['audioId'] = audio.audioId;
+//   logger.info(`Subtitle updated successfully: subtitleId=${subtitleId}`);
 
-      await logAdminAudit({
-        userId,
-        ipAddress: req.ip,
-        entityName: 'audio',
-        entityId: audio.audioId,
-        actionTypeId: AuditActions.CREATE,
-        logText: `Created audio file with ID ${audio.audioId}`,
-      });
-
-      logger.debug(
-        `Text converted to audio and saved successfully: ${fileLink}`,
-      );
-    }
-
-    const subtitle = await subtitleModel.create({
-      subtitleText: text,
-      languageCode,
-      createdBy: userId,
-      modifiedBy: userId,
-    });
-    assetObj['subtitleId'] = subtitle.subtitleId;
-
-    await logAdminAudit({
-      userId,
-      ipAddress: req.ip,
-      entityName: 'subtitle',
-      entityId: subtitle.subtitleId,
-      actionTypeId: AuditActions.CREATE,
-      logText: `Created subtitle entity with ID ${subtitle.subtitleId}`,
-    });
-
-    return assetObj;
-  });
-
-  // Pass on the IDs of the generated assets
-  res.locals.generatedAssetIdsArray = await Promise.all(generatedAssetIdsArray);
-  return next();
-});
-
-module.exports.updateSubtitle = catchAsync(async (req, res, next) => {
-  const { subtitleId } = req.params;
-  const { subtitleText, languageCode } = req.body;
-  const userId = res.locals.user.userId;
-  const role = res.locals.user.role; // Assuming role is stored in JWT payload
-
-  // Restrict to admins only
-  if (role !== Roles.ADMIN) {
-    throw new AppError('Only admins can update subtitles', 403);
-  }
-
-  // Validate inputs
-  if (!subtitleText || !subtitleText.trim()) {
-    throw new AppError('Subtitle text is required and cannot be empty', 400);
-  }
-
-  // Validate language code if provided
-  const supportedLanguages = await languageModel.getActiveLanguages();
-  if (languageCode && !supportedLanguages.includes(languageCode)) {
-    throw new AppError(
-      `Unsupported language code: ${languageCode}. Supported: ${supportedLanguages.join(', ')}`,
-      400,
-    );
-  }
-
-  // Check if subtitle exists
-  const subtitle = await audioModel.getSubtitleById(subtitleId);
-  if (!subtitle) {
-    throw new AppError('Subtitle not found', 404);
-  }
-
-  // Update subtitle
-  const updatedSubtitle = await audioModel.updateSubtitle({
-    subtitleId,
-    subtitleText,
-    languageCode: languageCode || subtitle.languageCode, // Keep existing languageCode if not provided
-    modifiedBy: userId,
-    ipAddress: req.ip || '0.0.0.0',
-  });
-
-  logger.info(`Subtitle updated successfully: subtitleId=${subtitleId}`);
-
-  res.status(200).json({
-    status: 'success',
-    data: {
-      subtitleId: updatedSubtitle.subtitleId,
-      subtitleText: updatedSubtitle.subtitleText,
-      languageCode: updatedSubtitle.languageCode,
-      message: 'Subtitle updated successfully',
-    },
-  });
-});
+//   res.status(200).json({
+//     status: 'success',
+//     data: {
+//       subtitleId: updatedSubtitle.subtitleId,
+//       subtitleText: updatedSubtitle.subtitleText,
+//       languageCode: updatedSubtitle.languageCode,
+//       message: 'Subtitle updated successfully',
+//     },
+//   });
+// });
 
 // Pagination
 // module.exports.getAllSubtitles = catchAsync(async (req, res, next) => {
@@ -341,6 +267,8 @@ module.exports.getSingleAudio = catchAsync(async (req, res, next) => {
     throw new AppError('Audio not found', 404);
   }
 
+  logger.info(`Fetched audio ${audioId}`);
+
   res.status(200).json({
     status: 'success',
     data: {
@@ -362,6 +290,9 @@ module.exports.archiveAudio = catchAsync(async (req, res, next) => {
   }
 
   await audioModel.archiveAudio(audioId, userId, req.ip);
+
+  logger.info(`Archived audio ${audioId}`);
+
   await logAdminAudit({
     userId,
     ipAddress: req.ip,
@@ -382,14 +313,11 @@ module.exports.hardDeleteAudio = catchAsync(async (req, res, next) => {
   const { audioId } = req.params;
   const userId = res.locals.user.userId;
 
-  // Check if audio exists
-  const audio = await audioModel.getAudioById(audioId);
-  if (!audio) {
-    throw new AppError('Audio not found', 404);
-  }
-
   // Hard delete audio
   await audioModel.hardDeleteAudio(audioId, userId, req.ip);
+
+  logger.info(`Hard deleted audio ${audioId}`);
+
   await logAdminAudit({
     userId,
     ipAddress: req.ip,
@@ -419,6 +347,8 @@ module.exports.unarchiveAudio = catchAsync(async (req, res, next) => {
   // Unarchive audio
   await audioModel.unarchiveAudio(audioId, userId, req.ip);
 
+  logger.info(`Unarchived audio ${audioId}`);
+
   await logAdminAudit({
     userId,
     ipAddress: req.ip,
@@ -447,6 +377,9 @@ module.exports.softDeleteAudio = catchAsync(async (req, res, next) => {
 
   // Soft delete audio by setting status to deleted
   await audioModel.softDeleteAudio(audioId, userId, req.ip);
+
+  logger.info(`Soft deleted audio ${audioId}`);
+
   await logAdminAudit({
     userId,
     ipAddress: req.ip,

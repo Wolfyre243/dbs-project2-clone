@@ -20,11 +20,15 @@ const LayoutBreadcrumb = (props: { href: any }) => {
 
   const formatHeader = (str: string) => {
     const words = str.split('-');
-    return words
+    let formatted = words
       .map((word) => {
         return uppercaseFirstLetter(word);
       })
       .join(' ');
+    if (formatted.length > 15) {
+      formatted = formatted.slice(0, 15) + '...';
+    }
+    return formatted;
   };
 
   let url = '';

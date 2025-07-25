@@ -18,7 +18,9 @@ export function SiteHeader() {
           orientation='vertical'
           className='mx-2 data-[orientation=vertical]:h-4'
         />
-        <LayoutBreadcrumb href={windowHref} />
+        <div className='hidden md:block'>
+          <LayoutBreadcrumb href={windowHref} />
+        </div>
         <div className='ml-auto flex items-center gap-2'>
           {/* Light/Dark mode toggler */}
           <ThemeSwitcher />

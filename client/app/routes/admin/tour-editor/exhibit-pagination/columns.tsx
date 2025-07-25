@@ -4,6 +4,7 @@ import { MoreHorizontal } from 'lucide-react';
 import { Button } from '~/components/ui/button';
 import { Checkbox } from '~/components/ui/checkbox';
 import { DataTableColumnHeader } from '~/components/ui/data-table-column-header';
+import { Badge } from '~/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,19 +13,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu';
+import { Link } from 'react-router';
+import { toast } from 'sonner';
 
-export type Subtitle = {
-  subtitleId: string;
-  subtitleText: string;
-  languageCode: string;
-  createdBy: string;
-  modifiedBy: string;
-  createdAt: Date;
-  modifiedAt: Date;
-  statusId: number;
+export type Exhibit = {
+  exhibitId: string;
+  title: string;
+  description: string;
+  createdAt: string;
+  image: string | null;
+  status: string;
+  exhibitCreatedBy: string;
+  supportedLanguages: string[];
 };
 
-export const columns: ColumnDef<Subtitle>[] = [
+export const columns: ColumnDef<Exhibit>[] = [
   {
     id: 'select',
     header: ({ table }) => (
@@ -48,39 +51,33 @@ export const columns: ColumnDef<Subtitle>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: 'subtitleId',
+    accessorKey: 'exhibitId',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Subtitle ID' />
+      <DataTableColumnHeader column={column} title='Exhibit ID' />
     ),
     cell: ({ row }) => {
-      const value = row.original.subtitleId;
+      const value = row.original.exhibitId;
       return value.length > 8 ? value.slice(0, 8) + '...' : value;
     },
   },
   {
-    accessorKey: 'subtitleText',
+    accessorKey: 'title',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Subtitle Text' />
+      <DataTableColumnHeader column={column} title='Title' />
     ),
     cell: ({ row }) => {
-      const value = row.original.subtitleText;
+      const value = row.original.title;
       return value.length > 20 ? value.slice(0, 20) + '...' : value;
     },
   },
   {
-    accessorKey: 'languageCode',
+    accessorKey: 'description',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Language Code' />
-    ),
-  },
-  {
-    accessorKey: 'createdBy',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Created By' />
+      <DataTableColumnHeader column={column} title='Description' />
     ),
     cell: ({ row }) => {
-      const value = row.original.createdBy;
-      return value.length > 8 ? value.slice(0, 8) + '...' : value;
+      const value = row.original.description;
+      return value?.length > 30 ? value.slice(0, 30) + '...' : value;
     },
   },
   {
@@ -102,37 +99,55 @@ export const columns: ColumnDef<Subtitle>[] = [
     },
   },
   {
-    accessorKey: 'modifiedBy',
+    accessorKey: 'status',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Modified By' />
+      <DataTableColumnHeader column={column} title='Status' />
     ),
     cell: ({ row }) => {
-      const value = row.original.modifiedBy;
-      return value?.length > 8 ? value.slice(0, 8) + '...' : value;
+      const value = row.original.status;
+      return (
+        <span
+          className={value === 'Active' ? 'text-green-600' : 'text-red-600'}
+        >
+          {value}
+        </span>
+      );
     },
   },
   {
-    accessorKey: 'modifiedAt',
+    accessorKey: 'exhibitCreatedBy',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Modified At' />
+      <DataTableColumnHeader column={column} title='Created By' />
     ),
     cell: ({ row }) => {
-      const value = row.original.modifiedAt;
-      if (!value) return '';
-      const date = typeof value === 'string' ? new Date(value) : value;
-      return date.toLocaleString('en-SG', {
-        year: 'numeric',
-        month: 'short',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
+      const value = row.original.exhibitCreatedBy;
+      return value.length > 12 ? value.slice(0, 12) + '...' : value;
+    },
+  },
+  {
+    accessorKey: 'supportedLanguages',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title='Languages' />
+    ),
+    cell: ({ row }) => {
+      const value = row.original.supportedLanguages;
+      return Array.isArray(value) ? (
+        <div className='flex flex-wrap gap-1'>
+          {value.map((lang: string) => (
+            <Badge key={lang} variant='secondary'>
+              {lang}
+            </Badge>
+          ))}
+        </div>
+      ) : (
+        ''
+      );
     },
   },
   {
     id: 'actions',
     cell: ({ row }) => {
-      const subtitle = row.original;
+      const exhibit = row.original;
 
       return (
         <DropdownMenu>
@@ -143,18 +158,22 @@ export const columns: ColumnDef<Subtitle>[] = [
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align='end'>
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() =>
-                navigator.clipboard.writeText(subtitle.subtitleId.toString())
-              }
+              onClick={() => {
+                toast.success('Copied to clipboard', {
+                  duration: 2000,
+                });
+                navigator.clipboard.writeText(exhibit.exhibitId.toString());
+              }}
             >
-              Copy Subtitle ID
+              Copy Exhibit ID
             </DropdownMenuItem>
             {/* TODO Turn into redirect buttons */}
-            <DropdownMenuItem>View subtitle</DropdownMenuItem>
-            <DropdownMenuItem>View activity</DropdownMenuItem>
+            <DropdownMenuItem>
+              <Link to={`/admin/tour-editor/view-exhibit/${exhibit.exhibitId}`}>
+                View Exhibit
+              </Link>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );

@@ -3,7 +3,6 @@ const logger = require('../utils/logger');
 const catchAsync = require('../utils/catchAsync');
 const validateFields = require('../utils/validateFields');
 const exhibitModel = require('../models/exhibitModel');
-const exhibitModes = require('../configs/exhibitModes');
 const statusCodes = require('../configs/statusCodes');
 const AuditActions = require('../configs/auditActionConfig');
 const { logAdminAudit } = require('../utils/auditlogs');
@@ -19,13 +18,8 @@ module.exports.createExhibit = catchAsync(async (req, res, next) => {
   // const imageId = req.body.imageId; // Assuming imageId is provided in the request
 
   // Validate required fields
-  console.log(assetData);
   if (!Array.isArray(assetData.subtitleIds)) {
     throw new AppError('Subtitle IDs must be an array', 400);
-  }
-
-  if (!Array.isArray(assetData.audioIds)) {
-    throw new AppError('Audio IDs must be an array', 400);
   }
 
   // Validate imageId if provided
@@ -45,25 +39,9 @@ module.exports.createExhibit = catchAsync(async (req, res, next) => {
     createdBy: userId,
     modifiedBy: userId,
     subtitleIdArr: assetData.subtitleIds,
-    audioIdArr: assetData.audioIds,
     // TODO: To implement images
     // imageId,
   });
-
-  // assetData.forEach(async ({ audioId = null, subtitleId }) => {
-  //   // Create exhibit-subtitle relation
-  //   await exhibitModel.createExhibitSubtitle({
-  //     exhibitId: exhibit.exhibitId,
-  //     subtitleId,
-  //   });
-
-  //   if (audioId) {
-  //     await exhibitModel.createExhibitAudio({
-  //       exhibitId: exhibit.exhibitId,
-  //       audioId,
-  //     });
-  //   }
-  // });
 
   logger.info(
     `Exhibit created successfully: ${exhibit.exhibitId} by Admin ${userId}`,
@@ -76,7 +54,10 @@ module.exports.createExhibit = catchAsync(async (req, res, next) => {
     entityName: 'exhibit',
     entityId: exhibit.exhibitId,
     actionTypeId: AuditActions.CREATE,
-    logText: `Exhibit created successfully: ${exhibit.exhibitId} by Admin ${userId}`,
+    logText: `
+      Exhibit created successfully: ${exhibit.exhibitId} by Admin ${userId}.\n
+      Subtitles: ${assetData.subtitleIds.join(', ')}
+    `,
   });
 
   res.status(201).json({
@@ -189,19 +170,38 @@ module.exports.deleteExhibit = catchAsync(async (req, res, next) => {
   }
 });
 
-// Getting all exhibit data
+// Get all exhibits with pagination, sorting, and search
 module.exports.getAllExhibits = catchAsync(async (req, res, next) => {
-  const exhibits = await exhibitModel.getEveryExhibit();
-  if (!exhibits || exhibits.length === 0) {
-    logger.warning('No exhibits found');
-    return next(new AppError('No exhibits found', 404));
+  const {
+    page = 1,
+    pageSize = 10,
+    sortBy = 'createdAt',
+    order = 'desc',
+    search = '',
+    statusFilter = null,
+  } = req.query;
+
+  const filter = {};
+  if (statusFilter) {
+    filter.statusId = parseInt(statusFilter);
   }
 
-  logger.info('All exhibits retrieved successfully');
+  const result = await exhibitModel.getAllExhibits({
+    page: parseInt(page),
+    pageSize: parseInt(pageSize),
+    sortBy,
+    order,
+    search,
+    filter,
+  });
+
+  logger.info(
+    `Retrieved ${pageSize} exhibits for page ${page}, total ${result.exhibitCount} exhibits.`,
+  );
+
   res.status(200).json({
     status: 'success',
-    data: {
-      exhibits,
-    },
+    pageCount: Math.ceil(result.exhibitCount / pageSize),
+    data: result.exhibits,
   });
 });
