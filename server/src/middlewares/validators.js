@@ -73,6 +73,12 @@ const generateAudioValidationRules = () => [
   languageCodeValidation().notEmpty().withMessage('Language Code is required'),
 ];
 
+const createImageValidationRules = () => [
+  body('description').notEmpty().withMessage('Description is required'),
+  body('fileLink').notEmpty().withMessage('File link is required'),
+  body('fileName').notEmpty().withMessage('File name is required'),
+];
+
 module.exports = {
   validate,
 
@@ -82,4 +88,5 @@ module.exports = {
   createExhibitionValidationRules,
   generateAudioValidationRules,
   createSubtitleValidationRules,
+  createImageValidationRules,
 };
