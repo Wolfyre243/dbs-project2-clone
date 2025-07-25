@@ -12,6 +12,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '~/components/ui/dialog';
 
 export type Audio = {
   audioId: string;
@@ -109,28 +116,34 @@ export const columns: ColumnDef<Audio>[] = [
       const audio = row.original;
 
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant='ghost' className='h-8 w-8 p-0'>
-              <span className='sr-only'>Open menu</span>
-              <MoreHorizontal className='h-4 w-4' />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align='end'>
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() =>
-                navigator.clipboard.writeText(audio.audioId.toString())
-              }
-            >
-              Copy Audio ID
-            </DropdownMenuItem>
-            {/* TODO Turn into redirect buttons */}
-            <DropdownMenuItem>View audio</DropdownMenuItem>
-            <DropdownMenuItem>View activity</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Dialog>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant='ghost' className='h-8 w-8 p-0'>
+                <span className='sr-only'>Open menu</span>
+                <MoreHorizontal className='h-4 w-4' />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align='end'>
+              <DropdownMenuItem
+                onClick={() =>
+                  navigator.clipboard.writeText(audio.audioId.toString())
+                }
+              >
+                Copy Audio ID
+              </DropdownMenuItem>
+              <DialogTrigger asChild>
+                <DropdownMenuItem>Preview audio</DropdownMenuItem>
+              </DialogTrigger>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Audio Preview</DialogTitle>
+            </DialogHeader>
+            <audio controls src={audio.fileLink} style={{ width: '100%' }} />
+          </DialogContent>
+        </Dialog>
       );
     },
   },

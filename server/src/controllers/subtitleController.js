@@ -14,47 +14,47 @@ const languageModel = require('../models/languageModel');
 const subtitleModel = require('../models/subtitleModel');
 const { logAdminAudit } = require('../utils/auditlogs');
 
-// module.exports.createSubtitle = catchAsync(async (req, res, next) => {
-//   const { text, languageCode } = req.body;
-//   const userId = res.locals.user.userId;
+module.exports.createSubtitle = catchAsync(async (req, res, next) => {
+  const { text, languageCode, audioId } = req.body;
+  const userId = res.locals.user.userId;
 
-//   // Validate language code
-//   const supportedLanguages = await languageModel.getActiveLanguages();
-//   if (!supportedLanguages.includes(languageCode)) {
-//     throw new AppError(
-//       `Unsupported language code: ${languageCode}. Supported: ${supportedLanguages.join(', ')}`,
-//       400,
-//     );
-//   }
+  // Validate language code
+  const supportedLanguages = await languageModel.getActiveLanguages();
+  if (!supportedLanguages.includes(languageCode)) {
+    throw new AppError(
+      `Unsupported language code: ${languageCode}. Supported: ${supportedLanguages.join(', ')}`,
+      400,
+    );
+  }
 
-//   const subtitle = await subtitleModel.create({
-//     subtitleText: text,
-//     languageCode,
-//     createdBy: userId,
-//     modifiedBy: userId,
-//   });
+  const subtitle = await subtitleModel.create({
+    subtitleText: text,
+    languageCode,
+    audioId,
+    createdBy: userId,
+    modifiedBy: userId,
+  });
 
-//   await logAdminAudit({
-//     userId,
-//     ipAddress: req.ip,
-//     entityName: 'subtitle',
-//     entityId: subtitle.subtitleId,
-//     actionTypeId: AuditActions.CREATE,
-//     logText: `Created subtitle entity with ID ${subtitle.subtitleId}`,
-//   });
+  await logAdminAudit({
+    userId,
+    ipAddress: req.ip,
+    entityName: 'subtitle',
+    entityId: subtitle.subtitleId,
+    actionTypeId: AuditActions.CREATE,
+    logText: `Created subtitle entity with ID ${subtitle.subtitleId}`,
+  });
 
-//   logger.debug(`Subtitle created successfully with ID: ${subtitle.subtitleId}`);
+  logger.debug(`Subtitle created successfully with ID: ${subtitle.subtitleId}`);
 
-//   res.status(201).json({
-//     status: 'success',
-//     data: {
-//       subtitleId: subtitle.subtitleId,
-//       languageCode,
-//       text,
-//       message: 'Successfully created subtitle',
-//     },
-//   });
-// });
+  res.status(201).json({
+    status: 'success',
+    data: {
+      ...subtitle,
+      audioId,
+      message: 'Successfully created subtitle',
+    },
+  });
+});
 
 // Archive subtitle
 module.exports.archiveSubtitle = catchAsync(async (req, res, next) => {

@@ -596,7 +596,6 @@ export default function TourEditorCreateExhibitPage() {
                           !subtitle.languageCode ||
                           subtitle.isGenerating
                         }
-                        variant='outline'
                       >
                         {subtitle.isGenerating ? (
                           <>

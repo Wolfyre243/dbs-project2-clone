@@ -1,6 +1,6 @@
 // single-exhibit.tsx
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import useApiPrivate from '~/hooks/useApiPrivate';
 import { Avatar } from '~/components/ui/avatar';
 import { Badge } from '~/components/ui/badge';
@@ -60,6 +60,8 @@ export default function SingleExhibit() {
   const [exhibit, setExhibit] = useState<ExhibitData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedLanguage, setSelectedLanguage] = useState<string>('');
+  const [currentWordIndices, setCurrentWordIndices] = useState<Record<string, number | null>>({});
+  const audioRefs = useRef<Record<string, HTMLAudioElement | null>>({});
   const apiPrivate = useApiPrivate();
 
   useEffect(() => {
@@ -82,6 +84,50 @@ export default function SingleExhibit() {
     if (exhibit && exhibit.supportedLanguages.length > 0) {
       setSelectedLanguage(exhibit.supportedLanguages[0]);
     }
+  }, [exhibit]);
+
+  useEffect(() => {
+    const handleTimeUpdate = (subtitleId: string) => {
+      const audioElement = audioRefs.current[subtitleId];
+      if (audioElement && exhibit) {
+        const duration = audioElement.duration;
+        if (isFinite(duration) && duration > 0) {
+          const subtitle = exhibit.subtitles.find(s => s.subtitleId === subtitleId);
+          if (subtitle) {
+            const words = subtitle.subtitleText.split(' ');
+            // Line 150-151: Changed to handle 5-word segments
+            const segmentSize = 5;
+            const segmentDuration = duration / Math.ceil(words.length / segmentSize);
+            const currentTime = audioElement.currentTime;
+            const index = Math.floor(currentTime / segmentDuration);
+            setCurrentWordIndices(prev => ({
+              ...prev,
+              [subtitleId]: index >= 0 && index * segmentSize < words.length ? index : null
+            }));
+          }
+        }
+      }
+    };
+
+    exhibit?.subtitles.forEach(subtitle => {
+      const audioElement = audioRefs.current[subtitle.subtitleId];
+      if (audioElement) {
+        audioElement.addEventListener('timeupdate', () => handleTimeUpdate(subtitle.subtitleId));
+        audioElement.addEventListener('pause', () => handleTimeUpdate(subtitle.subtitleId));
+        audioElement.addEventListener('ended', () => handleTimeUpdate(subtitle.subtitleId));
+      }
+    });
+
+    return () => {
+      exhibit?.subtitles.forEach(subtitle => {
+        const audioElement = audioRefs.current[subtitle.subtitleId];
+        if (audioElement) {
+          audioElement.removeEventListener('timeupdate', () => handleTimeUpdate(subtitle.subtitleId));
+          audioElement.removeEventListener('pause', () => handleTimeUpdate(subtitle.subtitleId));
+          audioElement.removeEventListener('ended', () => handleTimeUpdate(subtitle.subtitleId));
+        }
+      });
+    };
   }, [exhibit]);
 
   if (loading) {
@@ -157,6 +203,9 @@ export default function SingleExhibit() {
               </Badge> */}
               {/* TODO: Add text highlighting here */}
               <audio
+                ref={(el) => {
+                  if (el) audioRefs.current[subtitle.subtitleId] = el;
+                }}
                 controls
                 src={subtitle.audio.fileLink}
                 className='w-full mb-5'
@@ -164,7 +213,29 @@ export default function SingleExhibit() {
                 Your browser does not support the audio element.
               </audio>
               <div className='flex items-center gap-3 mb-2 p-4 rounded-lg border bg-muted'>
-                <span className='text-base'>{subtitle.subtitleText}</span>
+                <span className='text-base'>
+                  {subtitle.subtitleText.split(' ').reduce((acc, word, index) => {
+                    const segmentIndex = Math.floor(index / 5);
+                    if (index % 5 === 0) acc.push([]);
+                    acc[acc.length - 1].push(word);
+                    return acc;
+                  }, [] as string[][]).map((group, groupIndex) => (
+                    <span
+                      key={groupIndex}
+                      style={{
+                        padding: '2px 4px',
+                        borderRadius: '4px',
+                        background: groupIndex === currentWordIndices[subtitle.subtitleId] ? 'linear-gradient(90deg, #ffeb3b, #ffca28)' : 'transparent',
+                        fontWeight: groupIndex === currentWordIndices[subtitle.subtitleId] ? '500' : '300',
+                        transition: 'all 0.3s ease',
+                        boxShadow: groupIndex === currentWordIndices[subtitle.subtitleId] ? '0 2px 6px rgba(255, 215, 0, 0.4)' : 'none',
+                        color: groupIndex === currentWordIndices[subtitle.subtitleId] ? '#1a1a1a' : '#ffffff',
+                      }}
+                    >
+                      {group.join(' ') + ' '}
+                    </span>
+                  ))}
+                </span>
               </div>
             </motion.div>
           ))}

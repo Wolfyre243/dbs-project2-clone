@@ -12,6 +12,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '~/components/ui/dialog';
 
 export type Subtitle = {
   subtitleId: string;
@@ -135,28 +142,36 @@ export const columns: ColumnDef<Subtitle>[] = [
       const subtitle = row.original;
 
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant='ghost' className='h-8 w-8 p-0'>
-              <span className='sr-only'>Open menu</span>
-              <MoreHorizontal className='h-4 w-4' />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align='end'>
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() =>
-                navigator.clipboard.writeText(subtitle.subtitleId.toString())
-              }
-            >
-              Copy Subtitle ID
-            </DropdownMenuItem>
-            {/* TODO Turn into redirect buttons */}
-            <DropdownMenuItem>View subtitle</DropdownMenuItem>
-            <DropdownMenuItem>View activity</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Dialog>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant='ghost' className='h-8 w-8 p-0'>
+                <span className='sr-only'>Open menu</span>
+                <MoreHorizontal className='h-4 w-4' />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align='end'>
+              <DropdownMenuItem
+                onClick={() =>
+                  navigator.clipboard.writeText(subtitle.subtitleId.toString())
+                }
+              >
+                Copy Subtitle ID
+              </DropdownMenuItem>
+              <DialogTrigger asChild>
+                <DropdownMenuItem>Preview Subtitles</DropdownMenuItem>
+              </DialogTrigger>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Subtitle Preview</DialogTitle>
+            </DialogHeader>
+            <div className='max-h-72 overflow-y-scroll p-4 border-2 rounded-lg text-base whitespace-pre-wrap'>
+              {subtitle.subtitleText}
+            </div>
+          </DialogContent>
+        </Dialog>
       );
     },
   },

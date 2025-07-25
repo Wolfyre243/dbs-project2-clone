@@ -10,7 +10,7 @@ export default function ExhibitInstructionsPage() {
           <div className='flex items-center gap-3 mb-4'>
             <Sparkles className='h-8 w-8 text-[#e63946]' />
             <h1 className='text-3xl font-extrabold text-[#1d3557] tracking-tight'>
-              Welcome to the QR Exhibit Experience!
+              Welcome!
             </h1>
           </div>
           <p className='text-lg text-[#457b9d] mb-6 text-center'>
