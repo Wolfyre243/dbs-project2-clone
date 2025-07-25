@@ -171,6 +171,25 @@ async function main() {
         );
       }
 
+      // Step 4.1: Seed Event Type Records
+      console.log('\n🎫 Step 4.1: Creating event type records...');
+      const eventTypeData = [
+        {
+          eventType: 'QR_SCANNED',
+          description: 'Event triggered when a QR code is scanned',
+        },
+      ];
+
+      if (eventTypeData.length > 0) {
+        const createdEventTypes = await prisma.eventType.createMany({
+          data: eventTypeData,
+          skipDuplicates: true,
+        });
+        console.log(
+          `   ✅ Created ${createdEventTypes.count} event type records`,
+        );
+      }
+
       // Step 5: Seed User Records
       console.log('\n👥 Step 5: Creating user records...');
       const userData = [
