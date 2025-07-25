@@ -283,9 +283,17 @@ export default function UserSettings() {
             <div>
               <div className='text-xs text-muted-foreground mb-1'>Email</div>
               <div className='flex flex-row items-center gap-2'>
-                <span className='font-medium'>{user.emails?.email}</span>
-                {user.status.statusId !== StatusCodes.VERIFIED && (
-                  <VerifyEmailButton emailId={user.emails?.emailId} />
+                {user.emails ? (
+                  <>
+                    <span className='font-medium'>{user.emails?.email}</span>
+                    {user.status.statusId !== StatusCodes.VERIFIED && (
+                      <VerifyEmailButton emailId={user.emails?.emailId} />
+                    )}
+                  </>
+                ) : (
+                  <Badge>
+                    <h1>Login to save data!</h1>
+                  </Badge>
                 )}
               </div>
             </div>

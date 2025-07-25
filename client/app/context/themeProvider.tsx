@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
+import useAuth from '~/hooks/useAuth';
 
 type Theme = 'dark' | 'light' | 'system';
 
@@ -39,7 +40,6 @@ export function ThemeProvider({
 
   useEffect(() => {
     const root = window.document.documentElement;
-
     root.classList.remove('light', 'dark');
 
     if (theme === 'system') {

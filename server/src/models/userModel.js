@@ -139,7 +139,7 @@ module.exports.retrieveById = async (userId) => {
       },
     });
 
-    user.emails.email = decryptData(user.emails.email);
+    if (user.emails) user.emails.email = decryptData(user.emails.email);
 
     return convertDatesToStrings(user);
   } catch (error) {

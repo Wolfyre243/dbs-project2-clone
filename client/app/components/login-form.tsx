@@ -9,11 +9,13 @@ import { Link } from 'react-router';
 export function LoginForm({
   className,
   submitCb,
+  guestLoginCb,
   ref,
   ...props
 }: {
   className?: string;
   submitCb: (e: React.FormEvent) => Promise<void>;
+  guestLoginCb: () => Promise<void>;
   ref: React.RefObject<HTMLFormElement | null>;
 }) {
   return (
@@ -60,9 +62,19 @@ export function LoginForm({
                 required
               />
             </div>
-            <Button type='submit' className='w-full'>
-              Login
-            </Button>
+            <div className='flex flex-col gap-3'>
+              <Button type='submit' className='w-full'>
+                Login
+              </Button>
+              <Button
+                variant={'ghost'}
+                onClick={guestLoginCb}
+                type='button'
+                className='w-full'
+              >
+                Login as Guest
+              </Button>
+            </div>
           </div>
         </div>
       </form>

@@ -29,10 +29,17 @@ module.exports.guestLogin = catchAsync(async (req, res, next) => {
 
   const newUser = await userModel.createGuest(username, roleId);
 
+  const deviceInfo = req.headers['user-agent'] || 'Unknown Device';
+  const session = await sessionModel.create({
+    userId: newUser.userId,
+    deviceInfo,
+  });
+
   logger.info(`Guest login with username: ${username}`);
 
   res.locals.userId = newUser.userId;
   res.locals.roleId = roleId;
+  res.locals.sessionId = session.sessionId;
 
   return next();
 });

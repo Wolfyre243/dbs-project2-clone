@@ -12,8 +12,41 @@ import {
   Mail,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import api from '~/services/api';
+import useAuth from '~/hooks/useAuth';
+import { jwtDecode } from 'jwt-decode';
+import { useNavigate } from 'react-router';
+import { useJWTDecode } from '~/hooks/useJWTDecode';
+import { isAxiosError } from 'axios';
+import { toast } from 'sonner';
 
 export default function LandingPage() {
+  const { setAccessToken, accessToken } = useAuth();
+  const JWTDecode = useJWTDecode();
+  const navigate = useNavigate();
+
+  const handleGuestLogin = async () => {
+    try {
+      const { data: responseData } = await api.post(
+        '/auth/guest-login',
+        {},
+        { withCredentials: true },
+      );
+
+      setAccessToken(responseData.accessToken);
+      await JWTDecode(responseData.accessToken);
+      // TOFIX: How come user is taken to /admin
+      navigate('/');
+    } catch (error: any) {
+      let message;
+      if (isAxiosError(error)) {
+        message =
+          error.response?.data.message ||
+          'Something went wrong. Please try again later.';
+      }
+      toast.error(message);
+    }
+  };
   return (
     <div className='min-h-screen w-full flex flex-col'>
       <main className='flex-1 w-full flex flex-col'>
@@ -68,13 +101,18 @@ export default function LandingPage() {
 
             {/* CTA Buttons */}
             <div className='flex flex-col sm:flex-row gap-4 justify-center items-center mb-16'>
-              <Button
-                size='lg'
-                className='bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-blue-500/25'
-              >
-                Start Your Journey
-                <ArrowRight className='ml-2 w-5 h-5' />
-              </Button>
+              {!accessToken ? (
+                <Button
+                  size='lg'
+                  onClick={() => handleGuestLogin()}
+                  className='bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-blue-500/25'
+                >
+                  Start Your Journey
+                  <ArrowRight className='ml-2 w-5 h-5' />
+                </Button>
+              ) : (
+                ''
+              )}
 
               <Button
                 size='lg'
