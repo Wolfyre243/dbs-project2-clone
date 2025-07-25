@@ -3,7 +3,6 @@ const logger = require('../utils/logger');
 const catchAsync = require('../utils/catchAsync');
 const validateFields = require('../utils/validateFields');
 const exhibitModel = require('../models/exhibitModel');
-const exhibitModes = require('../configs/exhibitModes');
 const statusCodes = require('../configs/statusCodes');
 const AuditActions = require('../configs/auditActionConfig');
 const { logAdminAudit } = require('../utils/auditlogs');
