@@ -9,7 +9,7 @@ const exhibitRouter = require('./exhibitRoutes');
 const subtitleRouter = require('./subtitleRoutes');
 const languageRouter = require('./languageRoutes');
 const imageRouter = require('./imageRoutes');
-const QRcode = require('./QRcodeRoutes')
+const QRcodeRouter = require('./QRcodeRoutes')
 
 // Create the main router and register routers
 const mainRouter = express.Router();
@@ -21,7 +21,7 @@ mainRouter.use('/exhibit', exhibitRouter);
 mainRouter.use('/subtitle', subtitleRouter);
 mainRouter.use('/language', languageRouter);
 mainRouter.use('/image', imageRouter);
-//mainRouter.use('/QRcode', QRcodeRouter);
+mainRouter.use('/QRcode', QRcodeRouter);
 mainRouter.get('/', (req, res) => {
   res.redirect('/docs');
 });
