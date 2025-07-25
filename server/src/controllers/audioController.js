@@ -28,19 +28,14 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
 
   // const { filename, path: filePath } = req.file;
   const userId = res.locals.user.userId;
-  const languageCode = req.body.languageCode;
-  const description = req.body.description || 'No description provided';
-  // TODO Include more file details
+  const { languageCode } = req.body;
+
   logger.debug(`Received file: ${req.file.originalname}`);
 
   // Validation for supported languages
   const supportedLanguages = await languageModel.getActiveLanguages();
-  // TODO Transfer to validator middlware
-  if (!languageCode) {
-    throw new AppError('Language code is required', 400);
-  }
 
-  console.log(`Supported languages: ${supportedLanguages.join(', ')}`);
+  // console.log(`Supported languages: ${supportedLanguages.join(', ')}`);
 
   if (!supportedLanguages.includes(languageCode)) {
     throw new AppError(
@@ -49,33 +44,17 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
     );
   }
 
-  // Transcribe and translate audio
-  // TODO: Make optional
-  const { transcription, translations } = await transcribeAndTranslateAudio(
+  const { fileLink, fileName } = await fileUploader.uploadFile(
     req.file,
-    languageCode,
+    'audio',
   );
-  if (!transcription) {
-    throw new Error('Failed to transcribe audio');
-  }
-
-  // Get the translated text for the specified languageCode
-  const translatedText = translations[languageCode];
-  if (!translatedText) {
-    throw new Error(
-      `No translation available for language code: ${languageCode}`,
-    );
-  }
-
-  const fileLink = await fileUploader.uploadFile(req.file, 'audio');
 
   // Create audio record using the model
   const audio = await audioModel.createAudio({
-    description,
     fileLink,
+    fileName,
     createdBy: userId,
     languageCode,
-    statusId: statusCodes.ACTIVE,
   });
 
   // Log audit action
@@ -85,29 +64,13 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
     entityName: 'audio',
     entityId: audio.audioId,
     actionTypeId: AuditActions.CREATE,
-    logText: `Uploaded, transcribed, and translated audio file at ${fileLink} to ${languageCode}`,
+    logText: `Uploaded audio file at ${fileLink} in ${languageCode}`,
   });
-
-  // Create subtitle record with translated text
-  const subtitle = await audioModel.createSubtitle({
-    subtitleText: translatedText,
-    languageCode,
-    createdBy: userId,
-    modifiedBy: userId,
-    statusId: statusCodes.ACTIVE,
-  });
-
-  logger.info(`Uploaded audio ${audio.audioId}`);
 
   res.status(200).json({
     status: 'success',
     data: {
-      audioId: audio.audioId,
-      fileLink: audio.fileLink,
-      languageCode,
-      transcription: translatedText, // Return translated text as transcription
-      translations,
-      subtitleId: subtitle.subtitleId,
+      ...audio,
       message:
         'Successfully uploaded audio and saved translated text as subtitle',
     },

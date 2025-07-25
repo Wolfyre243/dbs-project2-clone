@@ -12,3 +12,11 @@ module.exports.getActiveLanguages = async () => {
   // console.log(languagesArr);
   return languagesArr.map((lang) => lang.languageCode);
 };
+
+module.exports.getActiveLanguagesWithName = async () => {
+  const languagesArr = await prisma.language.findMany({
+    where: { statusId: statusCodes.ACTIVE },
+  });
+
+  return languagesArr;
+};

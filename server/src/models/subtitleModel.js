@@ -7,30 +7,36 @@ const AppError = require('../utils/AppError');
 
 const prisma = new PrismaClient();
 
-// module.exports.create = async ({
-//   subtitleText,
-//   languageCode,
-//   createdBy,
-//   modifiedBy,
-//   statusId = statusCodes.ACTIVE,
-// }) => {
-//   try {
-//     return await prisma.subtitle.create({
-//       data: {
-//         subtitleText,
-//         languageCode,
-//         createdBy,
-//         modifiedBy,
-//         statusId,
-//       },
-//     });
-//   } catch (error) {
-//     if (error.code === 'P2002') {
-//       throw new AppError('Subtitle with unique constraint already exists.', 409);
-//     }
-//     throw error;
-//   }
-// };
+module.exports.create = async ({
+  subtitleText,
+  languageCode,
+  audioId,
+  createdBy,
+  modifiedBy,
+  statusId = statusCodes.ACTIVE,
+}) => {
+  try {
+    return await prisma.subtitle.create({
+      data: {
+        subtitleText,
+        languageCode,
+        audioId,
+        createdBy,
+        modifiedBy,
+        statusId,
+      },
+    });
+  } catch (error) {
+    // TODO: Handle foreign key error
+    if (error.code === 'P2002') {
+      throw new AppError(
+        `Subtitle with audioId ${audioId} already exists.`,
+        409,
+      );
+    }
+    throw error;
+  }
+};
 
 // Archive subtitle by setting status to ARCHIVED
 

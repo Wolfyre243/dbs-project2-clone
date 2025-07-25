@@ -10,7 +10,7 @@ const prisma = new PrismaClient();
 
 // Create a new audio record
 module.exports.createAudio = async ({
-  description,
+  description = undefined,
   fileLink,
   fileName,
   createdBy,

@@ -25,3 +25,18 @@ module.exports.retrieveAllLanguages = catchAsync(async (req, res, next) => {
     data: supportedLanguages,
   });
 });
+
+module.exports.retrieveAllLanguagesWithName = catchAsync(
+  async (req, res, next) => {
+    const supportedLanguages = await languageModel.getActiveLanguagesWithName();
+
+    logger.info(
+      `Successfully retrieved ${supportedLanguages.length} supported languages!`,
+    );
+
+    return res.status(200).json({
+      status: 'success',
+      data: supportedLanguages,
+    });
+  },
+);

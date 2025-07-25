@@ -18,12 +18,12 @@ const subtitleRouter = express.Router();
 
 subtitleRouter.use(jwtMiddleware.verifyToken, authMiddleware.verifyIsAdmin);
 
-// subtitleRouter.post(
-//   '/',
-//   createSubtitleValidationRules(),
-//   validate,
-//   subtitleController.createSubtitle,
-// );
+subtitleRouter.post(
+  '/',
+  createSubtitleValidationRules(),
+  validate,
+  subtitleController.createSubtitle,
+);
 
 // archive subtitle by setting status to archived
 subtitleRouter.put('/archive/:subtitleId', subtitleController.archiveSubtitle);
