@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router';
 import {
   Card,
@@ -142,11 +142,48 @@ function SubtitleAudioPreview({ subtitles }: { subtitles: Subtitle[] }) {
   const [current, setCurrent] = useState(
     available.length > 0 ? available[0] : undefined,
   );
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [currentWordIndices, setCurrentWordIndices] = useState<Record<string, number | null>>({});
 
   // Update current when selectedLang changes
   useEffect(() => {
     setCurrent(available.find((s) => s.languageCode === selectedLang));
   }, [selectedLang, available]);
+
+  useEffect(() => {
+    const handleTimeUpdate = () => {
+      if (audioRef.current && current) {
+        const duration = audioRef.current.duration;
+        if (isFinite(duration) && duration > 0) {
+          const isSpaceSeparated = ['en-GB', 'es-ES', 'fr-FR', 'de-DE', 'ru-RU', 'it-IT', 'ms-MY', 'ta-IN', 'hi-IN'].includes(current.languageCode);
+          const units = isSpaceSeparated ? current.subtitleText.split(' ') : current.subtitleText.split('');
+          const segmentSize = 8;
+          const segmentDuration = duration / Math.ceil(units.length / segmentSize);
+          const currentTime = audioRef.current.currentTime;
+          const index = Math.floor(currentTime / segmentDuration);
+          setCurrentWordIndices(prev => ({
+            ...prev,
+            [current.subtitleId]: index >= 0 && index * segmentSize < units.length ? index : null,
+          }));
+        }
+      }
+    };
+
+    const audioElement = audioRef.current;
+    if (audioElement) {
+      audioElement.addEventListener('timeupdate', handleTimeUpdate);
+      audioElement.addEventListener('pause', handleTimeUpdate);
+      audioElement.addEventListener('ended', handleTimeUpdate);
+    }
+
+    return () => {
+      if (audioElement) {
+        audioElement.removeEventListener('timeupdate', handleTimeUpdate);
+        audioElement.removeEventListener('pause', handleTimeUpdate);
+        audioElement.removeEventListener('ended', handleTimeUpdate);
+      }
+    };
+  }, [current]);
 
   if (available.length === 0) {
     return (
@@ -179,11 +216,53 @@ function SubtitleAudioPreview({ subtitles }: { subtitles: Subtitle[] }) {
           <div className='text-xs text-muted-foreground'>
             Language: {current?.languageCode}
           </div>
-          <div className='font-medium'>{current?.subtitleText}</div>
+          <div className='font-medium'>
+            {(() => {
+              const isSpaceSeparated =
+                current?.languageCode &&
+                ['en-GB', 'es-ES', 'fr-FR', 'de-DE', 'ru-RU', 'it-IT', 'ms-MY', 'ta-IN', 'hi-IN'].includes(current.languageCode);
+              const units = current?.subtitleText
+                ? current.subtitleText.split(isSpaceSeparated ? ' ' : '')
+                : [];
+              return units.reduce((acc, unit, index) => {
+                const segmentIndex = Math.floor(index / 8);
+                if (index % 8 === 0) acc.push([]);
+                acc[acc.length - 1].push(unit);
+                return acc;
+              }, [] as string[][]).map((group, groupIndex) => (
+                <span
+                  key={groupIndex}
+                  style={{
+                    padding: '2px 4px',
+                    borderRadius: '4px',
+                    background:
+                      groupIndex === currentWordIndices[current?.subtitleId || '']
+                        ? 'linear-gradient(90deg, #ffeb3b, #ffca28)'
+                        : 'transparent',
+                    fontWeight:
+                      groupIndex === currentWordIndices[current?.subtitleId || '']
+                        ? '500'
+                        : '300',
+                    transition: 'all 0.3s ease',
+                    boxShadow:
+                      groupIndex === currentWordIndices[current?.subtitleId || '']
+                        ? '0 2px 6px rgba(255, 215, 0, 0.4)'
+                        : 'none',
+                    color:
+                      groupIndex === currentWordIndices[current?.subtitleId || '']
+                        ? '#1a1a1a'
+                        : '#ffffff',
+                  }}
+                >
+                  {group.join(isSpaceSeparated ? ' ' : '') + ' '}
+                </span>
+              ));
+            })()}
+          </div>
         </div>
         <div className='flex flex-row w-full md:w-1/3'>
           {current?.audio?.fileLink ? (
-            <audio key={current.audio.fileLink} controls className='w-full'>
+            <audio ref={audioRef} key={current.audio.fileLink} controls className='w-full'>
               <source src={current.audio.fileLink} type='audio/wav' />
               Your browser does not support the audio element.
             </audio>
