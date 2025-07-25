@@ -17,7 +17,7 @@ module.exports.getAllImages = async () => {
 module.exports.getImageById = async(imageId) => {
     try {
         const image = await prisma.image.findUnique({
-            where: { imageId: parseInt(imageId) },
+            where: { imageId: imageId },
         });
         logger.info(`Image with ID ${imageId} retrieved successfully`);
         return image;
@@ -27,6 +27,7 @@ module.exports.getImageById = async(imageId) => {
                 throw new AppError(`Image with ID ${imageId} not found`, 404);
             }
         }
+        console.error(e);
         logger.error(`Error fetching image with ID ${imageId}`, e);
         throw new AppError(`Failed to fetch image by ID`, 500);
     };
@@ -64,7 +65,7 @@ module.exports.createImage = async ({description,
 module.exports.updateImage = async (imageId, updateData) => {
   try {
     const updatedImage = await prisma.image.update({
-      where: { imageId: parseInt(imageId) },
+      where: { imageId:imageId },
       data: updateData,
     });
     logger.info(`Image with ID ${imageId} updated successfully`);
@@ -75,6 +76,7 @@ module.exports.updateImage = async (imageId, updateData) => {
         throw new AppError(`Image with ID ${imageId} not found`, 404);
       }
     }
+    console.error("ERRROR: " + error);
     logger.error(`Error updating image with ID ${imageId}:`, error);
     throw new AppError('Failed to update image', 500);
   }
@@ -83,7 +85,7 @@ module.exports.updateImage = async (imageId, updateData) => {
 module.exports.archiveImage = async (imageId, statusId) => {
   try {
     const archivedImage = await prisma.image.update({
-      where: { imageId: parseInt(imageId) },
+      where: { imageId: imageId },
       data: { statusId },
     });
     logger.info(`Image with ID ${imageId} archived successfully`);
@@ -94,6 +96,7 @@ module.exports.archiveImage = async (imageId, statusId) => {
         throw new AppError(`Image with ID ${imageId} not found`, 404);
       }
     }
+    console.log("ERROR:" + error)
     logger.error(`Error archiving image with ID ${imageId}:`, error);
     throw new AppError('Failed to archive image', 500);
   }
@@ -102,7 +105,7 @@ module.exports.archiveImage = async (imageId, statusId) => {
 module.exports.deleteImage = async (imageId) => {
   try {
     const deletedImage = await prisma.image.delete({
-      where: { imageId: parseInt(imageId) },
+      where: { imageId: imageId },
     });
     logger.info(`Image with ID ${imageId} deleted successfully`);
     return deletedImage;

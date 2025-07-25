@@ -90,7 +90,7 @@ module.exports.updateImage = catchAsync( async(req, res, next) => {
             throw new AppError('Image not found', 404);
         }
 
-        logger.info(`Image with ID ${imageId} updated by user ${updatedBy}`);
+        logger.info(`Image with ID ${imageId} updated`);
 
         res.status(200).json({
             status: 'success',
@@ -106,7 +106,7 @@ module.exports.updateImage = catchAsync( async(req, res, next) => {
 module.exports.archiveImage = catchAsync( async(req, res, next) => {
     try {
         const imageId = req.params.imageId;
-        const statusId = statusCodes.ARCHIVED;
+        const statusId = statusCodes.DELETED;
 
         const archivedImage = await imageModel.archiveImage(imageId, statusId);
 

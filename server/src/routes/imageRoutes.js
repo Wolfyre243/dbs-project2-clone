@@ -15,19 +15,25 @@ const imageRouter = express.Router();
 
 imageRouter.use(jwtMiddleware.verifyToken /* ,authMiddleware.verifyIsAdmin */);
 
+// Tested
 imageRouter.get('/', imageController.getAllImages);
 
+// Tested
 imageRouter.get('/:imageId', imageController.getImageById);
 
+// Tested
 imageRouter.post('/create', 
     createImageValidationRules(),
     validate,
     imageController.createImage);
 
-imageRouter.put('/update-image', 
+// Tested
+imageRouter.put('/update-image/:imageId', 
     imageController.updateImage);
     
-imageRouter.put('/archive/:imageId', imageController.archiveImage);
+imageRouter.delete('/archive/:imageId', imageController.archiveImage);
 imageRouter.delete('/delete/:imageId', imageController.deleteImage);
 
 module.exports = imageRouter;
+
+// TODO: Audit log import & validations;
