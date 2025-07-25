@@ -22,6 +22,7 @@ userRouter.get('/profile', userController.retrieveUserProfile);
 
 // Soft delete user
 userRouter.delete('/', userController.softDeleteUser);
+
 // Admin soft delete user
 userRouter.delete(
   '/admin/soft-delete/:userId',

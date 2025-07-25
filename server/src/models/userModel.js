@@ -281,6 +281,17 @@ module.exports.hardDeleteUser = async (userId) => {
   }
 };
 
+function calculateAge(dob) {
+  // const dob = new Date(dobString);
+  const today = new Date();
+  let age = today.getFullYear() - dob?.getFullYear();
+  const m = today.getMonth() - dob?.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < dob?.getDate())) {
+    age--;
+  }
+  return age;
+}
+
 //get all users for admin
 module.exports.getAllUsers = async ({
   page,
@@ -312,11 +323,18 @@ module.exports.getAllUsers = async ({
       username: true,
       createdAt: true,
       modifiedAt: true,
-      statusId: true,
+      status: {
+        select: {
+          statusName: true,
+        },
+      },
       userProfile: {
         select: {
           firstName: true,
           lastName: true,
+          dob: true,
+          gender: true,
+          languageCode: true,
         },
       },
       userRoles: {
@@ -334,12 +352,18 @@ module.exports.getAllUsers = async ({
     },
   });
 
-  const users = usersRaw.map((user) => ({
-    ...user,
-    firstName: user.userProfile?.firstName,
-    lastName: user.userProfile?.lastName,
-    role: user.userRoles?.role?.roleName,
-  }));
+  const users = usersRaw
+    .map((user) => ({
+      ...user,
+      firstName: user.userProfile?.firstName,
+      lastName: user.userProfile?.lastName,
+      role: user.userRoles?.role?.roleName,
+      status: user.status.statusName,
+      age: calculateAge(user.userProfile?.dob),
+      gender: user.userProfile?.gender,
+      languageCode: user.userProfile?.languageCode,
+    }))
+    .map((user) => convertDatesToStrings(user));
 
   return {
     users,
