@@ -97,20 +97,17 @@ module.exports.updateExhibit = catchAsync(async (req, res, next) => {
       createdBy,
     });
 
-    if (!updatedExhibit) {
-      throw new AppError('Exhibit not found or update failed', 404);
-    }
-
-    res.status(200).json({
-      status: 'success',
-      data: {
-        exhibit: updatedExhibit,
-        message: 'Exhibit updated successfully',
-      },
-    });
-  } catch (error) {
-    next(error);
+  if (!updatedExhibit) {
+    throw new AppError('Exhibit not found or update failed', 404);
   }
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      exhibit: updatedExhibit,
+      message: 'Exhibit updated successfully',
+    },
+  });
 });
 
 // Get single exhibit

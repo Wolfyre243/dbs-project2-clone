@@ -297,30 +297,30 @@ module.exports.getExhibitById = async (exhibitId) => {
 
     console.log('Exhibit subtitles:', exhibit.subtitles); // Debug log
 
-    // const enrichedSubtitles = await Promise.all(
-    //   exhibit.subtitles.map(async (s) => {
-    //     console.log('Subtitle object:', s.subtitle); // Debug log
-    //     const subtitleText = s.subtitle.subtitleText;
-    //     const audioUrl = s.subtitle.audio?.fileLink;
-    //     const languageCode = s.subtitle.languageCode;
+    const enrichedSubtitles = await Promise.all(
+      exhibit.subtitles.map(async (s) => {
+        console.log('Subtitle object:', s.subtitle); // Debug log
+        const subtitleText = s.subtitle.subtitleText;
+        const audioUrl = s.subtitle.audio?.fileLink;
+        const languageCode = s.subtitle.languageCode;
 
-    //     console.log('Processing subtitle:', {
-    //       subtitleText,
-    //       audioUrl,
-    //       languageCode,
-    //     }); // Debug
+        console.log('Processing subtitle:', {
+          subtitleText,
+          audioUrl,
+          languageCode,
+        }); // Debug
 
-    //     const wordTimings =
-    //       audioUrl && subtitleText && languageCode
-    //         ? await generateWordTimings(audioUrl, subtitleText, languageCode)
-    //         : [];
+        const wordTimings =
+          audioUrl && subtitleText && languageCode
+            ? generateWordTimings(audioUrl, subtitleText, languageCode)
+            : [];
 
-    //     return {
-    //       ...s.subtitle,
-    //       wordTimings,
-    //     };
-    //   }),
-    // );
+        return {
+          ...s.subtitle,
+          wordTimings: await wordTimings,
+        };
+      }),
+    );
 
     console.log('Finished processing subtitles');
 
@@ -328,10 +328,10 @@ module.exports.getExhibitById = async (exhibitId) => {
       ...exhibit,
       statusId: undefined,
       exhibitCreatedBy: undefined,
-      supportedLanguages: exhibit.subtitles.map((s) => s.languageCode),
-      // supportedLanguages: enrichedSubtitles.map((s) => s.languageCode),
-      // subtitles: enrichedSubtitles,
-      subtitles: exhibit.subtitles.map((s) => ({ ...s.subtitle })),
+      // supportedLanguages: exhibit.subtitles.map((s) => s.languageCode),
+      supportedLanguages: enrichedSubtitles.map((s) => s.languageCode),
+      subtitles: enrichedSubtitles,
+      // subtitles: exhibit.subtitles.map((s) => ({ ...s.subtitle })),
       status: exhibit.status.statusName,
       createdBy: exhibit.exhibitCreatedBy.username,
       imageLink: exhibit.image.fileLink,

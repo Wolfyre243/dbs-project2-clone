@@ -7,6 +7,8 @@ const QRcodeController = require('../controllers/QRcodeController');
 const jwtMiddleware = require('../middlewares/jwtMiddleware');
 const authMiddleware = require('../middlewares/authMiddleware');
 const rateLimiter = require('../middlewares/rateLimiter');
+const { param } = require('express-validator');
+const { validate } = require('../middlewares/validators');
 
 //-----------------------------SET UP ROUTES------------------------
 // Create the router
@@ -20,7 +22,19 @@ QRcodeRouter.get('/:qrCodeId', QRcodeController.getQRCodeById);
 
 // Generate & re-generate routes
 // QRcodeRouter.post('/generate', QRcodeController.generateQRCode);
-QRcodeRouter.post('/re-generate', QRcodeController.regenerateQRcode);
+QRcodeRouter.post(
+  '/regenerate/:exhibitId',
+  [
+    param('exhibitId')
+      .notEmpty()
+      .withMessage('Exhibit ID is required.')
+      .isUUID()
+      .withMessage('Exhibit ID must be a valid UUID.')
+      .escape(),
+  ],
+  validate,
+  QRcodeController.regenerateQRcode,
+);
 
 // Soft-delete route
 QRcodeRouter.delete('/:qrCodeId', QRcodeController.softDeleteQRCode);

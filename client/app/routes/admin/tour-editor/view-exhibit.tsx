@@ -57,6 +57,7 @@ interface Subtitle {
     fileName: string;
     languageCode: string;
   };
+  wordTimings: { word: string; start: number; end: number }[];
 }
 
 interface Exhibit {
@@ -430,18 +431,30 @@ function ExhibitQrCard({
   qrCodeId,
   qrImageLink,
   exhibitId,
+  setExhibit,
 }: {
   qrCodeId: string;
   qrImageLink: string;
   exhibitId: string;
+  setExhibit: any;
 }) {
   const apiPrivate = useApiPrivate();
 
   const handleRefreshQR = async () => {
     try {
       const { data: responseData } = await apiPrivate.post(
-        `/qrcode/regenerate/${qrCodeId}`,
+        `/qrcode/regenerate/${exhibitId}`,
       );
+
+      await setExhibit((prev: Exhibit) => ({
+        ...prev,
+        qrCode: {
+          qrCodeId: responseData.data.qrCodeId,
+          image: { fileLink: responseData.data.fileLink },
+        },
+      }));
+
+      toast.success('Successfully regenerated QR Code');
     } catch (error: any) {
       if (isAxiosError(error)) {
         toast.error(
@@ -687,6 +700,7 @@ export default function AdminViewExhibitPage() {
         const { data: responseData } = await apiPrivate.get(
           `/exhibit/${exhibitId}`,
         );
+        console.log(responseData.data.exhibit);
         setExhibit(responseData.data.exhibit);
       } catch (err) {
         setExhibit(null);
@@ -749,6 +763,7 @@ export default function AdminViewExhibitPage() {
             qrCodeId={exhibit.qrCode?.qrCodeId}
             qrImageLink={exhibit.qrCode?.image.fileLink}
             exhibitId={exhibit.exhibitId}
+            setExhibit={setExhibit}
           />
         </div>
         <div className='w-full flex flex-col gap-8'>
