@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '~/components/ui/button';
 import {
   Card,
@@ -12,11 +12,26 @@ import { Label } from '~/components/ui/label';
 import { Textarea } from '~/components/ui/textarea';
 import { LanguageSelect } from '~/components/language-select';
 import { apiPrivate } from '~/services/api';
-import { Trash2, Plus, Play, Loader2, AlertCircle } from 'lucide-react';
+import {
+  Trash2,
+  Plus,
+  Play,
+  Loader2,
+  AlertCircle,
+  Upload,
+  UploadCloud,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 interface SubtitleItem {
-  id: string;
+  text: string;
+  languageCode: string;
+  subtitleId: string;
+  audioId: string;
+  fileLink: string;
+}
+
+interface SubtitleFormData {
   text: string;
   languageCode: string;
   audioId?: string;
@@ -36,6 +51,63 @@ interface ExhibitMetadata {
 
 interface ValidationErrors {
   [key: string]: string;
+}
+
+function SubtitlePreviewCard({
+  key,
+  subtitle,
+  removeCb,
+}: {
+  key: number;
+  subtitle: SubtitleItem;
+  removeCb: (subtitleId: string) => void;
+}) {
+  return (
+    <div key={subtitle.subtitleId} className='space-y-4 p-4 border rounded-lg'>
+      <div className='flex items-center justify-between'>
+        <h3 className='font-medium'>{subtitle.languageCode}</h3>
+        <Button
+          variant='outline'
+          size='sm'
+          onClick={() => removeCb(subtitle.subtitleId)}
+          className='text-red-600 hover:text-red-700'
+        >
+          <Trash2 className='h-4 w-4' />
+        </Button>
+      </div>
+
+      <div className='space-y-2'>
+        {/* Subtitle Text */}
+        <div className='space-y-2'>
+          <p>{subtitle.text}</p>
+        </div>
+      </div>
+
+      <div className='flex flex-col gap-1'>
+        {subtitle.fileLink && (
+          <div className='flex-1 flex items-center gap-2'>
+            <audio
+              key={subtitle.audioId || subtitle.fileLink}
+              controls
+              className='w-full'
+            >
+              <source
+                src={`${subtitle.fileLink}?t=${subtitle.audioId}`}
+                type='audio/wav'
+              />
+              Your browser does not support the audio element.
+            </audio>
+          </div>
+        )}
+
+        {subtitle.audioId && (
+          <div className='text-xs text-muted-foreground'>
+            Audio ID: {subtitle.audioId}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default function TourEditorCreateExhibitPage() {
@@ -91,10 +163,62 @@ export default function TourEditorCreateExhibitPage() {
   // };
 
   const [subtitles, setSubtitles] = useState<SubtitleItem[]>([]);
+  const [subtitleFormData, setSubtitleFormData] = useState<SubtitleFormData>({
+    text: '',
+    languageCode: '',
+    isGenerating: false,
+  });
   const [isCreatingExhibit, setIsCreatingExhibit] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
     {},
   );
+
+  // Ref for audio file input
+  const audioInputRef = useRef<HTMLInputElement | null>(null);
+  const [isUploadingAudio, setIsUploadingAudio] = useState(false);
+
+  // Handle audio file upload
+  const handleAudioFileChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.type !== 'audio/wav' && !file.name.endsWith('.wav')) {
+      toast.error('Please upload a .wav audio file');
+      return;
+    }
+    setIsUploadingAudio(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('languageCode', subtitleFormData.languageCode);
+
+      const { data: responseData } = await apiPrivate.post(
+        '/audio/upload',
+        formData,
+        {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        },
+      );
+
+      const { audioId, fileLink } = responseData.data;
+      setSubtitleFormData({
+        ...subtitleFormData,
+        audioId,
+        fileLink,
+        isGenerating: false,
+      });
+      toast.success('Audio uploaded successfully!');
+    } catch (err: any) {
+      toast.error(
+        'Failed to upload audio: ' + (err.response?.data?.message || ''),
+      );
+    } finally {
+      setIsUploadingAudio(false);
+      // Reset input value so same file can be re-uploaded if needed
+      if (audioInputRef.current) audioInputRef.current.value = '';
+    }
+  };
 
   // Validation constants
   const VALIDATION_LIMITS = {
@@ -156,34 +280,61 @@ export default function TourEditorCreateExhibitPage() {
   };
 
   // Add a new subtitle item (local only, not yet created on backend)
-  const addSubtitle = () => {
+  const addSubtitle = async () => {
+    if (!subtitleFormData.audioId && !subtitleFormData.fileLink) {
+      // console.log('No audio file selected');
+      toast.error('No audio file selected!');
+      return;
+    }
+
+    const { data: responseData } = await apiPrivate.post('/subtitle', {
+      ...subtitleFormData,
+    });
+
     setSubtitles((prev) => [
       ...prev,
-      { id: `temp-${crypto.randomUUID()}`, text: '', languageCode: '' }, // temp id
+      {
+        text: subtitleFormData.text,
+        languageCode: subtitleFormData.languageCode,
+        audioId: subtitleFormData.audioId as string,
+        fileLink: subtitleFormData.fileLink as string,
+        subtitleId: responseData.data.subtitleId,
+      },
     ]);
+
+    // Reset data
+    setSubtitleFormData({
+      text: '',
+      languageCode: '',
+      audioId: undefined,
+      fileLink: undefined,
+      isGenerating: undefined,
+    });
   };
 
   // Remove a subtitle item and delete its audio/subtitle if present
   const removeSubtitle = async (id: string) => {
-    const subtitle = subtitles.find((s) => s.id === id);
+    const subtitle = subtitles.find((s) => s.subtitleId === id);
     if (!subtitle) return;
 
     // Delete subtitle from backend if it has a backend id (assume not a temp id)
-    if (subtitle.id && !subtitle.id.startsWith('temp-')) {
+    if (subtitle.subtitleId) {
       try {
-        await apiPrivate.delete(`/subtitle/hard-delete/${subtitle.id}`);
+        await apiPrivate.delete(`/subtitle/hard-delete/${subtitle.subtitleId}`);
       } catch (err) {
         console.warn('Failed to delete subtitle from backend:', err);
       }
     }
-    setSubtitles((prev) => prev.filter((subtitle) => subtitle.id !== id));
+    setSubtitles((prev) =>
+      prev.filter((subtitle) => subtitle.subtitleId !== id),
+    );
   };
 
   // Update subtitle text
   const updateSubtitleText = (id: string, text: string) => {
     setSubtitles((prev) =>
       prev.map((subtitle) =>
-        subtitle.id === id ? { ...subtitle, text } : subtitle,
+        subtitle.subtitleId === id ? { ...subtitle, text } : subtitle,
       ),
     );
 
@@ -204,23 +355,25 @@ export default function TourEditorCreateExhibitPage() {
   const updateSubtitleLanguage = (id: string, languageCode: string) => {
     setSubtitles((prev) =>
       prev.map((subtitle) =>
-        subtitle.id === id ? { ...subtitle, languageCode } : subtitle,
+        subtitle.subtitleId === id ? { ...subtitle, languageCode } : subtitle,
       ),
     );
   };
 
   // Generate TTS audio for a subtitle
-  const generateAudio = async (subtitleId: string) => {
-    let subtitle = subtitles.find((s) => s.id === subtitleId);
+  const generateAudio = async () => {
+    // let subtitle = subtitles.find((s) => s.id === subtitleId);
+    const subtitle = subtitleFormData;
     if (!subtitle || !subtitle.text.trim() || !subtitle.languageCode) {
       toast.error('Please enter subtitle text and select a language');
       return;
     }
 
     // Set loading state
-    setSubtitles((prev) =>
-      prev.map((s) => (s.id === subtitleId ? { ...s, isGenerating: true } : s)),
-    );
+    // setSubtitles((prev) =>
+    //   prev.map((s) => (s.id === subtitleId ? { ...s, isGenerating: true } : s)),
+    // );
+    setSubtitleFormData({ ...subtitleFormData, isGenerating: true });
 
     try {
       // Delete old audio if exists
@@ -237,30 +390,37 @@ export default function TourEditorCreateExhibitPage() {
         languageCode: subtitle.languageCode,
       });
 
-      const generatedSubtitleId = responseData.data.subtitleId;
+      // const generatedSubtitleId = responseData.data.subtitleId;
 
       // If subtitle does not have a backend id, create it first
       // if (!subtitle.id || subtitle.id.startsWith('temp-')) {
       // Update the subtitle in state with the backend id
-      setSubtitles((prev) =>
-        prev.map((s) =>
-          s.id === subtitleId ? { ...s, id: generatedSubtitleId } : s,
-        ),
-      );
-      subtitle = { ...subtitle, id: generatedSubtitleId };
-      subtitleId = generatedSubtitleId;
+      // setSubtitles((prev) =>
+      //   prev.map((s) =>
+      //     s.id === subtitleId ? { ...s, id: generatedSubtitleId } : s,
+      //   ),
+      // );
+
+      // subtitle = { ...subtitle, id: generatedSubtitleId };
+      // subtitleId = generatedSubtitleId;
       // }
 
       const { audioId, fileLink } = responseData.data;
 
       // Update subtitle with audio data
-      setSubtitles((prev) =>
-        prev.map((s) =>
-          s.id === subtitleId
-            ? { ...s, audioId, fileLink, isGenerating: false }
-            : s,
-        ),
-      );
+      // setSubtitles((prev) =>
+      //   prev.map((s) =>
+      //     s.id === subtitleId
+      //       ? { ...s, audioId, fileLink, isGenerating: false }
+      //       : s,
+      //   ),
+      // );
+      setSubtitleFormData({
+        ...subtitleFormData,
+        audioId,
+        fileLink,
+        isGenerating: false,
+      });
 
       toast.success('Audio generated successfully!');
     } catch (error) {
@@ -268,11 +428,39 @@ export default function TourEditorCreateExhibitPage() {
       toast.error('Failed to generate audio');
 
       // Remove loading state
-      setSubtitles((prev) =>
-        prev.map((s) =>
-          s.id === subtitleId ? { ...s, isGenerating: false } : s,
-        ),
-      );
+      // setSubtitles((prev) =>
+      //   prev.map((s) =>
+      //     s.id === subtitleId ? { ...s, isGenerating: false } : s,
+      //   ),
+      // );
+      setSubtitleFormData({ ...subtitleFormData, isGenerating: false });
+    }
+  };
+
+  const handleDeleteAudio = async () => {
+    try {
+      await apiPrivate.delete(`/audio/hard-delete/${subtitleFormData.audioId}`);
+      // Update form data
+      // setSubtitles((prev) =>
+      //   prev.map((s) =>
+      //     s.id === subtitle.id
+      //       ? {
+      //           ...s,
+      //           audioId: undefined,
+      //           fileLink: undefined,
+      //         }
+      //       : s,
+      //   ),
+      // );
+      setSubtitleFormData({
+        ...subtitleFormData,
+        audioId: undefined,
+        fileLink: undefined,
+      });
+
+      toast.success('Audio deleted');
+    } catch (err) {
+      toast.error('Failed to delete audio');
     }
   };
 
@@ -304,12 +492,12 @@ export default function TourEditorCreateExhibitPage() {
     subtitles.forEach((subtitle) => {
       const textError = validateSubtitleText(subtitle.text);
       if (textError) {
-        subtitleErrors[`subtitle-${subtitle.id}`] = textError;
+        subtitleErrors[`subtitle-${subtitle.subtitleId}`] = textError;
         hasSubtitleErrors = true;
       }
 
       if (!subtitle.languageCode) {
-        subtitleErrors[`subtitle-${subtitle.id}-language`] =
+        subtitleErrors[`subtitle-${subtitle.subtitleId}-language`] =
           'Language is required';
         hasSubtitleErrors = true;
       }
@@ -332,7 +520,7 @@ export default function TourEditorCreateExhibitPage() {
     }
 
     const assetData: AssetData = {
-      subtitleIds: subtitles.map((s) => s.id),
+      subtitleIds: subtitles.map((s) => s.subtitleId),
     };
 
     const exhibitData = {
@@ -521,75 +709,70 @@ export default function TourEditorCreateExhibitPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className='space-y-4'>
-                {/* Turn into component */}
-                {subtitles.map((subtitle, index) => (
-                  <div
-                    key={subtitle.id}
-                    className='space-y-4 p-4 border rounded-lg'
-                  >
-                    <div className='flex items-center justify-between'>
-                      <h3 className='font-medium'>Subtitle {index + 1}</h3>
-                      {subtitles.length > 0 && (
-                        <Button
-                          variant='outline'
-                          size='sm'
-                          onClick={() => removeSubtitle(subtitle.id)}
-                          className='text-red-600 hover:text-red-700'
-                        >
-                          <Trash2 className='h-4 w-4' />
-                        </Button>
+                {/* Create Subtitle Form */}
+                <div className='flex flex-col gap-4'>
+                  <h1 className='text-md font-semibold'>Add Subtitle</h1>
+
+                  {/* Subtitle Text & Language */}
+                  <div className='space-y-4'>
+                    {/* TODO: Add checks to ensure language isnt repeated */}
+                    <div className='space-y-2'>
+                      <Label>Language *</Label>
+                      <LanguageSelect
+                        fieldName={`languageCode`}
+                        value={subtitleFormData.languageCode}
+                        onValueChange={(languageCode) =>
+                          // updateSubtitleLanguage(subtitle.id, languageCode)
+                          setSubtitleFormData({
+                            ...subtitleFormData,
+                            languageCode,
+                          })
+                        }
+                        placeholder='Select language'
+                      />
+                    </div>
+                    {/* Subtitle Text */}
+                    <div className='space-y-2'>
+                      <Label htmlFor={`subtitle-text`}>Subtitle Text *</Label>
+                      <Textarea
+                        placeholder='Enter subtitle text...'
+                        value={subtitleFormData.text}
+                        onChange={(e) =>
+                          // updateSubtitleText(subtitle.id, e.target.value)
+                          setSubtitleFormData({
+                            ...subtitleFormData,
+                            text: e.target.value,
+                          })
+                        }
+                      />
+                      <div className='text-xs text-muted-foreground'>
+                        {subtitleFormData.text.length}/
+                        {VALIDATION_LIMITS.SUBTITLE_TEXT_MAX} characters
+                      </div>
+                      {/* TODO: LOW | Fix validation methods */}
+                      {validationErrors[`subtitle-0`] && (
+                        <div className='flex items-center gap-2 text-sm text-red-600'>
+                          <AlertCircle className='h-4 w-4' />
+                          {validationErrors[`subtitle-0`]}
+                        </div>
                       )}
                     </div>
+                  </div>
 
-                    <div className='space-y-4'>
-                      {/* TODO: Add checks to ensure language isnt repeated */}
-                      <div className='space-y-2'>
-                        <Label>Language *</Label>
-                        <LanguageSelect
-                          fieldName={`language-${subtitle.id}`}
-                          value={subtitle.languageCode}
-                          onValueChange={(languageCode) =>
-                            updateSubtitleLanguage(subtitle.id, languageCode)
-                          }
-                          placeholder='Select language'
-                        />
-                      </div>
-                      {/* Subtitle Text */}
-                      <div className='space-y-2'>
-                        <Label htmlFor={`text-${subtitle.id}`}>
-                          Subtitle Text *
-                        </Label>
-                        <Textarea
-                          id={`text-${subtitle.id}`}
-                          placeholder='Enter subtitle text...'
-                          value={subtitle.text}
-                          onChange={(e) =>
-                            updateSubtitleText(subtitle.id, e.target.value)
-                          }
-                        />
-                        <div className='text-xs text-muted-foreground'>
-                          {subtitle.text.length}/
-                          {VALIDATION_LIMITS.SUBTITLE_TEXT_MAX} characters
-                        </div>
-                        {validationErrors[`subtitle-${subtitle.id}`] && (
-                          <div className='flex items-center gap-2 text-sm text-red-600'>
-                            <AlertCircle className='h-4 w-4' />
-                            {validationErrors[`subtitle-${subtitle.id}`]}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className='flex items-center gap-4'>
+                  {/* Audio Buttons */}
+                  <div className='flex flex-col gap-1'>
+                    <div className='flex flex-row items-start gap-4'>
+                      {/* Generate TTS */}
                       <Button
-                        onClick={() => generateAudio(subtitle.id)}
+                        onClick={() => generateAudio()}
                         disabled={
-                          !subtitle.text.trim() ||
-                          !subtitle.languageCode ||
-                          subtitle.isGenerating
+                          !subtitleFormData.text.trim() ||
+                          !subtitleFormData.languageCode ||
+                          subtitleFormData.isGenerating ||
+                          isUploadingAudio
                         }
                       >
-                        {subtitle.isGenerating ? (
+                        {subtitleFormData.isGenerating ? (
                           <>
                             <Loader2 className='h-4 w-4 mr-2 animate-spin' />
                             Generating...
@@ -601,48 +784,78 @@ export default function TourEditorCreateExhibitPage() {
                           </>
                         )}
                       </Button>
+                      {/* Upload Custom Audio */}
+                      <div>
+                        <input
+                          type='file'
+                          accept='.wav,audio/wav'
+                          ref={audioInputRef}
+                          className='hidden'
+                          onChange={handleAudioFileChange}
+                          disabled={
+                            Boolean(subtitleFormData.audioId) ||
+                            subtitleFormData.isGenerating ||
+                            !Boolean(subtitleFormData.languageCode) ||
+                            isUploadingAudio
+                          }
+                        />
+                        <Button
+                          type='button'
+                          onClick={() => audioInputRef.current?.click()}
+                          disabled={
+                            Boolean(subtitleFormData.audioId) ||
+                            subtitleFormData.isGenerating ||
+                            !Boolean(subtitleFormData.languageCode) ||
+                            isUploadingAudio
+                          }
+                        >
+                          {isUploadingAudio ? (
+                            <>
+                              <Loader2 className='h-4 w-4 mr-2 animate-spin' />
+                              Uploading...
+                            </>
+                          ) : (
+                            <>
+                              <UploadCloud className='h-4 w-4 mr-2' />
+                              Upload Audio
+                            </>
+                          )}
+                        </Button>
+                      </div>
 
-                      {subtitle.audioId && (
+                      {/* Delete Audio */}
+                      {subtitleFormData.audioId && (
                         <Button
                           variant='destructive'
                           size='icon'
                           title='Delete Audio'
-                          onClick={async () => {
-                            try {
-                              await apiPrivate.delete(
-                                `/audio/hard-delete/${subtitle.audioId}`,
-                              );
-                              setSubtitles((prev) =>
-                                prev.map((s) =>
-                                  s.id === subtitle.id
-                                    ? {
-                                        ...s,
-                                        audioId: undefined,
-                                        fileLink: undefined,
-                                      }
-                                    : s,
-                                ),
-                              );
-                              toast.success('Audio deleted');
-                            } catch (err) {
-                              toast.error('Failed to delete audio');
-                            }
-                          }}
+                          onClick={handleDeleteAudio}
                         >
                           <Trash2 className='h-4 w-4' />
                         </Button>
                       )}
                     </div>
+                    {!subtitleFormData.audioId && (
+                      <p className={`text-muted-foreground/60 text-xs`}>
+                        Accepted file types: .wav
+                      </p>
+                    )}
+                  </div>
 
-                    {subtitle.fileLink && (
+                  {/* Audio Preview */}
+                  <div className='flex flex-col gap-1'>
+                    {subtitleFormData.fileLink && (
                       <div className='flex-1 flex items-center gap-2'>
                         <audio
-                          key={subtitle.audioId || subtitle.fileLink}
+                          key={
+                            subtitleFormData.audioId ||
+                            subtitleFormData.fileLink
+                          }
                           controls
                           className='w-full'
                         >
                           <source
-                            src={`${subtitle.fileLink}?t=${subtitle.audioId}`}
+                            src={`${subtitleFormData.fileLink}?t=${subtitleFormData.audioId}`}
                             type='audio/wav'
                           />
                           Your browser does not support the audio element.
@@ -650,22 +863,36 @@ export default function TourEditorCreateExhibitPage() {
                       </div>
                     )}
 
-                    {subtitle.audioId && (
-                      <div className='text-sm text-muted-foreground'>
-                        Audio ID: {subtitle.audioId}
+                    {subtitleFormData.audioId && (
+                      <div className='text-xs text-muted-foreground/60'>
+                        Audio ID: {subtitleFormData.audioId}
                       </div>
                     )}
                   </div>
-                ))}
 
-                <Button
-                  onClick={addSubtitle}
-                  variant='outline'
-                  className='w-full'
-                >
-                  <Plus className='h-4 w-4 mr-2' />
-                  Add Another Subtitle
-                </Button>
+                  {/* Submit Button */}
+                  <Button
+                    onClick={addSubtitle}
+                    disabled={
+                      !subtitleFormData.text.trim() ||
+                      !subtitleFormData.languageCode ||
+                      subtitleFormData.isGenerating ||
+                      !subtitleFormData.audioId
+                    }
+                  >
+                    <Plus />
+                    Create Subtitle
+                  </Button>
+                </div>
+
+                {/* Turn into component */}
+                {subtitles.map((subtitle, index) => (
+                  <SubtitlePreviewCard
+                    key={index + 1}
+                    subtitle={subtitle}
+                    removeCb={removeSubtitle}
+                  />
+                ))}
               </CardContent>
             </Card>
           </div>

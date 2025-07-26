@@ -51,9 +51,9 @@ audioRouter.post(
 audioRouter.post(
   '/generate',
   // TODO: Rate limit
-  //generateAudioValidationRules(),
+  generateAudioValidationRules(),
   validate,
-  audioController.convertTextToAudio,
+  audioController.generateAudio,
 );
 
 // audioRouter.get('/subtitles', audioController.getAllSubtitles);

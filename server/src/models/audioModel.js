@@ -28,6 +28,7 @@ module.exports.createAudio = async ({
         statusId,
       },
     });
+
     return audio;
   } catch (error) {
     if (error.code === 'P2002') {
