@@ -76,7 +76,7 @@ module.exports.createExhibit = catchAsync(async (req, res, next) => {
 
 // Get exhibit controller function
 module.exports.updateExhibit = catchAsync(async (req, res, next) => {
-  const { exhibitId, title, description, audioId, imageId, statusId } =
+  const { exhibitId, title, description,  imageId } =
     req.body;
   const createdBy = res.locals.user.userId;
 
@@ -84,9 +84,7 @@ module.exports.updateExhibit = catchAsync(async (req, res, next) => {
     exhibitId,
     title,
     description,
-    audioId,
     imageId,
-    statusId,
     createdBy,
   });
 
@@ -95,9 +93,7 @@ module.exports.updateExhibit = catchAsync(async (req, res, next) => {
       exhibitId,
       title,
       description,
-      audioId,
       imageId,
-      statusId,
       createdBy,
     });
 

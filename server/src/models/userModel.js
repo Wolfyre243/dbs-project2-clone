@@ -370,3 +370,36 @@ module.exports.getAllUsers = async ({
     userCount,
   };
 };
+
+
+// update user profile, username, lastname, firstname, statusid
+module.exports.updateUserProfileWithStatus = async (userId, { username, firstName, lastName, statusId }) => {
+  try {
+    const updatedUser = await prisma.users.update({
+      where: { userId: userId },
+      data: {
+        username: username,
+        userProfile: {
+          update: {
+            firstName: firstName,
+            lastName: lastName,
+          },
+        },
+        statusId: statusId,
+      },
+      include: {
+        userProfile: true,
+      },
+    });
+
+    return convertDatesToStrings(updatedUser);
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2025') {
+        throw new AppError('User not found', 404);
+      }
+    }
+    console.log(error);
+    throw error;
+  }
+};

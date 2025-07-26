@@ -111,24 +111,49 @@ module.exports.updateExhibit = async ({
   exhibitId,
   title,
   description,
-  audioId,
   imageId,
-  statusId,
   createdBy,
 }) => {
   try {
     const updated = await prisma.exhibit.update({
-      where: { exhibitId: Number(exhibitId) },
+      where: { exhibitId: exhibitId },
       data: {
         title,
         description,
-        audioId,
         imageId,
-        statusId,
         createdBy,
       },
+      include: {
+        subtitles: {
+          select: {
+            subtitle: {
+              include: {
+                audio: true,
+              },
+            },
+          },
+        },
+        image: {
+          select: {
+            fileLink: true,
+          },
+        },
+        status: true,
+        exhibitCreatedBy: true,
+      },
     });
-    return updated;
+    return convertDatesToStrings({
+      ...updated,
+      statusId: undefined,
+      exhibitCreatedBy: undefined,
+      supportedLanguages: updated.subtitles.map((s) => s.languageCode),
+      // supportedLanguages: enrichedSubtitles.map((s) => s.languageCode),
+      // subtitles: enrichedSubtitles,
+      subtitles: updated.subtitles.map((s) => ({ ...s.subtitle })),
+      status: updated.status.statusId,
+      createdBy: updated.exhibitCreatedBy.username,
+      imageLink: updated.image.fileLink,
+    });
   } catch (error) {
     console.error('Error updating exhibit:', error);
     throw new AppError('Failed to update exhibit', 500);
