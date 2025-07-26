@@ -66,7 +66,7 @@ module.exports.reGenerateQRcode = catchAsync( async(req, res, next) => {
     ipAddress: req.ip,
     entityName: 'qrCode',
     entityId: qrCodeId,
-    actionTypeId: 3,
+    actionTypeId: AuditActions.UPDATE,
     logText: 'QR-code regenerated successfully',
   });
 
