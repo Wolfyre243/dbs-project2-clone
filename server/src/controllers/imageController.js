@@ -39,7 +39,7 @@ module.exports.getImageById = catchAsync( async(req, res, next) => {
     ipAddress: req.ip,
     entityName: 'image',
     entityId: imageId,
-    actionTypeId: 2,
+    actionTypeId: AuditActions.READ,
     logText: 'Image retrieved by ID successfully',
   });
 
@@ -74,7 +74,7 @@ module.exports.createImage = catchAsync( async(req, res, next) => {
     ipAddress: req.ip,
     entityName: 'image',
     entityId: image.imageId,
-    actionTypeId: 1,
+    actionTypeId: AuditActions.CREATE,
     logText: 'Image created successfully',
   });
 
@@ -113,7 +113,7 @@ module.exports.updateImage = catchAsync( async(req, res, next) => {
     ipAddress: req.ip,
     entityName: 'image',
     entityId: imageId,
-    actionTypeId: 3,
+    actionTypeId: AuditActions.UPDATE,
     logText: 'Image updated successfully',
   });
 
@@ -147,7 +147,7 @@ module.exports.archiveImage = catchAsync( async(req, res, next) => {
     ipAddress: req.ip,
     entityName: 'image',
     entityId: imageId,
-    actionTypeId: 4,
+    actionTypeId:AuditActions.DELETE,
     logText: 'Image archived successfully',
   });
 
@@ -180,7 +180,7 @@ module.exports.deleteImage = catchAsync( async(req, res, next) => {
     ipAddress: req.ip,
     entityName: 'image',
     entityId: imageId,
-    actionTypeId: 4,
+    actionTypeId: AuditActions.DELETE,
     logText: 'Image deleted successfully',
   });
 
