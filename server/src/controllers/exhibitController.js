@@ -90,31 +90,27 @@ module.exports.updateExhibit = catchAsync(async (req, res, next) => {
     createdBy,
   });
 
-  try {
-    const updatedExhibit = await exhibitModel.updateExhibit({
-      exhibitId,
-      title,
-      description,
-      audioId,
-      imageId,
-      statusId,
-      createdBy,
-    });
+  const updatedExhibit = await exhibitModel.updateExhibit({
+    exhibitId,
+    title,
+    description,
+    audioId,
+    imageId,
+    statusId,
+    createdBy,
+  });
 
-    if (!updatedExhibit) {
-      throw new AppError('Exhibit not found or update failed', 404);
-    }
-
-    res.status(200).json({
-      status: 'success',
-      data: {
-        exhibit: updatedExhibit,
-        message: 'Exhibit updated successfully',
-      },
-    });
-  } catch (error) {
-    next(error);
+  if (!updatedExhibit) {
+    throw new AppError('Exhibit not found or update failed', 404);
   }
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      exhibit: updatedExhibit,
+      message: 'Exhibit updated successfully',
+    },
+  });
 });
 
 // Get single exhibit

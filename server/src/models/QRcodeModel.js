@@ -19,11 +19,6 @@ module.exports.generateQRCode = async (createdBy, exhibitId) => {
         where: { exhibitId },
       });
 
-      // TODO Regenerate logic here
-      if (exists) {
-        throw new AppError('QRcode already exists for this exhibit', 400);
-      }
-
       //Generate image buffer
       const { buffer } = await generateQrImageBuffer(
         `/home/exhibits/${exhibitId}`,
@@ -41,15 +36,32 @@ module.exports.generateQRCode = async (createdBy, exhibitId) => {
         },
       });
 
-      // Create qrcode record
-      const qrCode = await tx.qrCode.create({
-        data: {
-          exhibitId,
-          imageId: image.imageId,
-          createdBy,
-          statusId: statusCodes.ACTIVE,
-        },
-      });
+      // TODO Regenerate logic here
+      let qrCode;
+      if (exists) {
+        await tx.image.update({
+          where: { imageId: exists.imageId },
+          data: {
+            statusId: statusCodes.DELETED,
+          },
+        });
+
+        qrCode = await tx.qrCode.update({
+          where: { exhibitId },
+          data: {
+            imageId: image.imageId,
+          },
+        });
+      } else {
+        qrCode = await tx.qrCode.create({
+          data: {
+            exhibitId,
+            imageId: image.imageId,
+            createdBy,
+            statusId: statusCodes.ACTIVE,
+          },
+        });
+      }
 
       return {
         qrCodeId: qrCode.qrCodeId,
