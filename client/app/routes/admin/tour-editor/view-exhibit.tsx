@@ -13,6 +13,7 @@ import {
   AudioLines,
   QrCode,
   FileQuestion,
+  RefreshCcw,
 } from 'lucide-react';
 import {
   Select,
@@ -24,6 +25,9 @@ import {
 import { apiPrivate } from '~/services/api';
 import { Button } from '~/components/ui/button';
 import { Link } from 'react-router';
+import useApiPrivate from '~/hooks/useApiPrivate';
+import { toast } from 'sonner';
+import { isAxiosError } from 'axios';
 
 interface Subtitle {
   subtitleId: string;
@@ -58,6 +62,12 @@ interface Exhibit {
   modifiedAt: string;
   supportedLanguages: string[];
   subtitles?: Subtitle[];
+  qrCode: {
+    qrCodeId: string;
+    image: {
+      fileLink: string;
+    };
+  };
 }
 
 function formatDate(dateString: string) {
@@ -116,28 +126,75 @@ function ExhibitMetadata({ exhibit }: { exhibit: Exhibit }) {
   );
 }
 
-function ExhibitQrCard({ exhibitId }: { exhibitId: string }) {
+function ExhibitQrCard({
+  qrCodeId,
+  qrImageLink,
+  exhibitId,
+}: {
+  qrCodeId: string;
+  qrImageLink: string;
+  exhibitId: string;
+}) {
+  const apiPrivate = useApiPrivate();
+
+  const handleRefreshQR = async () => {
+    try {
+      const { data: responseData } = await apiPrivate.post(
+        `/qrcode/regenerate/${qrCodeId}`,
+      );
+    } catch (error: any) {
+      if (isAxiosError(error)) {
+        toast.error(
+          'Failed to regenerate QR Code: ' + error.response?.data.message,
+        );
+        return;
+      }
+      console.log(error);
+      toast.error('Failed to regenerate QR Code');
+    }
+  };
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Exhibit QR Code</CardTitle>
-      </CardHeader>
-      <CardContent className='flex flex-col gap-2 w-full'>
-        {/* Placeholder QR code */}
-        <div className='flex items-center justify-center w-60 h-60 bg-muted rounded border text-muted-foreground'>
-          <QrCode className='h-10 w-10' />
-          <span className='ml-2'>QR Code Placeholder</span>
-        </div>
-        <Button asChild>
-          <Link
-            className='px-4 py-1 w-fit rounded-md'
-            to={`/home/exhibits/${exhibitId}`}
-          >
-            View Live
-          </Link>
-        </Button>
-      </CardContent>
-    </Card>
+    <div className='flex flex-row w-full justify-end'>
+      <Card className='gap-0 w-fit'>
+        <CardHeader>
+          <CardTitle className='flex flex-row justify-between items-center'>
+            <h1>Exhibit QR Code</h1>
+            <Button
+              onClick={handleRefreshQR}
+              variant={'secondary'}
+              size={'icon'}
+            >
+              <RefreshCcw />
+            </Button>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className='flex flex-col gap-2 w-full h-fit'>
+          {/* Placeholder QR code */}
+          {qrImageLink ? (
+            <img
+              src={qrImageLink}
+              alt='QR Code'
+              className='h-60 w-60 rounded-lg object-contain'
+            />
+          ) : (
+            <div className='flex items-center justify-center w-60 h-60 bg-muted rounded border text-muted-foreground'>
+              <QrCode className='h-10 w-10' />
+              <span className='ml-2'>QR Code Placeholder</span>
+            </div>
+          )}
+
+          <Button asChild>
+            <Link
+              className='px-4 py-1 w-fit rounded-md'
+              to={`/home/exhibits/${exhibitId}`}
+            >
+              View Live
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
@@ -366,9 +423,13 @@ export default function AdminViewExhibitPage() {
     <div className='w-full p-6'>
       <div className='flex flex-col gap-8'>
         {/* Left: Exhibit Metadata & QR */}
-        <div className='w-full flex flex-col md:flex-row gap-6'>
+        <div className='w-full items-start flex flex-col md:flex-row gap-6'>
           <ExhibitMetadata exhibit={exhibit} />
-          <ExhibitQrCard exhibitId={exhibit.exhibitId} />
+          <ExhibitQrCard
+            qrCodeId={exhibit.qrCode?.qrCodeId}
+            qrImageLink={exhibit.qrCode?.image.fileLink}
+            exhibitId={exhibit.exhibitId}
+          />
         </div>
         {/* Right: Subtitles, Audio */}
         <div className='w-full flex flex-col gap-8'>

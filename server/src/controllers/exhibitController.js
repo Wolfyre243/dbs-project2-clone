@@ -6,6 +6,9 @@ const exhibitModel = require('../models/exhibitModel');
 const statusCodes = require('../configs/statusCodes');
 const AuditActions = require('../configs/auditActionConfig');
 const { logAdminAudit } = require('../utils/auditlogs');
+const generateQrImageBuffer = require('../utils/generateQrImageBuffer');
+const qrModel = require('../models/QRcodeModel');
+const { saveAudioFile } = require('../utils/fileUploader');
 
 // Create Exhibit controller function
 // Takes in an array of subtitle and audio IDs
@@ -30,8 +33,14 @@ module.exports.createExhibit = catchAsync(async (req, res, next) => {
     imageId,
   });
 
+  const qrCode = await qrModel.generateQRCode(userId, exhibit.exhibitId);
+
   logger.info(
     `Exhibit created successfully: ${exhibit.exhibitId} by Admin ${userId}`,
+  );
+
+  logger.info(
+    `QR Code generated successfully: ${qrCode.qrCodeId} by Admin ${userId}`,
   );
 
   // Log audit action
@@ -45,6 +54,15 @@ module.exports.createExhibit = catchAsync(async (req, res, next) => {
       Exhibit created successfully: ${exhibit.exhibitId} by Admin ${userId}.\n
       Subtitles: ${assetData.subtitleIds.join(', ')}
     `,
+  });
+
+  await logAdminAudit({
+    userId,
+    ipAddress: req.ip,
+    entityName: 'qrCode',
+    entityId: qrCode.qrCodeId,
+    actionTypeId: AuditActions.CREATE,
+    logText: 'QR Code generated successfully',
   });
 
   res.status(201).json({
@@ -103,26 +121,14 @@ module.exports.updateExhibit = catchAsync(async (req, res, next) => {
 module.exports.getSingleExhibit = catchAsync(async (req, res, next) => {
   const exhibitId = req.params.exhibitId;
 
-  validateFields({
-    exhibitId,
+  const exhibit = await exhibitModel.getExhibitById(exhibitId);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      exhibit,
+    },
   });
-
-  try {
-    const exhibit = await exhibitModel.getExhibitById(exhibitId);
-
-    if (!exhibit) {
-      throw new AppError('Exhibit not found', 404);
-    }
-
-    res.status(200).json({
-      status: 'success',
-      data: {
-        exhibit,
-      },
-    });
-  } catch (error) {
-    next(error);
-  }
 });
 
 // Soft delete

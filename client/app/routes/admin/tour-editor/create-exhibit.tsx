@@ -505,13 +505,13 @@ export default function TourEditorCreateExhibitPage() {
     }
 
     // Check that all subtitles have generated audio
-    // const subtitlesWithoutAudio = subtitles.filter((s) => !s.audioId);
-    // if (subtitlesWithoutAudio.length > 0) {
-    //   toast.error(
-    //     'Please generate audio for all subtitles before creating the exhibit',
-    //   );
-    //   return;
-    // }
+    const subtitlesWithoutAudio = subtitles.filter((s) => !s.audioId);
+    if (subtitlesWithoutAudio.length > 0) {
+      toast.error(
+        'Please generate audio for all subtitles before creating the exhibit',
+      );
+      return;
+    }
 
     const assetData: AssetData = {
       subtitleIds: subtitles.map((s) => s.subtitleId),

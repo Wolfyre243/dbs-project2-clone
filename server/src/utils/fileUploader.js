@@ -81,6 +81,34 @@ async function saveAudioFile(fileBuffer) {
   return { fileLink: publicUrl, fileName: uniqueName };
 }
 
+async function saveImageFile(fileBuffer) {
+  // Decode file buffer
+  const fileBase64 = decode(fileBuffer.toString('base64'));
+
+  const buf = crypto.randomBytes(4);
+  const uniqueName =
+    Date.now() + '-' + buf.toString('hex') + '-' + 'qrcode.wav';
+
+  // Upload the file to supabase
+  const { data, error } = await supabase.storage
+    .from('uploads')
+    .upload(`images/${uniqueName}`, fileBase64, {
+      contentType: 'image/jpg, image/png, image/jpeg',
+    });
+
+  if (error) {
+    throw error;
+  }
+
+  // Get public url of the uploaded file
+  const { data: image } = supabase.storage
+    .from('uploads')
+    .getPublicUrl(data.path);
+
+  const publicUrl = image.publicUrl;
+  return { fileLink: publicUrl, fileName: uniqueName };
+}
+
 // Delete files
 async function deleteFile(folderName, fileName) {
   await supabase.storage.from('uploads').remove([`${folderName}/${fileName}`]);
@@ -90,5 +118,6 @@ async function deleteFile(folderName, fileName) {
 module.exports = {
   uploadFile,
   saveAudioFile,
+  saveImageFile,
   deleteFile,
 };

@@ -254,6 +254,19 @@ module.exports.getExhibitById = async (exhibitId) => {
         exhibitCreatedBy: true,
       },
     });
+
+    const qrCode = await prisma.qrCode.findFirst({
+      where: { exhibitId },
+      select: {
+        qrCodeId: true,
+        image: {
+          select: {
+            fileLink: true,
+          },
+        },
+      },
+    });
+
     return convertDatesToStrings({
       ...exhibit,
       statusId: undefined,
@@ -263,9 +276,12 @@ module.exports.getExhibitById = async (exhibitId) => {
       status: exhibit.status.statusName,
       createdBy: exhibit.exhibitCreatedBy.username,
       imageLink: exhibit.image.fileLink,
+      qrCode: { ...qrCode },
     });
   } catch (error) {
-    console.error('Error fetching exhibit:', error);
-    throw new AppError('Failed to fetch exhibit', 500);
+    if (error.code === 'P2025') {
+      throw new AppError('Exhibit not found', 404);
+    }
+    throw error;
   }
 };
