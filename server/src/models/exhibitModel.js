@@ -4,6 +4,8 @@ const prisma = new PrismaClient();
 const AppError = require('../utils/AppError');
 const { encryptData, decryptData } = require('../utils/encryption');
 const { convertDatesToStrings } = require('../utils/formatters');
+const { generateWordTimings } = require('../utils/echogardenHelper');
+console.log('generateWordTimings:', generateWordTimings);
 
 // TODO: Add back imageId
 module.exports.createExhibit = async ({
@@ -232,9 +234,7 @@ module.exports.getAllExhibits = async ({
 module.exports.getExhibitById = async (exhibitId) => {
   try {
     const exhibit = await prisma.exhibit.findUnique({
-      where: {
-        exhibitId,
-      },
+      where: { exhibitId },
       include: {
         subtitles: {
           select: {
@@ -267,12 +267,43 @@ module.exports.getExhibitById = async (exhibitId) => {
       },
     });
 
+    if (!exhibit) {
+      throw new AppError('Exhibit not found', 404);
+    }
+
+    console.log('Exhibit subtitles:', exhibit.subtitles); // Debug log
+
+    const enrichedSubtitles = await Promise.all(
+      exhibit.subtitles.map(async (s) => {
+        console.log('Subtitle object:', s.subtitle); // Debug log
+        const subtitleText = s.subtitle.subtitleText;
+        const audioUrl = s.subtitle.audio?.fileLink;
+        const languageCode = s.subtitle.languageCode;
+
+        console.log('Processing subtitle:', {
+          subtitleText,
+          audioUrl,
+          languageCode,
+        }); // Debug
+
+        const wordTimings =
+          audioUrl && subtitleText && languageCode
+            ? await generateWordTimings(audioUrl, subtitleText, languageCode)
+            : [];
+
+        return {
+          ...s.subtitle,
+          wordTimings,
+        };
+      }),
+    );
+
     return convertDatesToStrings({
       ...exhibit,
       statusId: undefined,
       exhibitCreatedBy: undefined,
-      supportedLanguages: exhibit.subtitles.map((s) => s.subtitle.languageCode),
-      subtitles: exhibit.subtitles.map((s) => ({ ...s.subtitle })),
+      supportedLanguages: enrichedSubtitles.map((s) => s.languageCode),
+      subtitles: enrichedSubtitles,
       status: exhibit.status.statusName,
       createdBy: exhibit.exhibitCreatedBy.username,
       imageLink: exhibit.image.fileLink,

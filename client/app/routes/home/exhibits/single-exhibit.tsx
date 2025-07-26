@@ -1,6 +1,4 @@
-// single-exhibit.tsx
-
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import useApiPrivate from '~/hooks/useApiPrivate';
 import { Avatar } from '~/components/ui/avatar';
 import { Badge } from '~/components/ui/badge';
@@ -37,6 +35,7 @@ type ExhibitSubtitle = {
   modifiedAt: string;
   statusId: number;
   audio: ExhibitAudio;
+  wordTimings: { word: string; start: number; end: number }[];
 };
 
 type ExhibitData = {
@@ -55,6 +54,15 @@ type ExhibitData = {
 
 const PLACEHOLDER_IMAGE =
   'https://via.placeholder.com/400x250.png?text=No+Image+Available';
+
+// Simple debounce function to limit frequent updates
+function debounce<T extends (...args: any[]) => void>(func: T, wait: number) {
+  let timeout: NodeJS.Timeout;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+}
 
 export default function SingleExhibit() {
   const [exhibit, setExhibit] = useState<ExhibitData | null>(null);
@@ -88,8 +96,31 @@ export default function SingleExhibit() {
     }
   }, [exhibit]);
 
+  const handleTimeUpdate = useCallback(
+    debounce((subtitleId: string) => {
+      const audioElement = audioRefs.current[subtitleId];
+      if (audioElement && exhibit) {
+        const subtitle = exhibit.subtitles.find(
+          (s) => s.subtitleId === subtitleId,
+        );
+        if (subtitle && subtitle.wordTimings?.length) {
+          const currentTime = audioElement.currentTime;
+          const currentWordIndex = subtitle.wordTimings.findIndex(
+            (timing) =>
+              currentTime >= timing.start && currentTime < timing.end + 0.1, // Buffer to avoid flicker
+          );
+          setCurrentWordIndices((prev) => ({
+            ...prev,
+            [subtitleId]: currentWordIndex >= 0 ? currentWordIndex : null,
+          }));
+        }
+      }
+    }, 50), // Debounce to update every 50ms
+    [exhibit],
+  );
+
   useEffect(() => {
-    // Reset indices for unselected subtitles when language changes
+    // Reset indices when language changes
     if (exhibit) {
       const validSubtitleIds = exhibit.subtitles
         .filter((sub) => sub.languageCode === selectedLanguage)
@@ -103,45 +134,6 @@ export default function SingleExhibit() {
       });
     }
 
-    const handleTimeUpdate = (subtitleId: string) => {
-      const audioElement = audioRefs.current[subtitleId];
-      if (audioElement && exhibit) {
-        const duration = audioElement.duration;
-        if (isFinite(duration) && duration > 0) {
-          const subtitle = exhibit.subtitles.find(
-            (s) => s.subtitleId === subtitleId,
-          );
-          if (subtitle) {
-            const isSpaceSeparated = [
-              'en-GB',
-              'es-ES',
-              'fr-FR',
-              'de-DE',
-              'ru-RU',
-              'it-IT',
-              'ms-MY',
-              'ta-IN',
-              'hi-IN',
-            ].includes(subtitle.languageCode);
-            const units = isSpaceSeparated
-              ? subtitle.subtitleText.split(' ')
-              : subtitle.subtitleText.split(''); // Dynamic splitting
-            // Line 150-151: Adjusted for language-specific units
-            const segmentSize = 8;
-            const segmentDuration =
-              duration / Math.ceil(units.length / segmentSize);
-            const currentTime = audioElement.currentTime;
-            const index = Math.floor(currentTime / segmentDuration);
-            setCurrentWordIndices((prev) => ({
-              ...prev,
-              [subtitleId]:
-                index >= 0 && index * segmentSize < units.length ? index : null,
-            }));
-          }
-        }
-      }
-    };
-
     exhibit?.subtitles.forEach((subtitle) => {
       const audioElement = audioRefs.current[subtitle.subtitleId];
       if (audioElement) {
@@ -151,9 +143,12 @@ export default function SingleExhibit() {
         audioElement.addEventListener('pause', () =>
           handleTimeUpdate(subtitle.subtitleId),
         );
-        audioElement.addEventListener('ended', () =>
-          handleTimeUpdate(subtitle.subtitleId),
-        );
+        audioElement.addEventListener('ended', () => {
+          setCurrentWordIndices((prev) => ({
+            ...prev,
+            [subtitle.subtitleId]: null,
+          }));
+        });
       }
     });
 
@@ -167,13 +162,16 @@ export default function SingleExhibit() {
           audioElement.removeEventListener('pause', () =>
             handleTimeUpdate(subtitle.subtitleId),
           );
-          audioElement.removeEventListener('ended', () =>
-            handleTimeUpdate(subtitle.subtitleId),
-          );
+          audioElement.removeEventListener('ended', () => {
+            setCurrentWordIndices((prev) => ({
+              ...prev,
+              [subtitle.subtitleId]: null,
+            }));
+          });
         }
       });
     };
-  }, [exhibit, selectedLanguage]);
+  }, [exhibit, selectedLanguage, handleTimeUpdate]);
 
   if (loading) {
     return (
@@ -215,7 +213,6 @@ export default function SingleExhibit() {
         </p>
       </div>
       <Separator className='my-6' />
-      {/* <h2 className='text-xl font-semibold mb-4'>Subtitles & Audio</h2> */}
       <div className='mb-6 w-full max-w-xs'>
         <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
           <SelectTrigger>
@@ -233,89 +230,100 @@ export default function SingleExhibit() {
       <div className='flex flex-col gap-6'>
         {exhibit.subtitles
           .filter((subtitle) => subtitle.languageCode === selectedLanguage)
-          .map((subtitle) => (
-            <motion.div
-              key={subtitle.subtitleId}
-              initial={{ opacity: 0, x: -30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className=''
-            >
-              {/* <Badge className='ml-auto'>
-                {subtitle.audio.languageCode}
-              </Badge> */}
-              {/* TODO: Add text highlighting here */}
-              <audio
-                ref={(el) => {
-                  if (el) audioRefs.current[subtitle.subtitleId] = el;
-                }}
-                controls
-                src={subtitle.audio.fileLink}
-                className='w-full mb-5'
+          .map((subtitle) => {
+            const isSpaceSeparated = [
+              'en-GB',
+              'es-ES',
+              'fr-FR',
+              'de-DE',
+              'ru-RU',
+              'it-IT',
+              'ms-MY',
+              'ta-IN',
+              'hi-IN',
+            ].includes(subtitle.languageCode);
+            // Group Chinese characters into phrases (4 characters per group)
+            const units = subtitle.wordTimings?.length
+              ? subtitle.languageCode === 'cmn-CN'
+                ? subtitle.wordTimings.reduce(
+                    (acc, timing, index) => {
+                      if (index % 4 === 0) {
+                        acc.push({
+                          word: '',
+                          start: timing.start,
+                          end: timing.end,
+                        });
+                      }
+                      acc[acc.length - 1].word += timing.word;
+                      if (
+                        index % 4 !== 3 &&
+                        index < subtitle.wordTimings.length - 1
+                      ) {
+                        acc[acc.length - 1].end =
+                          subtitle.wordTimings[index + 1].end;
+                      }
+                      return acc;
+                    },
+                    [] as { word: string; start: number; end: number }[],
+                  )
+                : subtitle.wordTimings
+              : isSpaceSeparated
+                ? subtitle.subtitleText.split(' ')
+                : subtitle.subtitleText.split('');
+            return (
+              <motion.div
+                key={subtitle.subtitleId}
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className=''
               >
-                Your browser does not support the audio element.
-              </audio>
-              <div className='flex items-center gap-3 mb-2 p-4 rounded-lg border bg-muted'>
-                <span className='text-base'>
-                  {(() => {
-                    const isSpaceSeparated = [
-                      'en-GB',
-                      'es-ES',
-                      'fr-FR',
-                      'de-DE',
-                      'ru-RU',
-                      'it-IT',
-                      'ms-MY',
-                      'ta-IN',
-                      'hi-IN',
-                    ].includes(subtitle.languageCode);
-                    return subtitle.subtitleText
-                      .split(isSpaceSeparated ? ' ' : '')
-                      .reduce((acc, unit, index) => {
-                        // Dynamic splitting
-                        const segmentIndex = Math.floor(index / 8);
-                        if (index % 8 === 0) acc.push([]);
-                        acc[acc.length - 1].push(unit);
-                        return acc;
-                      }, [] as string[][])
-                      .map((group, groupIndex) => (
-                        <span
-                          key={groupIndex}
-                          style={{
-                            padding: '2px 4px',
-                            borderRadius: '4px',
-                            background:
-                              groupIndex ===
-                              currentWordIndices[subtitle.subtitleId]
-                                ? 'linear-gradient(90deg, #ffeb3b, #ffca28)'
-                                : 'transparent',
-                            fontWeight:
-                              groupIndex ===
-                              currentWordIndices[subtitle.subtitleId]
-                                ? '500'
-                                : '300',
-                            transition: 'all 0.3s ease',
-                            boxShadow:
-                              groupIndex ===
-                              currentWordIndices[subtitle.subtitleId]
-                                ? '0 2px 6px rgba(255, 215, 0, 0.4)'
-                                : 'none',
-                            color:
-                              groupIndex ===
-                              currentWordIndices[subtitle.subtitleId]
-                                ? '#1a1a1a'
-                                : '#ffffff',
-                          }}
-                        >
-                          {group.join(isSpaceSeparated ? ' ' : '') + ' '}{' '}
-                          {/* Dynamic joining */}
-                        </span>
-                      ));
-                  })()}
-                </span>
-              </div>
-            </motion.div>
-          ))}
+                <audio
+                  ref={(el) => {
+                    if (el) audioRefs.current[subtitle.subtitleId] = el;
+                  }}
+                  controls
+                  src={subtitle.audio.fileLink}
+                  className='w-full mb-5'
+                >
+                  Your browser does not support the audio element.
+                </audio>
+                <div className='flex items-center gap-3 mb-2 p-4 rounded-lg border bg-muted'>
+                  <span className='text-base'>
+                    {units.map((unit, index) => (
+                      <span
+                        key={index}
+                        style={{
+                          padding: '2px 4px',
+                          borderRadius: '4px',
+                          background:
+                            index === currentWordIndices[subtitle.subtitleId]
+                              ? 'linear-gradient(90deg, #ffeb3b, #ffca28)'
+                              : 'transparent',
+                          fontWeight:
+                            index === currentWordIndices[subtitle.subtitleId]
+                              ? '500'
+                              : '300',
+                          transition: 'all 0.3s ease',
+                          boxShadow:
+                            index === currentWordIndices[subtitle.subtitleId]
+                              ? '0 2px 6px rgba(255, 215, 0, 0.4)'
+                              : 'none',
+                          color:
+                            index === currentWordIndices[subtitle.subtitleId]
+                              ? '#1a1a1a'
+                              : '#ffffff',
+                        }}
+                      >
+                        {typeof unit === 'string' ? unit : unit.word}
+                        {isSpaceSeparated ? ' ' : ''}
+                      </span>
+                    ))}
+                  </span>
+                </div>
+              </motion.div>
+            );
+          })}
       </div>
     </motion.div>
   );
