@@ -164,18 +164,10 @@ export default function TourEditorCreateExhibitPage() {
   };
 
   // Remove a subtitle item and delete its audio/subtitle if present
-  // FIXME
   const removeSubtitle = async (id: string) => {
     const subtitle = subtitles.find((s) => s.id === id);
     if (!subtitle) return;
-    // Delete audio if present
-    // if (subtitle.audioId) {
-    //   try {
-    //     await apiPrivate.delete(`/audio/hard-delete/${subtitle.audioId}`);
-    //   } catch (err) {
-    //     console.warn('Failed to delete audio for removed subtitle:', err);
-    //   }
-    // }
+
     // Delete subtitle from backend if it has a backend id (assume not a temp id)
     if (subtitle.id && !subtitle.id.startsWith('temp-')) {
       try {
@@ -550,6 +542,19 @@ export default function TourEditorCreateExhibitPage() {
                     </div>
 
                     <div className='space-y-4'>
+                      {/* TODO: Add checks to ensure language isnt repeated */}
+                      <div className='space-y-2'>
+                        <Label>Language *</Label>
+                        <LanguageSelect
+                          fieldName={`language-${subtitle.id}`}
+                          value={subtitle.languageCode}
+                          onValueChange={(languageCode) =>
+                            updateSubtitleLanguage(subtitle.id, languageCode)
+                          }
+                          placeholder='Select language'
+                        />
+                      </div>
+                      {/* Subtitle Text */}
                       <div className='space-y-2'>
                         <Label htmlFor={`text-${subtitle.id}`}>
                           Subtitle Text *
@@ -572,19 +577,6 @@ export default function TourEditorCreateExhibitPage() {
                             {validationErrors[`subtitle-${subtitle.id}`]}
                           </div>
                         )}
-                      </div>
-
-                      {/* Add checks to ensure language isnt repeated */}
-                      <div className='space-y-2'>
-                        <Label>Language *</Label>
-                        <LanguageSelect
-                          fieldName={`language-${subtitle.id}`}
-                          value={subtitle.languageCode}
-                          onValueChange={(languageCode) =>
-                            updateSubtitleLanguage(subtitle.id, languageCode)
-                          }
-                          placeholder='Select language'
-                        />
                       </div>
                     </div>
 
@@ -610,22 +602,53 @@ export default function TourEditorCreateExhibitPage() {
                         )}
                       </Button>
 
-                      {subtitle.fileLink && (
-                        <div className='flex-1'>
-                          <audio
-                            key={subtitle.audioId || subtitle.fileLink}
-                            controls
-                            className='w-full'
-                          >
-                            <source
-                              src={`${subtitle.fileLink}?t=${subtitle.audioId}`}
-                              type='audio/wav'
-                            />
-                            Your browser does not support the audio element.
-                          </audio>
-                        </div>
+                      {subtitle.audioId && (
+                        <Button
+                          variant='destructive'
+                          size='icon'
+                          title='Delete Audio'
+                          onClick={async () => {
+                            try {
+                              await apiPrivate.delete(
+                                `/audio/hard-delete/${subtitle.audioId}`,
+                              );
+                              setSubtitles((prev) =>
+                                prev.map((s) =>
+                                  s.id === subtitle.id
+                                    ? {
+                                        ...s,
+                                        audioId: undefined,
+                                        fileLink: undefined,
+                                      }
+                                    : s,
+                                ),
+                              );
+                              toast.success('Audio deleted');
+                            } catch (err) {
+                              toast.error('Failed to delete audio');
+                            }
+                          }}
+                        >
+                          <Trash2 className='h-4 w-4' />
+                        </Button>
                       )}
                     </div>
+
+                    {subtitle.fileLink && (
+                      <div className='flex-1 flex items-center gap-2'>
+                        <audio
+                          key={subtitle.audioId || subtitle.fileLink}
+                          controls
+                          className='w-full'
+                        >
+                          <source
+                            src={`${subtitle.fileLink}?t=${subtitle.audioId}`}
+                            type='audio/wav'
+                          />
+                          Your browser does not support the audio element.
+                        </audio>
+                      </div>
+                    )}
 
                     {subtitle.audioId && (
                       <div className='text-sm text-muted-foreground'>

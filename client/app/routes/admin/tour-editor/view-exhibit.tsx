@@ -22,6 +22,8 @@ import {
   SelectItem,
 } from '~/components/ui/select';
 import { apiPrivate } from '~/services/api';
+import { Button } from '~/components/ui/button';
+import { Link } from 'react-router';
 
 interface Subtitle {
   subtitleId: string;
@@ -120,12 +122,20 @@ function ExhibitQrCard({ exhibitId }: { exhibitId: string }) {
       <CardHeader>
         <CardTitle>Exhibit QR Code</CardTitle>
       </CardHeader>
-      <CardContent className='flex flex-row w-full'>
+      <CardContent className='flex flex-col gap-2 w-full'>
         {/* Placeholder QR code */}
-        <div className='flex m-auto items-center justify-center w-60 h-60 bg-muted rounded border text-muted-foreground'>
+        <div className='flex items-center justify-center w-60 h-60 bg-muted rounded border text-muted-foreground'>
           <QrCode className='h-10 w-10' />
           <span className='ml-2'>QR Code Placeholder</span>
         </div>
+        <Button asChild>
+          <Link
+            className='px-4 py-1 w-fit rounded-md'
+            to={`/home/exhibits/${exhibitId}`}
+          >
+            View Live
+          </Link>
+        </Button>
       </CardContent>
     </Card>
   );
@@ -143,7 +153,9 @@ function SubtitleAudioPreview({ subtitles }: { subtitles: Subtitle[] }) {
     available.length > 0 ? available[0] : undefined,
   );
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [currentWordIndices, setCurrentWordIndices] = useState<Record<string, number | null>>({});
+  const [currentWordIndices, setCurrentWordIndices] = useState<
+    Record<string, number | null>
+  >({});
 
   // Update current when selectedLang changes
   useEffect(() => {
@@ -155,15 +167,29 @@ function SubtitleAudioPreview({ subtitles }: { subtitles: Subtitle[] }) {
       if (audioRef.current && current) {
         const duration = audioRef.current.duration;
         if (isFinite(duration) && duration > 0) {
-          const isSpaceSeparated = ['en-GB', 'es-ES', 'fr-FR', 'de-DE', 'ru-RU', 'it-IT', 'ms-MY', 'ta-IN', 'hi-IN'].includes(current.languageCode);
-          const units = isSpaceSeparated ? current.subtitleText.split(' ') : current.subtitleText.split('');
+          const isSpaceSeparated = [
+            'en-GB',
+            'es-ES',
+            'fr-FR',
+            'de-DE',
+            'ru-RU',
+            'it-IT',
+            'ms-MY',
+            'ta-IN',
+            'hi-IN',
+          ].includes(current.languageCode);
+          const units = isSpaceSeparated
+            ? current.subtitleText.split(' ')
+            : current.subtitleText.split('');
           const segmentSize = 8;
-          const segmentDuration = duration / Math.ceil(units.length / segmentSize);
+          const segmentDuration =
+            duration / Math.ceil(units.length / segmentSize);
           const currentTime = audioRef.current.currentTime;
           const index = Math.floor(currentTime / segmentDuration);
-          setCurrentWordIndices(prev => ({
+          setCurrentWordIndices((prev) => ({
             ...prev,
-            [current.subtitleId]: index >= 0 && index * segmentSize < units.length ? index : null,
+            [current.subtitleId]:
+              index >= 0 && index * segmentSize < units.length ? index : null,
           }));
         }
       }
@@ -212,6 +238,7 @@ function SubtitleAudioPreview({ subtitles }: { subtitles: Subtitle[] }) {
         </Select>
       </div>
       <div className='flex flex-col md:flex-row w-full items-start gap-5'>
+        {/* Subtitles */}
         <div className='p-4 border rounded-lg space-y-2 w-full md:w-2/3'>
           <div className='text-xs text-muted-foreground'>
             Language: {current?.languageCode}
@@ -220,49 +247,66 @@ function SubtitleAudioPreview({ subtitles }: { subtitles: Subtitle[] }) {
             {(() => {
               const isSpaceSeparated =
                 current?.languageCode &&
-                ['en-GB', 'es-ES', 'fr-FR', 'de-DE', 'ru-RU', 'it-IT', 'ms-MY', 'ta-IN', 'hi-IN'].includes(current.languageCode);
+                [
+                  'en-GB',
+                  'es-ES',
+                  'fr-FR',
+                  'de-DE',
+                  'ru-RU',
+                  'it-IT',
+                  'ms-MY',
+                  'ta-IN',
+                  'hi-IN',
+                ].includes(current.languageCode);
               const units = current?.subtitleText
                 ? current.subtitleText.split(isSpaceSeparated ? ' ' : '')
                 : [];
-              return units.reduce((acc, unit, index) => {
-                const segmentIndex = Math.floor(index / 8);
-                if (index % 8 === 0) acc.push([]);
-                acc[acc.length - 1].push(unit);
-                return acc;
-              }, [] as string[][]).map((group, groupIndex) => (
-                <span
-                  key={groupIndex}
-                  style={{
-                    padding: '2px 4px',
-                    borderRadius: '4px',
-                    background:
-                      groupIndex === currentWordIndices[current?.subtitleId || '']
-                        ? 'linear-gradient(90deg, #ffeb3b, #ffca28)'
-                        : 'transparent',
-                    fontWeight:
-                      groupIndex === currentWordIndices[current?.subtitleId || '']
-                        ? '500'
-                        : '300',
-                    transition: 'all 0.3s ease',
-                    boxShadow:
-                      groupIndex === currentWordIndices[current?.subtitleId || '']
-                        ? '0 2px 6px rgba(255, 215, 0, 0.4)'
-                        : 'none',
-                    color:
-                      groupIndex === currentWordIndices[current?.subtitleId || '']
-                        ? '#1a1a1a'
-                        : '#ffffff',
-                  }}
-                >
-                  {group.join(isSpaceSeparated ? ' ' : '') + ' '}
-                </span>
-              ));
+              return units
+                .reduce((acc, unit, index) => {
+                  const segmentIndex = Math.floor(index / 8);
+                  if (index % 8 === 0) acc.push([]);
+                  acc[acc.length - 1].push(unit);
+                  return acc;
+                }, [] as string[][])
+                .map((group, groupIndex) => (
+                  <span
+                    key={groupIndex}
+                    className={`${groupIndex === currentWordIndices[current?.subtitleId || ''] ? 'text-black' : ''} px-1 py-0.5`}
+                    style={{
+                      borderRadius: '4px',
+                      background:
+                        groupIndex ===
+                        currentWordIndices[current?.subtitleId || '']
+                          ? 'linear-gradient(90deg, #ffeb3b, #ffca28)'
+                          : 'transparent',
+                      fontWeight:
+                        groupIndex ===
+                        currentWordIndices[current?.subtitleId || '']
+                          ? '500'
+                          : '300',
+                      transition: 'all 0.3s ease',
+                      boxShadow:
+                        groupIndex ===
+                        currentWordIndices[current?.subtitleId || '']
+                          ? '0 2px 6px rgba(255, 215, 0, 0.4)'
+                          : 'none',
+                    }}
+                  >
+                    {group.join(isSpaceSeparated ? ' ' : '') + ''}
+                  </span>
+                ));
             })()}
           </div>
         </div>
+        {/* Audio */}
         <div className='flex flex-row w-full md:w-1/3'>
           {current?.audio?.fileLink ? (
-            <audio ref={audioRef} key={current.audio.fileLink} controls className='w-full'>
+            <audio
+              ref={audioRef}
+              key={current.audio.fileLink}
+              controls
+              className='w-full'
+            >
               <source src={current.audio.fileLink} type='audio/wav' />
               Your browser does not support the audio element.
             </audio>
