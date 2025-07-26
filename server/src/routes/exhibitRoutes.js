@@ -25,6 +25,12 @@ exhibitRouter.use(jwtMiddleware.verifyToken);
 // Admin Exhibit Routes
 // router.post('/create-exhibit', exhibitController.createExhibit);             // -- C
 exhibitRouter.get('/:exhibitId', exhibitController.getSingleExhibit); // -- R
+
+// QR code token validation route
+exhibitRouter.post(
+  '/:exhibitId/validate-qr-token',
+  exhibitController.validateQrToken,
+);
 exhibitRouter.put(
   '/',
   authMiddleware.verifyIsAdmin,
