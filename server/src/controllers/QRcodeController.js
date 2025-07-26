@@ -102,7 +102,7 @@ module.exports.getQRCodeById = catchAsync( async(req, res, next) => {
     ipAddress: req.ip,
     entityName: 'qrCode',
     entityId: qrCodeId,
-    actionTypeId: 1,
+    actionTypeId: AuditActions.READ,
     logText: 'QR-code retrived by ID successfully',
   });
 
