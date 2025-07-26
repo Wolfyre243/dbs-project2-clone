@@ -25,6 +25,9 @@ subtitleRouter.post(
   subtitleController.createSubtitle,
 );
 
+// Update subtitle
+subtitleRouter.put('/:subtitleId', subtitleController.updateSubtitle);
+
 // archive subtitle by setting status to archived
 subtitleRouter.put('/archive/:subtitleId', subtitleController.archiveSubtitle);
 //unarchive subtitle by setting status to active

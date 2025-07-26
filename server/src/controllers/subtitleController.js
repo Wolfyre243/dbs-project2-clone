@@ -15,7 +15,7 @@ const subtitleModel = require('../models/subtitleModel');
 const { logAdminAudit } = require('../utils/auditlogs');
 
 module.exports.createSubtitle = catchAsync(async (req, res, next) => {
-  const { text, languageCode, audioId } = req.body;
+  const { text, languageCode, audioId, exhibitId } = req.body;
   const userId = res.locals.user.userId;
 
   // Validate language code
@@ -31,6 +31,7 @@ module.exports.createSubtitle = catchAsync(async (req, res, next) => {
     subtitleText: text,
     languageCode,
     audioId,
+    exhibitId, // Add exhibitId to link subtitle to exhibit
     createdBy: userId,
     modifiedBy: userId,
   });
@@ -135,7 +136,7 @@ module.exports.hardDeleteSubtitle = catchAsync(async (req, res, next) => {
 
   await subtitleModel.hardDeleteSubtitle(subtitleId, userId);
 
-  logger.info(`Hard deleted subtitle ${subtitleId}`);
+  logger.info(`Hard deleted subtitle ${subtitleId} and its related audio file`);
 
   await logAdminAudit({
     userId,
@@ -143,12 +144,12 @@ module.exports.hardDeleteSubtitle = catchAsync(async (req, res, next) => {
     entityName: 'subtitle',
     entityId: subtitleId,
     actionTypeId: AuditActions.DELETE,
-    logText: `Hard deleted subtitle entity with ID ${subtitleId}`,
+    logText: `Hard deleted subtitle entity with ID ${subtitleId} and its related audio file`,
   });
 
   res.status(200).json({
     status: 'success',
-    message: 'Subtitle hard deleted successfully',
+    message: 'Subtitle and related audio file hard deleted successfully',
   });
 });
 
@@ -185,6 +186,64 @@ module.exports.getAllSubtitles = catchAsync(async (req, res, next) => {
     status: 'success',
     pageCount: Math.ceil(result.subtitleCount / pageSize),
     data: result.subtitles,
+  });
+});
+
+// Update subtitle
+module.exports.updateSubtitle = catchAsync(async (req, res, next) => {
+  const { subtitleId } = req.params;
+  const { text, languageCode, audioId } = req.body;
+  const userId = res.locals.user.userId;
+
+  // Validate required fields
+  if (!text && !languageCode && !audioId) {
+    throw new AppError(
+      'At least one field (text, languageCode, audioId) must be provided for update',
+      400,
+    );
+  }
+
+  // Validate language code if provided
+  if (languageCode) {
+    const supportedLanguages = await languageModel.getActiveLanguages();
+    if (!supportedLanguages.includes(languageCode)) {
+      throw new AppError(
+        `Unsupported language code: ${languageCode}. Supported: ${supportedLanguages.join(', ')}`,
+        400,
+      );
+    }
+  }
+
+  const updateData = {
+    modifiedBy: userId,
+  };
+
+  if (text) updateData.subtitleText = text;
+  if (languageCode) updateData.languageCode = languageCode;
+  if (audioId) updateData.audioId = audioId;
+
+  const updatedSubtitle = await subtitleModel.updateSubtitle(
+    subtitleId,
+    updateData,
+  );
+
+  await logAdminAudit({
+    userId,
+    ipAddress: req.ip,
+    entityName: 'subtitle',
+    entityId: subtitleId,
+    actionTypeId: AuditActions.UPDATE,
+    logText: `Updated subtitle entity with ID ${subtitleId}`,
+  });
+
+  logger.debug(`Subtitle updated successfully with ID: ${subtitleId}`);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      ...updatedSubtitle,
+      message: 'Successfully updated subtitle',
+    },
   });
 });
 

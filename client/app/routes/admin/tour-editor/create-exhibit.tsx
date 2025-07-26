@@ -233,6 +233,7 @@ export default function TourEditorCreateExhibitPage() {
       const { data: responseData } = await apiPrivate.post(
         '/audio/upload',
         formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } },
       );
 
       const { audioId, fileLink } = responseData.data;

@@ -19,6 +19,10 @@ import {
   Save,
   X,
   Pencil,
+  Plus,
+  Trash2,
+  Play,
+  Edit3,
 } from 'lucide-react';
 import {
   Select,
@@ -32,6 +36,15 @@ import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { Textarea } from '~/components/ui/textarea';
 import { Label } from '~/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '~/components/ui/dialog';
+import { LanguageSelect } from '~/components/language-select';
 import { Link } from 'react-router';
 import useApiPrivate from '~/hooks/useApiPrivate';
 import { toast } from 'sonner';
@@ -103,11 +116,16 @@ function formatDate(dateString: string) {
   });
 }
 
-function ExhibitMetadata({ exhibit, isEditing, setIsEditing, onUpdate }: { 
-  exhibit: Exhibit, 
-  isEditing: boolean, 
-  setIsEditing: (editing: boolean) => void,
-  onUpdate: (metadata: ExhibitMetadata) => Promise<void>
+function ExhibitMetadata({
+  exhibit,
+  isEditing,
+  setIsEditing,
+  onUpdate,
+}: {
+  exhibit: Exhibit;
+  isEditing: boolean;
+  setIsEditing: (editing: boolean) => void;
+  onUpdate: (metadata: ExhibitMetadata) => Promise<void>;
 }) {
   const [editMetadata, setEditMetadata] = useState<ExhibitMetadata>({
     title: exhibit.title,
@@ -117,7 +135,9 @@ function ExhibitMetadata({ exhibit, isEditing, setIsEditing, onUpdate }: {
   });
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
-  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
+    {},
+  );
   const [isUpdating, setIsUpdating] = useState(false);
 
   const VALIDATION_LIMITS = {
@@ -132,17 +152,27 @@ function ExhibitMetadata({ exhibit, isEditing, setIsEditing, onUpdate }: {
 
     if (!editMetadata.title.trim()) {
       errors.exhibitName = 'Exhibit name is required';
-    } else if (editMetadata.title.trim().length < VALIDATION_LIMITS.EXHIBIT_NAME_MIN) {
+    } else if (
+      editMetadata.title.trim().length < VALIDATION_LIMITS.EXHIBIT_NAME_MIN
+    ) {
       errors.exhibitName = `Exhibit name must be at least ${VALIDATION_LIMITS.EXHIBIT_NAME_MIN} characters`;
-    } else if (editMetadata.title.trim().length > VALIDATION_LIMITS.EXHIBIT_NAME_MAX) {
+    } else if (
+      editMetadata.title.trim().length > VALIDATION_LIMITS.EXHIBIT_NAME_MAX
+    ) {
       errors.exhibitName = `Exhibit name must not exceed ${VALIDATION_LIMITS.EXHIBIT_NAME_MAX} characters`;
     }
 
     if (!editMetadata.description.trim()) {
       errors.exhibitDescription = 'Exhibit description is required';
-    } else if (editMetadata.description.trim().length < VALIDATION_LIMITS.EXHIBIT_DESCRIPTION_MIN) {
+    } else if (
+      editMetadata.description.trim().length <
+      VALIDATION_LIMITS.EXHIBIT_DESCRIPTION_MIN
+    ) {
       errors.exhibitDescription = `Description must be at least ${VALIDATION_LIMITS.EXHIBIT_DESCRIPTION_MIN} characters`;
-    } else if (editMetadata.description.trim().length > VALIDATION_LIMITS.EXHIBIT_DESCRIPTION_MAX) {
+    } else if (
+      editMetadata.description.trim().length >
+      VALIDATION_LIMITS.EXHIBIT_DESCRIPTION_MAX
+    ) {
       errors.exhibitDescription = `Description must not exceed ${VALIDATION_LIMITS.EXHIBIT_DESCRIPTION_MAX} characters`;
     }
 
@@ -241,7 +271,10 @@ function ExhibitMetadata({ exhibit, isEditing, setIsEditing, onUpdate }: {
     }
   };
 
-  const updateExhibitMetadata = (field: keyof ExhibitMetadata, value: string) => {
+  const updateExhibitMetadata = (
+    field: keyof ExhibitMetadata,
+    value: string,
+  ) => {
     setEditMetadata((prev) => ({
       ...prev,
       [field]: value,
@@ -274,7 +307,8 @@ function ExhibitMetadata({ exhibit, isEditing, setIsEditing, onUpdate }: {
               onChange={(e) => updateExhibitMetadata('title', e.target.value)}
             />
             <div className='text-xs text-muted-foreground'>
-              {editMetadata.title.length}/{VALIDATION_LIMITS.EXHIBIT_NAME_MAX} characters
+              {editMetadata.title.length}/{VALIDATION_LIMITS.EXHIBIT_NAME_MAX}{' '}
+              characters
             </div>
             {validationErrors.exhibitName && (
               <div className='flex items-center gap-2 text-sm text-red-600'>
@@ -289,11 +323,14 @@ function ExhibitMetadata({ exhibit, isEditing, setIsEditing, onUpdate }: {
               id='exhibit-description'
               placeholder='Enter exhibit description...'
               value={editMetadata.description}
-              onChange={(e) => updateExhibitMetadata('description', e.target.value)}
+              onChange={(e) =>
+                updateExhibitMetadata('description', e.target.value)
+              }
               className='min-h-[100px]'
             />
             <div className='text-xs text-muted-foreground'>
-              {editMetadata.description.length}/{VALIDATION_LIMITS.EXHIBIT_DESCRIPTION_MAX} characters
+              {editMetadata.description.length}/
+              {VALIDATION_LIMITS.EXHIBIT_DESCRIPTION_MAX} characters
             </div>
             {validationErrors.exhibitDescription && (
               <div className='flex items-center gap-2 text-sm text-red-600'>
@@ -324,10 +361,14 @@ function ExhibitMetadata({ exhibit, isEditing, setIsEditing, onUpdate }: {
                 onDrop={handleImageDrop}
                 onDragOver={(e) => e.preventDefault()}
                 className={`flex min-h-[150px] border-2 border-dashed rounded-md p-4 flex-col items-center justify-center cursor-pointer transition-colors ${isUploadingImage ? 'opacity-50' : 'hover:border-primary'}`}
-                onClick={() => document.getElementById('exhibit-image-input')?.click()}
+                onClick={() =>
+                  document.getElementById('exhibit-image-input')?.click()
+                }
               >
                 <UploadCloud className='h-6 w-6 mb-2' />
-                <span className='text-muted-foreground'>Drag & drop or click to upload an image</span>
+                <span className='text-muted-foreground'>
+                  Drag & drop or click to upload an image
+                </span>
                 <input
                   id='exhibit-image-input'
                   type='file'
@@ -337,25 +378,23 @@ function ExhibitMetadata({ exhibit, isEditing, setIsEditing, onUpdate }: {
                   disabled={isUploadingImage}
                 />
                 {imageError && (
-                  <span className='text-xs text-red-600 mt-2'>{imageError}</span>
+                  <span className='text-xs text-red-600 mt-2'>
+                    {imageError}
+                  </span>
                 )}
                 {isUploadingImage && (
-                  <span className='text-xs text-muted-foreground mt-2'>Uploading...</span>
+                  <span className='text-xs text-muted-foreground mt-2'>
+                    Uploading...
+                  </span>
                 )}
               </div>
             )}
           </div>
           <div className='flex justify-end gap-2'>
-            <Button
-              variant='outline'
-              onClick={() => setIsEditing(false)}
-            >
+            <Button variant='outline' onClick={() => setIsEditing(false)}>
               Cancel
             </Button>
-            <Button
-              onClick={handleUpdate}
-              disabled={isUpdating}
-            >
+            <Button onClick={handleUpdate} disabled={isUpdating}>
               {isUpdating ? (
                 <>
                   <Loader2 className='h-4 w-4 mr-2 animate-spin' />
@@ -382,10 +421,7 @@ function ExhibitMetadata({ exhibit, isEditing, setIsEditing, onUpdate }: {
             <span className='text-muted-foreground'>No Name</span>
           )}
         </h1>
-        <Button
-          onClick={() => setIsEditing(true)}
-          variant='outline'
-        >
+        <Button onClick={() => setIsEditing(true)} variant='outline'>
           <Pencil className='h-4 w-4 mr-2' />
           Edit Exhibit
         </Button>
@@ -509,179 +545,701 @@ function ExhibitQrCard({
   );
 }
 
-function SubtitleAudioPreview({ subtitles }: { subtitles: Subtitle[] }) {
-  const available = subtitles.filter(
-    (s) => s.languageCode && s.subtitleText && s.audio && s.audio.fileLink,
-  );
-  const [selectedLang, setSelectedLang] = useState(
-    available.length > 0 ? available[0].languageCode : '',
-  );
-  const [current, setCurrent] = useState(
-    available.length > 0 ? available[0] : undefined,
-  );
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [currentWordIndices, setCurrentWordIndices] = useState<
-    Record<string, number | null>
-  >({});
+interface SubtitleFormData {
+  text: string;
+  languageCode: string;
+  audioId?: string;
+  fileLink?: string;
+  isGenerating?: boolean;
+}
 
-  useEffect(() => {
-    setCurrent(available.find((s) => s.languageCode === selectedLang));
-  }, [selectedLang, available]);
+function SubtitleManagementSection({
+  subtitles,
+  onSubtitleUpdate,
+  onSubtitleAdd,
+  onSubtitleDelete,
+}: {
+  subtitles: Subtitle[];
+  onSubtitleUpdate: (
+    subtitleId: string,
+    data: Partial<Subtitle>,
+  ) => Promise<void>;
+  onSubtitleAdd: (data: SubtitleFormData) => Promise<void>;
+  onSubtitleDelete: (subtitleId: string) => Promise<void>;
+}) {
+  const apiPrivate = useApiPrivate();
+  const audioInputRef = useRef<HTMLInputElement | null>(null);
 
-  useEffect(() => {
-    const handleTimeUpdate = () => {
-      if (audioRef.current && current) {
-        const duration = audioRef.current.duration;
-        if (isFinite(duration) && duration > 0) {
-          const isSpaceSeparated = [
-            'en-GB',
-            'es-ES',
-            'fr-FR',
-            'de-DE',
-            'ru-RU',
-            'it-IT',
-            'ms-MY',
-            'ta-IN',
-            'hi-IN',
-          ].includes(current.languageCode);
-          const units = isSpaceSeparated
-            ? current.subtitleText.split(' ')
-            : current.subtitleText.split('');
-          const segmentSize = 8;
-          const segmentDuration =
-            duration / Math.ceil(units.length / segmentSize);
-          const currentTime = audioRef.current.currentTime;
-          const index = Math.floor(currentTime / segmentDuration);
-          setCurrentWordIndices((prev) => ({
-            ...prev,
-            [current.subtitleId]:
-              index >= 0 && index * segmentSize < units.length ? index : null,
-          }));
-        }
-      }
-    };
+  // Dialog states
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
-    const audioElement = audioRef.current;
-    if (audioElement) {
-      audioElement.addEventListener('timeupdate', handleTimeUpdate);
-      audioElement.addEventListener('pause', handleTimeUpdate);
-      audioElement.addEventListener('ended', handleTimeUpdate);
+  // Form data
+  const [editingSubtitle, setEditingSubtitle] = useState<Subtitle | null>(null);
+  const [editFormData, setEditFormData] = useState<SubtitleFormData>({
+    text: '',
+    languageCode: '',
+  });
+  const [addFormData, setAddFormData] = useState<SubtitleFormData>({
+    text: '',
+    languageCode: '',
+  });
+
+  // Loading states
+  const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
+  const [isUploadingAudio, setIsUploadingAudio] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Validation
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
+    {},
+  );
+
+  const VALIDATION_LIMITS = {
+    SUBTITLE_TEXT_MIN: 5,
+    SUBTITLE_TEXT_MAX: 1000,
+  };
+
+  const validateSubtitle = (data: SubtitleFormData): boolean => {
+    const errors: ValidationErrors = {};
+
+    if (!data.text.trim()) {
+      errors.text = 'Subtitle text is required';
+    } else if (data.text.trim().length < VALIDATION_LIMITS.SUBTITLE_TEXT_MIN) {
+      errors.text = `Text must be at least ${VALIDATION_LIMITS.SUBTITLE_TEXT_MIN} characters`;
+    } else if (data.text.trim().length > VALIDATION_LIMITS.SUBTITLE_TEXT_MAX) {
+      errors.text = `Text must not exceed ${VALIDATION_LIMITS.SUBTITLE_TEXT_MAX} characters`;
     }
 
-    return () => {
-      if (audioElement) {
-        audioElement.removeEventListener('timeupdate', handleTimeUpdate);
-        audioElement.removeEventListener('pause', handleTimeUpdate);
-        audioElement.removeEventListener('ended', handleTimeUpdate);
-      }
-    };
-  }, [current]);
+    if (!data.languageCode) {
+      errors.languageCode = 'Language is required';
+    }
 
-  if (available.length === 0) {
-    return (
-      <div className='flex items-center gap-2 text-muted-foreground'>
-        <AudioLines className='h-5 w-5' />
-        No subtitles with audio available
-      </div>
+    if (!data.audioId) {
+      errors.audioId = 'Audio ID is required';
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const checkLanguageUniqueness = (
+    languageCode: string,
+    excludeId?: string,
+  ): boolean => {
+    // If subtitle lannguage is not unique, then return false
+    return !subtitles.some(
+      (s) => s.languageCode === languageCode && s.subtitleId !== excludeId,
     );
-  }
+  };
+
+  const generateAudio = async (
+    formData: SubtitleFormData,
+    setFormData: (
+      updater: (prev: SubtitleFormData) => SubtitleFormData,
+    ) => void,
+  ) => {
+    if (!formData.text.trim() || !formData.languageCode) {
+      toast.error('Please enter subtitle text and select a language');
+      return;
+    }
+
+    setIsGeneratingAudio(true);
+    try {
+      if (formData.audioId) {
+        await apiPrivate.delete(`/audio/hard-delete/${formData.audioId}`);
+      }
+
+      const { data: responseData } = await apiPrivate.post('/audio/generate', {
+        text: formData.text,
+        languageCode: formData.languageCode,
+      });
+
+      setFormData((prev: SubtitleFormData) => {
+        const updated = {
+          ...prev,
+          audioId: responseData.data.audioId,
+          fileLink: responseData.data.fileLink,
+        };
+        return updated;
+      });
+
+      toast.success('Audio generated successfully!');
+    } catch (error) {
+      toast.error('Failed to generate audio');
+    } finally {
+      setIsGeneratingAudio(false);
+    }
+  };
+
+  const handleAudioUpload = async (
+    file: File,
+    formData: SubtitleFormData,
+    setFormData: (data: SubtitleFormData) => void,
+  ) => {
+    if (file.type !== 'audio/wav' && !file.name.endsWith('.wav')) {
+      toast.error('Please upload a .wav audio file');
+      return;
+    }
+
+    console.log(file);
+
+    setIsUploadingAudio(true);
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', file);
+      uploadFormData.append('languageCode', formData.languageCode);
+
+      // Do NOT set Content-Type header manually; let Axios handle it
+      const { data: responseData } = await apiPrivate.post(
+        '/audio/upload',
+        uploadFormData,
+        { headers: { 'Content-Type': 'multipart/form-data' } },
+      );
+
+      setFormData({
+        ...formData,
+        audioId: responseData.data.audioId,
+        fileLink: responseData.data.fileLink,
+      });
+
+      toast.success('Audio uploaded successfully!');
+    } catch (error) {
+      toast.error('Failed to upload audio');
+    } finally {
+      setIsUploadingAudio(false);
+      if (audioInputRef.current) audioInputRef.current.value = '';
+    }
+  };
+
+  const handleDeleteAudio = async (
+    formData: SubtitleFormData,
+    setFormData: (data: SubtitleFormData) => void,
+  ) => {
+    if (!formData.audioId) return;
+
+    try {
+      await apiPrivate.delete(`/audio/hard-delete/${formData.audioId}`);
+      setFormData({
+        ...formData,
+        audioId: undefined,
+        fileLink: undefined,
+      });
+      toast.success('Audio deleted');
+    } catch (error) {
+      toast.error('Failed to delete audio');
+    }
+  };
+
+  const openEditDialog = (subtitle: Subtitle) => {
+    setEditingSubtitle(subtitle);
+    setEditFormData({
+      text: subtitle.subtitleText,
+      languageCode: subtitle.languageCode,
+      audioId: subtitle.audioId,
+      fileLink: subtitle.audio?.fileLink,
+    });
+    setEditDialogOpen(true);
+  };
+
+  const openAddDialog = () => {
+    setAddFormData({
+      text: '',
+      languageCode: '',
+    });
+    setAddDialogOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!validateSubtitle(editFormData) || !editingSubtitle) return;
+
+    if (
+      !checkLanguageUniqueness(
+        editFormData.languageCode,
+        editingSubtitle.subtitleId,
+      )
+    ) {
+      toast.error('A subtitle with this language already exists');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await onSubtitleUpdate(editingSubtitle.subtitleId, {
+        subtitleText: editFormData.text,
+        languageCode: editFormData.languageCode,
+        audioId: editFormData.audioId,
+      });
+      setEditDialogOpen(false);
+      toast.success('Subtitle updated successfully!');
+    } catch (error) {
+      toast.error('Failed to update subtitle');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleAddSubtitle = async () => {
+    if (!validateSubtitle(addFormData)) return;
+
+    if (!checkLanguageUniqueness(addFormData.languageCode)) {
+      toast.error('A subtitle with this language already exists');
+      return;
+    }
+
+    if (!addFormData.audioId) {
+      toast.error('Please generate or upload audio for the subtitle');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await onSubtitleAdd(addFormData);
+      setAddDialogOpen(false);
+      toast.success('Subtitle added successfully!');
+    } catch (error) {
+      toast.error('Failed to add subtitle');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteSubtitle = async (subtitleId: string) => {
+    if (subtitles.length <= 1) {
+      toast.error(
+        'Cannot delete the last subtitle. An exhibit must have at least one subtitle.',
+      );
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      await onSubtitleDelete(subtitleId);
+      setDeleteDialogOpen(false);
+      toast.success('Subtitle deleted successfully!');
+    } catch (error) {
+      toast.error('Failed to delete subtitle');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const hasLanguageMismatch = (subtitle: Subtitle): boolean => {
+    return subtitle.audio?.languageCode !== subtitle.languageCode;
+  };
 
   return (
-    <div className='flex flex-col w-full'>
-      <div className='mb-4 flex items-center gap-2'>
-        <span className='font-medium'>Language:</span>
-        <Select value={selectedLang} onValueChange={setSelectedLang}>
-          <SelectTrigger className='w-40'>
-            <SelectValue placeholder='Select language' />
-          </SelectTrigger>
-          <SelectContent>
-            {available.map((s) => (
-              <SelectItem key={s.languageCode} value={s.languageCode}>
-                {s.languageCode}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+    <div className='space-y-4'>
+      {/* Header with Add Button */}
+      <div className='flex justify-between items-center'>
+        <span className='font-medium'>Manage Subtitles</span>
+        <Button onClick={openAddDialog} size='sm'>
+          <Plus className='h-4 w-4 mr-2' />
+          Add Subtitle
+        </Button>
       </div>
-      <div className='flex flex-col md:flex-row w-full items-start gap-5'>
-        <div className='p-4 border rounded-lg space-y-2 w-full md:w-2/3'>
-          <div className='text-xs text-muted-foreground'>
-            Language: {current?.languageCode}
-          </div>
-          <div className='font-medium'>
-            {(() => {
-              const isSpaceSeparated =
-                current?.languageCode &&
-                [
-                  'en-GB',
-                  'es-ES',
-                  'fr-FR',
-                  'de-DE',
-                  'ru-RU',
-                  'it-IT',
-                  'ms-MY',
-                  'ta-IN',
-                  'hi-IN',
-                ].includes(current.languageCode);
-              const units = current?.subtitleText
-                ? current.subtitleText.split(isSpaceSeparated ? ' ' : '')
-                : [];
-              return units
-                .reduce((acc, unit, index) => {
-                  const segmentIndex = Math.floor(index / 8);
-                  if (index % 8 === 0) acc.push([]);
-                  acc[acc.length - 1].push(unit);
-                  return acc;
-                }, [] as string[][])
-                .map((group, groupIndex) => (
-                  <span
-                    key={groupIndex}
-                    className={`${groupIndex === currentWordIndices[current?.subtitleId || ''] ? 'text-black' : ''} px-1 py-0.5`}
-                    style={{
-                      borderRadius: '4px',
-                      background:
-                        groupIndex ===
-                        currentWordIndices[current?.subtitleId || '']
-                          ? 'linear-gradient(90deg, #ffeb3b, #ffca28)'
-                          : 'transparent',
-                      fontWeight:
-                        groupIndex ===
-                        currentWordIndices[current?.subtitleId || '']
-                          ? '500'
-                          : '300',
-                      transition: 'all 0.3s ease',
-                      boxShadow:
-                        groupIndex ===
-                        currentWordIndices[current?.subtitleId || '']
-                          ? '0 2px 6px rgba(255, 215, 0, 0.4)'
-                          : 'none',
-                    }}
+
+      {/* Subtitle Cards */}
+      <div className='space-y-3'>
+        {subtitles.length !== 0 ? (
+          subtitles.map((subtitle) => (
+            <Card key={subtitle.subtitleId} className='p-4'>
+              <div className='flex justify-between items-start gap-4'>
+                <div className='flex-1 space-y-2'>
+                  <div className='flex items-center gap-2'>
+                    <span className='font-medium text-sm'>
+                      {subtitle.languageCode}
+                    </span>
+                    {hasLanguageMismatch(subtitle) && (
+                      <div className='flex items-center gap-1 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded'>
+                        <AlertCircle className='h-3 w-3' />
+                        Audio language may not match
+                      </div>
+                    )}
+                  </div>
+                  <p className='text-sm'>{subtitle.subtitleText}</p>
+                  {subtitle.audio?.fileLink && (
+                    <audio
+                      key={subtitle.audio?.fileLink}
+                      controls
+                      className='w-full max-w-md'
+                    >
+                      <source src={subtitle.audio.fileLink} type='audio/wav' />
+                      Your browser does not support the audio element.
+                    </audio>
+                  )}
+                </div>
+                <div className='flex gap-2'>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={() => openEditDialog(subtitle)}
                   >
-                    {group.join(isSpaceSeparated ? ' ' : '') + ''}
-                  </span>
-                ));
-            })()}
-          </div>
-        </div>
-        <div className='flex flex-row w-full md:w-1/3'>
-          {current?.audio?.fileLink ? (
-            <audio
-              ref={audioRef}
-              key={current.audio.fileLink}
-              controls
-              className='w-full'
-            >
-              <source src={current.audio.fileLink} type='audio/wav' />
-              Your browser does not support the audio element.
-            </audio>
-          ) : (
+                    <Edit3 className='h-4 w-4' />
+                  </Button>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={() => {
+                      setEditingSubtitle(subtitle);
+                      setDeleteDialogOpen(true);
+                    }}
+                    disabled={subtitles.length <= 1}
+                  >
+                    <Trash2 className='h-4 w-4' />
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          ))
+        ) : (
+          <div className='space-y-4'>
             <div className='flex items-center gap-2 text-muted-foreground'>
-              <AudioLines className='h-4 w-4' />
-              No Audio
+              <AudioLines className='h-5 w-5' />
+              No subtitles available
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Edit Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className='max-w-2xl'>
+          <DialogHeader>
+            <DialogTitle>Edit Subtitle</DialogTitle>
+            <DialogDescription>
+              Update the subtitle text, language, or regenerate audio
+            </DialogDescription>
+          </DialogHeader>
+          <div className='space-y-4'>
+            <div className='space-y-2'>
+              <Label>Language *</Label>
+              <LanguageSelect
+                fieldName='languageCode'
+                value={editFormData.languageCode}
+                onValueChange={(languageCode) =>
+                  setEditFormData({ ...editFormData, languageCode })
+                }
+                placeholder='Select language'
+              />
+              {validationErrors.languageCode && (
+                <div className='flex items-center gap-2 text-sm text-red-600'>
+                  <AlertCircle className='h-4 w-4' />
+                  {validationErrors.languageCode}
+                </div>
+              )}
+            </div>
+            <div className='space-y-2'>
+              <Label>Subtitle Text *</Label>
+              <Textarea
+                placeholder='Enter subtitle text...'
+                value={editFormData.text}
+                onChange={(e) =>
+                  setEditFormData({ ...editFormData, text: e.target.value })
+                }
+                className='min-h-[100px]'
+              />
+              <div className='text-xs text-muted-foreground'>
+                {editFormData.text.length}/{VALIDATION_LIMITS.SUBTITLE_TEXT_MAX}{' '}
+                characters
+              </div>
+              {validationErrors.text && (
+                <div className='flex items-center gap-2 text-sm text-red-600'>
+                  <AlertCircle className='h-4 w-4' />
+                  {validationErrors.text}
+                </div>
+              )}
+            </div>
+            <div className='space-y-2'>
+              <Label>Audio</Label>
+              <div className='flex gap-2'>
+                <Button
+                  onClick={() => generateAudio(editFormData, setEditFormData)}
+                  disabled={
+                    !editFormData.text.trim() ||
+                    !editFormData.languageCode ||
+                    isGeneratingAudio
+                  }
+                  size='sm'
+                >
+                  {isGeneratingAudio ? (
+                    <>
+                      <Loader2 className='h-4 w-4 mr-2 animate-spin' />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Play className='h-4 w-4 mr-2' />
+                      Generate Audio
+                    </>
+                  )}
+                </Button>
+                <input
+                  type='file'
+                  accept='.wav,audio/wav'
+                  ref={audioInputRef}
+                  className='hidden'
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file)
+                      handleAudioUpload(file, editFormData, setEditFormData);
+                  }}
+                />
+                <Button
+                  onClick={() => audioInputRef.current?.click()}
+                  disabled={!editFormData.languageCode || isUploadingAudio}
+                  size='sm'
+                  variant='secondary'
+                >
+                  {isUploadingAudio ? (
+                    <>
+                      <Loader2 className='h-4 w-4 mr-2 animate-spin' />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <UploadCloud className='h-4 w-4 mr-2' />
+                      Upload Audio
+                    </>
+                  )}
+                </Button>
+                {editFormData.audioId && (
+                  <Button
+                    variant='destructive'
+                    size='sm'
+                    onClick={() =>
+                      handleDeleteAudio(editFormData, setEditFormData)
+                    }
+                  >
+                    <Trash2 className='h-4 w-4' />
+                  </Button>
+                )}
+              </div>
+              {editFormData.fileLink && (
+                <audio key={editFormData.fileLink} controls className='w-full'>
+                  <source src={editFormData.fileLink} type='audio/wav' />
+                  Your browser does not support the audio element.
+                </audio>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant='outline' onClick={() => setEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveEdit}
+              disabled={
+                !Boolean(editFormData.text) ||
+                !Boolean(editFormData.languageCode) ||
+                !Boolean(editFormData.audioId) ||
+                isSaving
+              }
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className='h-4 w-4 mr-2 animate-spin' />
+                  Saving...
+                </>
+              ) : (
+                'Save Changes'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Dialog */}
+      <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+        <DialogContent className='max-w-2xl'>
+          <DialogHeader>
+            <DialogTitle>Add New Subtitle</DialogTitle>
+            <DialogDescription>
+              Create a new subtitle with text and audio
+            </DialogDescription>
+          </DialogHeader>
+          <div className='space-y-4'>
+            <div className='space-y-2'>
+              <Label>Language *</Label>
+              <LanguageSelect
+                fieldName='languageCode'
+                value={addFormData.languageCode}
+                onValueChange={(languageCode) =>
+                  setAddFormData({ ...addFormData, languageCode })
+                }
+                placeholder='Select language'
+              />
+              {validationErrors.languageCode && (
+                <div className='flex items-center gap-2 text-sm text-red-600'>
+                  <AlertCircle className='h-4 w-4' />
+                  {validationErrors.languageCode}
+                </div>
+              )}
+            </div>
+            <div className='space-y-2'>
+              <Label>Subtitle Text *</Label>
+              <Textarea
+                placeholder='Enter subtitle text...'
+                value={addFormData.text}
+                onChange={(e) =>
+                  setAddFormData({ ...addFormData, text: e.target.value })
+                }
+                className='min-h-[100px]'
+              />
+              <div className='text-xs text-muted-foreground'>
+                {addFormData.text.length}/{VALIDATION_LIMITS.SUBTITLE_TEXT_MAX}{' '}
+                characters
+              </div>
+              {validationErrors.text && (
+                <div className='flex items-center gap-2 text-sm text-red-600'>
+                  <AlertCircle className='h-4 w-4' />
+                  {validationErrors.text}
+                </div>
+              )}
+            </div>
+            <div className='space-y-2'>
+              <Label>Audio *</Label>
+              <div className='flex gap-2'>
+                <Button
+                  onClick={() => generateAudio(addFormData, setAddFormData)}
+                  disabled={
+                    !addFormData.text.trim() ||
+                    !addFormData.languageCode ||
+                    isGeneratingAudio
+                  }
+                  size='sm'
+                >
+                  {isGeneratingAudio ? (
+                    <>
+                      <Loader2 className='h-4 w-4 mr-2 animate-spin' />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Play className='h-4 w-4 mr-2' />
+                      Generate Audio
+                    </>
+                  )}
+                </Button>
+                <input
+                  type='file'
+                  accept='.wav,audio/wav'
+                  ref={audioInputRef}
+                  className='hidden'
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file)
+                      handleAudioUpload(file, addFormData, setAddFormData);
+                  }}
+                />
+                <Button
+                  onClick={() => audioInputRef.current?.click()}
+                  disabled={!addFormData.languageCode || isUploadingAudio}
+                  size='sm'
+                  variant='secondary'
+                >
+                  {isUploadingAudio ? (
+                    <>
+                      <Loader2 className='h-4 w-4 mr-2 animate-spin' />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <UploadCloud className='h-4 w-4 mr-2' />
+                      Upload Audio
+                    </>
+                  )}
+                </Button>
+                {addFormData.audioId && (
+                  <Button
+                    variant='destructive'
+                    size='sm'
+                    onClick={() =>
+                      handleDeleteAudio(addFormData, setAddFormData)
+                    }
+                  >
+                    <Trash2 className='h-4 w-4' />
+                  </Button>
+                )}
+              </div>
+              {addFormData.fileLink && (
+                <audio key={addFormData.fileLink} controls className='w-full'>
+                  <source src={addFormData.fileLink} type='audio/wav' />
+                  Your browser does not support the audio element.
+                </audio>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant='outline' onClick={() => setAddDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddSubtitle} disabled={isSaving}>
+              {isSaving ? (
+                <>
+                  <Loader2 className='h-4 w-4 mr-2 animate-spin' />
+                  Adding...
+                </>
+              ) : (
+                'Add Subtitle'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Subtitle</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this subtitle? This action cannot
+              be undone.
+            </DialogDescription>
+          </DialogHeader>
+          {editingSubtitle && (
+            <div className='py-4'>
+              <div className='p-3 bg-muted rounded border'>
+                <div className='font-medium text-sm mb-1'>
+                  {editingSubtitle.languageCode}
+                </div>
+                <div className='text-sm text-muted-foreground'>
+                  {editingSubtitle.subtitleText}
+                </div>
+              </div>
             </div>
           )}
-        </div>
-      </div>
+          <DialogFooter>
+            <Button
+              variant='outline'
+              onClick={() => setDeleteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant='destructive'
+              onClick={() =>
+                editingSubtitle &&
+                handleDeleteSubtitle(editingSubtitle.subtitleId)
+              }
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className='h-4 w-4 mr-2 animate-spin' />
+                  Deleting...
+                </>
+              ) : (
+                'Delete Subtitle'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -692,6 +1250,7 @@ export default function AdminViewExhibitPage() {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const navigate = useNavigate();
+  const apiPrivate = useApiPrivate();
 
   useEffect(() => {
     async function fetchExhibit() {
@@ -725,8 +1284,105 @@ export default function AdminViewExhibitPage() {
       setExhibit(responseData.data.exhibit);
     } catch (error: any) {
       if (isAxiosError(error)) {
-        throw new Error(error.response?.data.message || 'Failed to update exhibit');
+        throw new Error(
+          error.response?.data.message || 'Failed to update exhibit',
+        );
       }
+      throw error;
+    }
+  };
+
+  const handleSubtitleUpdate = async (
+    subtitleId: string,
+    data: Partial<Subtitle>,
+  ) => {
+    // Store the original subtitle for rollback if needed
+    const originalSubtitle = exhibit?.subtitles?.find(
+      (s) => s.subtitleId === subtitleId,
+    );
+
+    try {
+      const { data: responseData } = await apiPrivate.put(
+        `/subtitle/${subtitleId}`,
+        {
+          text: data.subtitleText,
+          languageCode: data.languageCode,
+          audioId: data.audioId,
+        },
+      );
+
+      // Only update the state after successful API call
+      setExhibit((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          subtitles:
+            prev.subtitles?.map((s) =>
+              s.subtitleId === subtitleId ? { ...s, ...responseData.data } : s,
+            ) || [],
+        };
+      });
+    } catch (error) {
+      console.error('Subtitle update failed:', error);
+      // Log more details for debugging
+      if (isAxiosError(error)) {
+        console.error('API Error Details:', {
+          status: error.response?.status,
+          message: error.response?.data?.message,
+          subtitleId,
+          updateData: data,
+        });
+      }
+      throw error;
+    }
+  };
+
+  const handleSubtitleAdd = async (data: SubtitleFormData) => {
+    try {
+      const { data: responseData } = await apiPrivate.post('/subtitle', {
+        text: data.text,
+        languageCode: data.languageCode,
+        audioId: data.audioId,
+        exhibitId: exhibit?.exhibitId, // Add exhibitId to link subtitle to exhibit
+      });
+
+      // Update the exhibit state with the new subtitle
+      setExhibit((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          subtitles: [...(prev.subtitles || []), responseData.data],
+        };
+      });
+    } catch (error) {
+      console.error('Subtitle add failed:', error);
+      // Log more details for debugging
+      if (isAxiosError(error)) {
+        console.error('API Error Details:', {
+          status: error.response?.status,
+          message: error.response?.data?.message,
+          exhibitId: exhibit?.exhibitId,
+          addData: data,
+        });
+      }
+      throw error;
+    }
+  };
+
+  const handleSubtitleDelete = async (subtitleId: string) => {
+    try {
+      await apiPrivate.delete(`/subtitle/hard-delete/${subtitleId}`);
+
+      // Update the exhibit state by removing the deleted subtitle
+      setExhibit((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          subtitles:
+            prev.subtitles?.filter((s) => s.subtitleId !== subtitleId) || [],
+        };
+      });
+    } catch (error) {
       throw error;
     }
   };
@@ -753,9 +1409,9 @@ export default function AdminViewExhibitPage() {
     <div className='w-full p-6'>
       <div className='flex flex-col gap-8'>
         <div className='w-full items-start flex flex-col md:flex-row gap-6'>
-          <ExhibitMetadata 
-            exhibit={exhibit} 
-            isEditing={isEditing} 
+          <ExhibitMetadata
+            exhibit={exhibit}
+            isEditing={isEditing}
             setIsEditing={setIsEditing}
             onUpdate={handleUpdateExhibit}
           />
@@ -768,10 +1424,13 @@ export default function AdminViewExhibitPage() {
         </div>
         <div className='w-full flex flex-col gap-8'>
           <div>
-            <h3 className='text-xl font-semibold mb-4'>
-              Subtitles & Audio Preview
-            </h3>
-            <SubtitleAudioPreview subtitles={exhibit.subtitles || []} />
+            <h3 className='text-xl font-semibold mb-4'>Subtitle Management</h3>
+            <SubtitleManagementSection
+              subtitles={exhibit.subtitles || []}
+              onSubtitleUpdate={handleSubtitleUpdate}
+              onSubtitleAdd={handleSubtitleAdd}
+              onSubtitleDelete={handleSubtitleDelete}
+            />
           </div>
         </div>
       </div>

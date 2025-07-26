@@ -72,8 +72,6 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
         'Successfully uploaded audio and saved translated text as subtitle',
     },
   });
-
-  // TODO call next
 });
 
 // Convert text to audio
@@ -335,7 +333,7 @@ module.exports.hardDeleteAudio = catchAsync(async (req, res, next) => {
     logText: `Hard deleted audio with ID ${audioId}`,
   });
 
-  logger.info(`Audio with ID ${imageId} deleted successfully`);
+  logger.info(`Audio with ID ${audioId} deleted successfully`);
   res.status(200).json({
     status: 'success',
     message: 'Audio hard deleted successfully',

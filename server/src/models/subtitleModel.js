@@ -11,28 +11,50 @@ module.exports.create = async ({
   subtitleText,
   languageCode,
   audioId,
+  exhibitId,
   createdBy,
   modifiedBy,
   statusId = statusCodes.ACTIVE,
 }) => {
   try {
-    return await prisma.subtitle.create({
-      data: {
-        subtitleText,
-        languageCode,
-        audioId,
-        createdBy,
-        modifiedBy,
-        statusId,
-      },
+    return await prisma.$transaction(async (tx) => {
+      // Create the subtitle
+      const subtitle = await tx.subtitle.create({
+        data: {
+          subtitleText,
+          languageCode,
+          audioId,
+          createdBy,
+          modifiedBy,
+          statusId,
+        },
+        include: {
+          audio: true,
+        },
+      });
+
+      // Link subtitle to exhibit
+      if (exhibitId) {
+        await tx.exhibitSubtitle.create({
+          data: {
+            exhibitId,
+            subtitleId: subtitle.subtitleId,
+          },
+        });
+      }
+
+      return convertDatesToStrings(subtitle);
     });
   } catch (error) {
-    // TODO: Handle foreign key error
+    // Handle unique constraint violations
     if (error.code === 'P2002') {
-      throw new AppError(
-        `Subtitle with audioId ${audioId} already exists.`,
-        409,
-      );
+      if (error.meta?.target?.includes('audioId')) {
+        throw new AppError(
+          `Subtitle with audioId ${audioId} already exists.`,
+          409,
+        );
+      }
+      throw new AppError('Subtitle with these details already exists.', 409);
     }
     throw error;
   }
@@ -216,6 +238,32 @@ module.exports.getAllSubtitles = async ({
     throw error;
   }
 };
+// Update subtitle
+module.exports.updateSubtitle = async (subtitleId, updateData) => {
+  try {
+    const updatedSubtitle = await prisma.subtitle.update({
+      where: { subtitleId },
+      data: {
+        ...updateData,
+        modifiedAt: new Date(),
+      },
+      include: {
+        audio: true,
+      },
+    });
+
+    return convertDatesToStrings(updatedSubtitle);
+  } catch (error) {
+    if (error.code === 'P2025') {
+      throw new AppError('Subtitle not found', 404);
+    }
+    if (error.code === 'P2002') {
+      throw new AppError('Subtitle with this audioId already exists', 409);
+    }
+    throw error;
+  }
+};
+
 // Get subtitle by ID
 module.exports.getSubtitleById = async (subtitleId) => {
   try {

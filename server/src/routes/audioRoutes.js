@@ -24,7 +24,7 @@ const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
     if (
-      file.mimetype === 'image/png' ||
+      file.mimetype === 'audio/wav' ||
       file.mimetype === 'audio/x-wav' ||
       file.mimetype === 'audio/wave'
     ) {
@@ -44,7 +44,7 @@ audioRouter.use(jwtMiddleware.verifyToken, authMiddleware.verifyIsAdmin);
 
 audioRouter.post(
   '/upload',
-  [generateAudioValidationRules()],
+  // [generateAudioValidationRules()],
   //rateLimiter,
   upload.single('file'),
   audioController.uploadAudio,
