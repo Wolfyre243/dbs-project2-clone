@@ -130,6 +130,6 @@ module.exports.textToSpeech = async (text, languageCode) => {
   const { fileLink, fileName } = await fileUploader.saveAudioFile(
     response.audioContent,
   );
-
+  console.log('Successfully Generated Audio');
   return { fileLink, fileName };
 };

@@ -4,17 +4,18 @@ const { body, param, query, check } = require('express-validator');
 // For validators, do not define as optional except if optional for ALL instances
 // .optional property will be set in the validators middleware.
 
+// Custom sanitizer that does NOT escape single or double quotes
+const customSanitizer = (value) => {
+  if (typeof value !== 'string') return value;
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;'); // does not escape ' or "
+};
+
 // Return from functions to prevent mutation
 module.exports.titleValidation = () =>
-  body('title')
-    .trim()
-    .matches(/^[a-zA-Z0-9 ]+$/)
-    .withMessage('Title must contain only letters, numbers and spaces')
-    .escape();
+  body('title').trim().customSanitizer(customSanitizer);
 
 module.exports.descriptionValidation = () =>
-  body('description')
-    .trim()
-    .matches(/^[a-zA-Z0-9 ]+$/)
-    .withMessage('Description must contain only letters, numbers and spaces')
-    .escape();
+  body('description').trim().customSanitizer(customSanitizer);
