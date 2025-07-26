@@ -33,7 +33,7 @@ imageRouter.put('/update-image/:imageId',
     
 // Tested
 imageRouter.delete('/archive/:imageId', imageController.archiveImage);
-
+imageRouter.put('/unarchive/:imageId', imageController.unarchiveImage);
 // Tested
 imageRouter.delete('/delete/:imageId', imageController.deleteImage);
 

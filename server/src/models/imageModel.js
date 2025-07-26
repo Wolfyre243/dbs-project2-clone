@@ -1,3 +1,4 @@
+const statusCodes = require('../configs/statusCodes');
 const { PrismaClient, Prisma } = require('../generated/prisma');
 const AppError = require('../utils/AppError');
 const prisma = new PrismaClient();
@@ -100,6 +101,21 @@ module.exports.archiveImage = async (imageId, statusId) => {
     logger.error(`Error archiving image with ID ${imageId}:`, error);
     throw new AppError('Failed to archive image', 500);
   }
+};
+
+module.exports.unarchiveImage = async function (imageId) {
+    try {
+        const image = await prisma.image.update({
+            where: { imageId },
+            data: { statusId: statusCodes.ACTIVE }, 
+        });
+        return image;
+    } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+            throw new AppError('Image not found', 404);
+        }
+        throw error;
+    }
 };
 
 module.exports.deleteImage = async (imageId) => {

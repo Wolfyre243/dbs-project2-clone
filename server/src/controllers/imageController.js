@@ -147,7 +147,7 @@ module.exports.archiveImage = catchAsync( async(req, res, next) => {
     ipAddress: req.ip,
     entityName: 'image',
     entityId: imageId,
-    actionTypeId: 4,
+    actionTypeId: AuditActions.UPDATE,
     logText: 'Image archived successfully',
   });
 
@@ -192,6 +192,42 @@ module.exports.deleteImage = catchAsync( async(req, res, next) => {
         });
     } catch (error) {
         logger.error('Error deleting imasge:', error);
+        next(error);
+    }
+});
+
+// Unarchiving image
+module.exports.unarchiveImage = catchAsync(async (req, res, next) => {
+    try {
+        const imageId = req.params.imageId;
+        const userId = res.locals.user.userId;
+
+        // Check if image exists
+        const image = await imageModel.getImageById(imageId);
+        if (!image) {
+            throw new AppError('Image not found', 404);
+        }
+
+        // Unarchive image (set status to ACTIVE)
+        await imageModel.unarchiveImage(imageId);
+
+        logger.info(`Unarchived image ${imageId}`);
+
+        await logAdminAudit({
+            userId,
+            ipAddress: req.ip,
+            entityName: 'image',
+            entityId: imageId,
+            actionTypeId: AuditActions.UPDATE,
+            logText: `Unarchived image with ID ${imageId}`,
+        });
+
+        res.status(200).json({
+            status: 'success',
+            message: 'Image unarchived successfully',
+        });
+    } catch (error) {
+        logger.error('Error unarchiving image:', error);
         next(error);
     }
 });
