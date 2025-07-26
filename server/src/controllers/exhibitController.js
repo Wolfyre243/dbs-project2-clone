@@ -106,9 +106,6 @@ module.exports.updateExhibit = catchAsync(async (req, res, next) => {
       message: 'Exhibit updated successfully',
     },
   });
-}catch (error) {
-    next(error);
-  }
 });
 
 // Get single exhibit
