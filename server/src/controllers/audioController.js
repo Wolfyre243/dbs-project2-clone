@@ -35,8 +35,6 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
   // Validation for supported languages
   const supportedLanguages = await languageModel.getActiveLanguages();
 
-  // console.log(`Supported languages: ${supportedLanguages.join(', ')}`);
-
   if (!supportedLanguages.includes(languageCode)) {
     throw new AppError(
       `Unsupported language code: ${languageCode}. Supported: ${supportedLanguages.join(', ')}`,
@@ -81,6 +79,7 @@ module.exports.uploadAudio = catchAsync(async (req, res, next) => {
 
 // Convert text to audio
 // Creates just one audio entity
+// BACKUP
 module.exports.convertTextToAudio = catchAsync(async (req, res, next) => {
   const { text, languageCode } = req.body;
   const userId = res.locals.user.userId;
@@ -131,6 +130,53 @@ module.exports.convertTextToAudio = catchAsync(async (req, res, next) => {
     data: {
       audioId: audio.audioId,
       subtitleId: subtitle.subtitleId,
+      fileLink,
+      fileName,
+      languageCode,
+      text,
+    },
+  });
+});
+
+module.exports.generateAudio = catchAsync(async (req, res, next) => {
+  const { text, languageCode } = req.body;
+  const userId = res.locals.user.userId;
+
+  // Validate language code
+  const supportedLanguages = await languageModel.getActiveLanguages();
+  if (!supportedLanguages.includes(languageCode)) {
+    throw new AppError(
+      `Unsupported language code: ${languageCode}. Supported: ${supportedLanguages.join(', ')}`,
+      400,
+    );
+  }
+
+  // Generate audio from text
+  const { fileLink, fileName } = await textToSpeech(text, languageCode);
+
+  const audio = await audioModel.createAudio({
+    description: 'Text-to-speech generated audio',
+    fileLink,
+    fileName,
+    createdBy: userId,
+    languageCode,
+  });
+
+  await logAdminAudit({
+    userId,
+    ipAddress: req.ip,
+    entityName: 'audio',
+    entityId: audio.audioId,
+    actionTypeId: AuditActions.CREATE,
+    logText: `(TTS) Created audio file with ID ${audio.audioId}`,
+  });
+
+  logger.info(`Converted text to audio ${audio.audioId}`);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      audioId: audio.audioId,
       fileLink,
       fileName,
       languageCode,
