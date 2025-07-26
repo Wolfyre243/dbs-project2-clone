@@ -4,6 +4,7 @@ const AppError = require('../utils/AppError');
 const statusCodes = require('../configs/statusCodes');
 const uploadFile = require('../utils/fileUploader').uploadFile;
 const generateQrImageBuffer = require('../utils/generateQrImageBuffer');
+const { generateQrJwt } = require('../utils/qrJwt');
 const AuditActions = require('../configs/auditActionConfig');
 const { saveImageFile } = require('../utils/fileUploader');
 
@@ -19,9 +20,12 @@ module.exports.generateQRCode = async (createdBy, exhibitId) => {
         where: { exhibitId },
       });
 
-      //Generate image buffer
+      // Generate JWT for QR code access
+      const qrJwt = generateQrJwt(exhibitId);
+
+      //Generate image buffer with JWT in URL
       const { buffer } = await generateQrImageBuffer(
-        `/home/exhibits/${exhibitId}`,
+        `/home/exhibits/${exhibitId}?token=${qrJwt}`,
       );
 
       const { fileLink, fileName } = await saveImageFile(buffer);
@@ -36,7 +40,6 @@ module.exports.generateQRCode = async (createdBy, exhibitId) => {
         },
       });
 
-      // TODO Regenerate logic here
       let qrCode;
       if (exists) {
         await tx.image.update({
@@ -67,6 +70,7 @@ module.exports.generateQRCode = async (createdBy, exhibitId) => {
         qrCodeId: qrCode.qrCodeId,
         fileLink,
         fileName,
+        qrJwt,
       };
     });
   } catch (error) {

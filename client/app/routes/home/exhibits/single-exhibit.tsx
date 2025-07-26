@@ -67,6 +67,7 @@ function debounce<T extends (...args: any[]) => void>(func: T, wait: number) {
 export default function SingleExhibit() {
   const [exhibit, setExhibit] = useState<ExhibitData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState<string>('');
   const [currentWordIndices, setCurrentWordIndices] = useState<
     Record<string, number | null>
@@ -77,17 +78,36 @@ export default function SingleExhibit() {
   useEffect(() => {
     const pathParts = window.location.pathname.split('/');
     const exhibitId = pathParts[pathParts.length - 1];
-    async function fetchExhibit() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+
+    async function validateAndFetch() {
       setLoading(true);
+      setError(null);
+
+      if (!token) {
+        setError('Access denied: QR code token missing.');
+        setLoading(false);
+        return;
+      }
+
       try {
+        // Validate QR token
+        await apiPrivate.post(`/exhibit/${exhibitId}/validate-qr-token`, {
+          token,
+        });
+
+        // Fetch exhibit data if token is valid
         const res = await apiPrivate.get(`/exhibit/${exhibitId}`);
         setExhibit(res.data.data.exhibit);
-      } catch (err) {
+      } catch (err: any) {
         setExhibit(null);
+        setError('Access denied: Invalid or expired QR code token.');
       }
       setLoading(false);
     }
-    fetchExhibit();
+
+    validateAndFetch();
   }, [apiPrivate]);
 
   useEffect(() => {
@@ -177,6 +197,14 @@ export default function SingleExhibit() {
     return (
       <div className='flex items-center justify-center h-[60vh]'>
         <span className='text-lg font-semibold'>Loading exhibit...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className='flex items-center justify-center h-[60vh]'>
+        <span className='text-lg font-semibold text-red-500'>{error}</span>
       </div>
     );
   }

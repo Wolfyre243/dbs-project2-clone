@@ -87,13 +87,13 @@ async function saveImageFile(fileBuffer) {
 
   const buf = crypto.randomBytes(4);
   const uniqueName =
-    Date.now() + '-' + buf.toString('hex') + '-' + 'qrcode.wav';
+    Date.now() + '-' + buf.toString('hex') + '-' + 'qrcode.jpg';
 
   // Upload the file to supabase
   const { data, error } = await supabase.storage
     .from('uploads')
     .upload(`images/${uniqueName}`, fileBase64, {
-      contentType: 'image/jpg, image/png, image/jpeg',
+      contentType: 'image/jpg',
     });
 
   if (error) {

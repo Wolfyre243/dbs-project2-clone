@@ -76,8 +76,7 @@ module.exports.createExhibit = catchAsync(async (req, res, next) => {
 
 // Get exhibit controller function
 module.exports.updateExhibit = catchAsync(async (req, res, next) => {
-  const { exhibitId, title, description,  imageId } =
-    req.body;
+  const { exhibitId, title, description, imageId } = req.body;
   const createdBy = res.locals.user.userId;
 
   validateFields({
@@ -88,14 +87,13 @@ module.exports.updateExhibit = catchAsync(async (req, res, next) => {
     createdBy,
   });
 
-  try {
-    const updatedExhibit = await exhibitModel.updateExhibit({
-      exhibitId,
-      title,
-      description,
-      imageId,
-      createdBy,
-    });
+  const updatedExhibit = await exhibitModel.updateExhibit({
+    exhibitId,
+    title,
+    description,
+    imageId,
+    createdBy,
+  });
 
   if (!updatedExhibit) {
     throw new AppError('Exhibit not found or update failed', 404);
@@ -156,6 +154,30 @@ module.exports.deleteExhibit = catchAsync(async (req, res, next) => {
     return next(
       new AppError('Failed to delete exhibit. Please try again later.', 500),
     );
+  }
+});
+
+const { verifyQrJwt } = require('../utils/qrJwt');
+
+// Validate QR JWT for exhibit access
+// TODO: Add event logging here using eventLogger utility function
+// to log users scanning w/ QR code
+module.exports.validateQrToken = catchAsync(async (req, res, next) => {
+  const { exhibitId } = req.params;
+  const { token } = req.body;
+
+  if (!token) {
+    throw new AppError('Missing QR token', 400);
+  }
+
+  try {
+    const payload = verifyQrJwt(token);
+    if (payload.exhibitId !== exhibitId) {
+      throw new AppError('Invalid QR token for this exhibit', 403);
+    }
+    res.status(200).json({ status: 'success', valid: true });
+  } catch (err) {
+    throw new AppError('Invalid or expired QR token', 403);
   }
 });
 
