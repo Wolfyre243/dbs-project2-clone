@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { useParams } from 'react-router';
+import { useParams, useNavigate } from 'react-router';
 import {
   Card,
   CardHeader,
@@ -14,6 +14,11 @@ import {
   QrCode,
   FileQuestion,
   RefreshCcw,
+  UploadCloud,
+  AlertCircle,
+  Save,
+  X,
+  Pencil,
 } from 'lucide-react';
 import {
   Select,
@@ -24,6 +29,9 @@ import {
 } from '~/components/ui/select';
 import { apiPrivate } from '~/services/api';
 import { Button } from '~/components/ui/button';
+import { Input } from '~/components/ui/input';
+import { Textarea } from '~/components/ui/textarea';
+import { Label } from '~/components/ui/label';
 import { Link } from 'react-router';
 import useApiPrivate from '~/hooks/useApiPrivate';
 import { toast } from 'sonner';
@@ -57,6 +65,7 @@ interface Exhibit {
   title: string;
   description: string;
   imageLink?: string;
+  imageId?: string;
   createdBy: string;
   modifiedBy: string;
   createdAt: string;
@@ -69,6 +78,18 @@ interface Exhibit {
       fileLink: string;
     };
   };
+  statusId: number;
+}
+
+interface ExhibitMetadata {
+  title: string;
+  description: string;
+  imageId?: string;
+  imageLink?: string;
+}
+
+interface ValidationErrors {
+  [key: string]: string;
 }
 
 function formatDate(dateString: string) {
@@ -82,14 +103,293 @@ function formatDate(dateString: string) {
   });
 }
 
-function ExhibitMetadata({ exhibit }: { exhibit: Exhibit }) {
+function ExhibitMetadata({ exhibit, isEditing, setIsEditing, onUpdate }: { 
+  exhibit: Exhibit, 
+  isEditing: boolean, 
+  setIsEditing: (editing: boolean) => void,
+  onUpdate: (metadata: ExhibitMetadata) => Promise<void>
+}) {
+  const [editMetadata, setEditMetadata] = useState<ExhibitMetadata>({
+    title: exhibit.title,
+    description: exhibit.description,
+    imageId: exhibit.imageId,
+    imageLink: exhibit.imageLink,
+  });
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const VALIDATION_LIMITS = {
+    EXHIBIT_NAME_MIN: 3,
+    EXHIBIT_NAME_MAX: 100,
+    EXHIBIT_DESCRIPTION_MIN: 10,
+    EXHIBIT_DESCRIPTION_MAX: 500,
+  };
+
+  const validateExhibitMetadata = (): boolean => {
+    const errors: ValidationErrors = {};
+
+    if (!editMetadata.title.trim()) {
+      errors.exhibitName = 'Exhibit name is required';
+    } else if (editMetadata.title.trim().length < VALIDATION_LIMITS.EXHIBIT_NAME_MIN) {
+      errors.exhibitName = `Exhibit name must be at least ${VALIDATION_LIMITS.EXHIBIT_NAME_MIN} characters`;
+    } else if (editMetadata.title.trim().length > VALIDATION_LIMITS.EXHIBIT_NAME_MAX) {
+      errors.exhibitName = `Exhibit name must not exceed ${VALIDATION_LIMITS.EXHIBIT_NAME_MAX} characters`;
+    }
+
+    if (!editMetadata.description.trim()) {
+      errors.exhibitDescription = 'Exhibit description is required';
+    } else if (editMetadata.description.trim().length < VALIDATION_LIMITS.EXHIBIT_DESCRIPTION_MIN) {
+      errors.exhibitDescription = `Description must be at least ${VALIDATION_LIMITS.EXHIBIT_DESCRIPTION_MIN} characters`;
+    } else if (editMetadata.description.trim().length > VALIDATION_LIMITS.EXHIBIT_DESCRIPTION_MAX) {
+      errors.exhibitDescription = `Description must not exceed ${VALIDATION_LIMITS.EXHIBIT_DESCRIPTION_MAX} characters`;
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleImageDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setImageError('Only image files (PNG, JPEG, JPG) are accepted.');
+      return;
+    }
+    setImageError(null);
+    const { imageId, imageLink } = (await uploadImage(file)) ?? {};
+    setEditMetadata((prev) => ({
+      ...prev,
+      imageId,
+      imageLink,
+    }));
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setImageError('Only image files (PNG, JPEG, JPG) are accepted.');
+      return;
+    }
+    setImageError(null);
+    const { imageId, imageLink } = (await uploadImage(file)) ?? {};
+    setEditMetadata((prev) => ({
+      ...prev,
+      imageId,
+      imageLink,
+    }));
+  };
+
+  const uploadImage = async (file: File) => {
+    setIsUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const { data: responseData } = await apiPrivate.post(
+        '/image/upload',
+        formData,
+        {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        },
+      );
+      return {
+        imageId: responseData.data.imageId,
+        imageLink: responseData.data.fileLink,
+      };
+    } catch (err) {
+      toast.error('Failed to upload image');
+      return null;
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const handleDeleteImage = async () => {
+    try {
+      if (editMetadata.imageId) {
+        await apiPrivate.delete(`/image/hard-delete/${editMetadata.imageId}`);
+      }
+      setEditMetadata({
+        ...editMetadata,
+        imageId: undefined,
+        imageLink: undefined,
+      });
+      toast.success('Image deleted');
+    } catch (err) {
+      toast.error('Failed to delete image');
+    }
+  };
+
+  const handleUpdate = async () => {
+    if (!validateExhibitMetadata()) {
+      toast.error('Please fix the validation errors');
+      return;
+    }
+    setIsUpdating(true);
+    try {
+      await onUpdate(editMetadata);
+      setIsEditing(false);
+      toast.success('Exhibit updated successfully!');
+    } catch (err) {
+      toast.error('Failed to update exhibit');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const updateExhibitMetadata = (field: keyof ExhibitMetadata, value: string) => {
+    setEditMetadata((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  if (isEditing) {
+    return (
+      <Card className='w-full'>
+        <CardHeader>
+          <CardTitle className='flex justify-between items-center'>
+            Edit Exhibit
+            <Button
+              variant='outline'
+              size='icon'
+              onClick={() => setIsEditing(false)}
+            >
+              <X className='h-4 w-4' />
+            </Button>
+          </CardTitle>
+          <CardDescription>Update exhibit details</CardDescription>
+        </CardHeader>
+        <CardContent className='space-y-4'>
+          <div className='space-y-2'>
+            <Label htmlFor='exhibit-name'>Exhibit Name *</Label>
+            <Input
+              id='exhibit-name'
+              placeholder='Enter exhibit name...'
+              value={editMetadata.title}
+              onChange={(e) => updateExhibitMetadata('title', e.target.value)}
+            />
+            <div className='text-xs text-muted-foreground'>
+              {editMetadata.title.length}/{VALIDATION_LIMITS.EXHIBIT_NAME_MAX} characters
+            </div>
+            {validationErrors.exhibitName && (
+              <div className='flex items-center gap-2 text-sm text-red-600'>
+                <AlertCircle className='h-4 w-4' />
+                {validationErrors.exhibitName}
+              </div>
+            )}
+          </div>
+          <div className='space-y-2'>
+            <Label htmlFor='exhibit-description'>Description *</Label>
+            <Textarea
+              id='exhibit-description'
+              placeholder='Enter exhibit description...'
+              value={editMetadata.description}
+              onChange={(e) => updateExhibitMetadata('description', e.target.value)}
+              className='min-h-[100px]'
+            />
+            <div className='text-xs text-muted-foreground'>
+              {editMetadata.description.length}/{VALIDATION_LIMITS.EXHIBIT_DESCRIPTION_MAX} characters
+            </div>
+            {validationErrors.exhibitDescription && (
+              <div className='flex items-center gap-2 text-sm text-red-600'>
+                <AlertCircle className='h-4 w-4' />
+                {validationErrors.exhibitDescription}
+              </div>
+            )}
+          </div>
+          <div className='space-y-2'>
+            <Label>Exhibit Image</Label>
+            {editMetadata.imageLink ? (
+              <div className='flex flex-col items-center'>
+                <img
+                  src={editMetadata.imageLink}
+                  alt='Exhibit'
+                  className='max-h-80 object-contain mb-2 rounded'
+                />
+                <Button
+                  variant='destructive'
+                  size='sm'
+                  onClick={handleDeleteImage}
+                >
+                  Remove Image
+                </Button>
+              </div>
+            ) : (
+              <div
+                onDrop={handleImageDrop}
+                onDragOver={(e) => e.preventDefault()}
+                className={`flex min-h-[150px] border-2 border-dashed rounded-md p-4 flex-col items-center justify-center cursor-pointer transition-colors ${isUploadingImage ? 'opacity-50' : 'hover:border-primary'}`}
+                onClick={() => document.getElementById('exhibit-image-input')?.click()}
+              >
+                <UploadCloud className='h-6 w-6 mb-2' />
+                <span className='text-muted-foreground'>Drag & drop or click to upload an image</span>
+                <input
+                  id='exhibit-image-input'
+                  type='file'
+                  accept='image/png, image/jpeg'
+                  className='hidden'
+                  onChange={handleImageChange}
+                  disabled={isUploadingImage}
+                />
+                {imageError && (
+                  <span className='text-xs text-red-600 mt-2'>{imageError}</span>
+                )}
+                {isUploadingImage && (
+                  <span className='text-xs text-muted-foreground mt-2'>Uploading...</span>
+                )}
+              </div>
+            )}
+          </div>
+          <div className='flex justify-end gap-2'>
+            <Button
+              variant='outline'
+              onClick={() => setIsEditing(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleUpdate}
+              disabled={isUpdating}
+            >
+              {isUpdating ? (
+                <>
+                  <Loader2 className='h-4 w-4 mr-2 animate-spin' />
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <Save className='h-4 w-4 mr-2' />
+                  Update Exhibit
+                </>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <div className='w-full'>
-      <h1 className='text-3xl font-bold mb-2'>
-        {exhibit.title || (
-          <span className='text-muted-foreground'>No Name</span>
-        )}
-      </h1>
+      <div className='flex justify-between items-center mb-4'>
+        <h1 className='text-3xl font-bold'>
+          {exhibit.title || (
+            <span className='text-muted-foreground'>No Name</span>
+          )}
+        </h1>
+        <Button
+          onClick={() => setIsEditing(true)}
+          variant='outline'
+        >
+          <Pencil className='h-4 w-4 mr-2' />
+          Edit Exhibit
+        </Button>
+      </div>
       <p className='mb-4 text-lg'>
         {exhibit.description || (
           <span className='text-muted-foreground'>No Description</span>
@@ -183,7 +483,6 @@ function ExhibitQrCard({
           </CardTitle>
         </CardHeader>
         <CardContent className='flex flex-col gap-2 w-full h-fit'>
-          {/* Placeholder QR code */}
           {qrImageLink ? (
             <img
               src={qrImageLink}
@@ -196,7 +495,6 @@ function ExhibitQrCard({
               <span className='ml-2'>QR Code Placeholder</span>
             </div>
           )}
-
           <Button asChild>
             <Link
               className='px-4 py-1 w-fit rounded-md'
@@ -212,7 +510,6 @@ function ExhibitQrCard({
 }
 
 function SubtitleAudioPreview({ subtitles }: { subtitles: Subtitle[] }) {
-  // Only show subtitles that have both subtitleText and audio.fileLink
   const available = subtitles.filter(
     (s) => s.languageCode && s.subtitleText && s.audio && s.audio.fileLink,
   );
@@ -227,7 +524,6 @@ function SubtitleAudioPreview({ subtitles }: { subtitles: Subtitle[] }) {
     Record<string, number | null>
   >({});
 
-  // Update current when selectedLang changes
   useEffect(() => {
     setCurrent(available.find((s) => s.languageCode === selectedLang));
   }, [selectedLang, available]);
@@ -308,7 +604,6 @@ function SubtitleAudioPreview({ subtitles }: { subtitles: Subtitle[] }) {
         </Select>
       </div>
       <div className='flex flex-col md:flex-row w-full items-start gap-5'>
-        {/* Subtitles */}
         <div className='p-4 border rounded-lg space-y-2 w-full md:w-2/3'>
           <div className='text-xs text-muted-foreground'>
             Language: {current?.languageCode}
@@ -368,7 +663,6 @@ function SubtitleAudioPreview({ subtitles }: { subtitles: Subtitle[] }) {
             })()}
           </div>
         </div>
-        {/* Audio */}
         <div className='flex flex-row w-full md:w-1/3'>
           {current?.audio?.fileLink ? (
             <audio
@@ -396,6 +690,8 @@ export default function AdminViewExhibitPage() {
   const { exhibitId } = useParams();
   const [exhibit, setExhibit] = useState<Exhibit | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     async function fetchExhibit() {
@@ -414,6 +710,26 @@ export default function AdminViewExhibitPage() {
     }
     if (exhibitId) fetchExhibit();
   }, [exhibitId]);
+
+  const handleUpdateExhibit = async (metadata: ExhibitMetadata) => {
+    if (!exhibit) return;
+    try {
+      const { data: responseData } = await apiPrivate.put(`/exhibit`, {
+        exhibitId: exhibit.exhibitId,
+        title: metadata.title,
+        description: metadata.description,
+        imageId: metadata.imageId,
+        statusId: exhibit.statusId,
+        createdBy: exhibit.createdBy,
+      });
+      setExhibit(responseData.data.exhibit);
+    } catch (error: any) {
+      if (isAxiosError(error)) {
+        throw new Error(error.response?.data.message || 'Failed to update exhibit');
+      }
+      throw error;
+    }
+  };
 
   if (loading) {
     return (
@@ -436,9 +752,13 @@ export default function AdminViewExhibitPage() {
   return (
     <div className='w-full p-6'>
       <div className='flex flex-col gap-8'>
-        {/* Left: Exhibit Metadata & QR */}
         <div className='w-full items-start flex flex-col md:flex-row gap-6'>
-          <ExhibitMetadata exhibit={exhibit} />
+          <ExhibitMetadata 
+            exhibit={exhibit} 
+            isEditing={isEditing} 
+            setIsEditing={setIsEditing}
+            onUpdate={handleUpdateExhibit}
+          />
           <ExhibitQrCard
             qrCodeId={exhibit.qrCode?.qrCodeId}
             qrImageLink={exhibit.qrCode?.image.fileLink}
@@ -446,7 +766,6 @@ export default function AdminViewExhibitPage() {
             setExhibit={setExhibit}
           />
         </div>
-        {/* Right: Subtitles, Audio */}
         <div className='w-full flex flex-col gap-8'>
           <div>
             <h3 className='text-xl font-semibold mb-4'>

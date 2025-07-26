@@ -76,7 +76,7 @@ module.exports.createExhibit = catchAsync(async (req, res, next) => {
 
 // Get exhibit controller function
 module.exports.updateExhibit = catchAsync(async (req, res, next) => {
-  const { exhibitId, title, description, audioId, imageId, statusId } =
+  const { exhibitId, title, description,  imageId } =
     req.body;
   const createdBy = res.locals.user.userId;
 
@@ -84,21 +84,18 @@ module.exports.updateExhibit = catchAsync(async (req, res, next) => {
     exhibitId,
     title,
     description,
-    audioId,
     imageId,
-    statusId,
     createdBy,
   });
 
-  const updatedExhibit = await exhibitModel.updateExhibit({
-    exhibitId,
-    title,
-    description,
-    audioId,
-    imageId,
-    statusId,
-    createdBy,
-  });
+  try {
+    const updatedExhibit = await exhibitModel.updateExhibit({
+      exhibitId,
+      title,
+      description,
+      imageId,
+      createdBy,
+    });
 
   if (!updatedExhibit) {
     throw new AppError('Exhibit not found or update failed', 404);

@@ -152,3 +152,33 @@ module.exports.getAllUsers = catchAsync(async (req, res, next) => {
     data: result.users,
   });
 });
+
+
+
+// Update user profile username, first name, lastname, status
+module.exports.updateUserProfile = catchAsync(async (req, res, next) => {
+  const userId = res.locals.user.userId;
+  const { username, firstName, lastName } = req.body;
+
+  // Validate input
+  if (!username || !firstName || !lastName) {
+    return next(new AppError('Username, first name, and last name are required', 400));
+  }
+
+  // Update user profile with status set to ACTIVE
+  const updatedUser = await userModel.updateUserProfileWithStatus(userId, {
+    username,
+    firstName,
+    lastName,
+    statusId: statusCodes.ACTIVE,
+  });
+
+  logger.info(`User profile updated for user ID: ${userId}`);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      user: updatedUser,
+    },
+  });
+});

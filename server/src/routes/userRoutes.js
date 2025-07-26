@@ -37,5 +37,9 @@ userRouter.delete(
 
 // Get all users for admin
 userRouter.get('/', authMiddleware.verifyIsAdmin, userController.getAllUsers);
-
+// Update user profile username, first name, lastname
+userRouter.put(
+  '/profile',
+  userController.updateUserProfile,
+);
 module.exports = userRouter;

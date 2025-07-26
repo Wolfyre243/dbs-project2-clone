@@ -36,7 +36,6 @@ export function VerifyEmailButton({
   emailId: number;
 }) {
   const apiPrivate = useApiPrivate();
-  // const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleVerify = async () => {
@@ -52,8 +51,6 @@ export function VerifyEmailButton({
         },
         error: 'Failed to send verification email',
       });
-
-      // const { data: responseData, status: responseStatus } = await promise;
     } catch (error) {
       if (isAxiosError(error)) {
         toast.error(error.response?.data.message);
@@ -78,17 +75,34 @@ export function VerifyEmailButton({
 }
 
 // Edit Profile Dialog Component
-function EditProfileDialog({ user }: { user: any }) {
+function EditProfileDialog({ user, onUpdate }: { user: any; onUpdate: (updatedUser: any) => void }) {
   const [open, setOpen] = useState(false);
   const [username, setUsername] = useState(user.username || '');
   const [firstName, setFirstName] = useState(user.userProfile?.firstName || '');
   const [lastName, setLastName] = useState(user.userProfile?.lastName || '');
+  const apiPrivate = useApiPrivate();
 
-  // Optionally, handle form submission here
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement save logic (API call)
-    setOpen(false);
+    try {
+      const response = await apiPrivate.put('/user/profile', {
+        username,
+        firstName,
+        lastName,
+      });
+
+      if (response.status === 200) {
+        toast.success('Profile updated successfully!');
+        onUpdate(response.data.data.user);
+        setOpen(false);
+      }
+    } catch (error) {
+      if (isAxiosError(error)) {
+        toast.error(error.response?.data.message || 'Failed to update profile');
+      } else {
+        toast.error('An unexpected error occurred');
+      }
+    }
   };
 
   return (
@@ -219,6 +233,7 @@ export default function UserSettings() {
     (async () => {
       try {
         const { data: responseData } = await apiPrivate.get('/user/profile');
+        console.log('API Response:', responseData.data.user); // Debug log
         setUser(responseData.data.user);
       } catch (err: any) {
         setError('Failed to fetch user profile');
@@ -232,10 +247,9 @@ export default function UserSettings() {
   if (error) return <div className='text-red-500'>{error}</div>;
   if (!user) return <div>No user data found.</div>;
 
-  // Status badge variant
   const statusVariant =
-    user.status.statusId === StatusCodes.VERIFIED ||
-    user.status.statusId === StatusCodes.ACTIVE
+    user.status?.statusId === StatusCodes.VERIFIED ||
+    user.status?.statusId === StatusCodes.ACTIVE
       ? 'default'
       : 'destructive';
 
@@ -251,16 +265,16 @@ export default function UserSettings() {
                 <div className='flex flex-row items-center gap-2'>
                   <span className='text-lg font-semibold'>{user.username}</span>
                   <Badge variant={statusVariant}>
-                    {user.status.statusId === StatusCodes.VERIFIED && (
+                    {user.status?.statusId === StatusCodes.VERIFIED && (
                       <BadgeCheck />
                     )}
-                    {user.status.statusName}
+                    {user.status?.statusName || 'Unknown'}
                   </Badge>
                   <Badge variant='secondary'>
-                    {user.userRoles.role.roleName}
+                    {user.userRoles?.role?.roleName || 'Unknown'}
                   </Badge>
                 </div>
-                <EditProfileDialog user={user} />
+                <EditProfileDialog user={user} onUpdate={setUser} />
               </div>
               <div className='flex flex-row items-center gap-2 text-sm text-muted-foreground'>
                 <span>
@@ -286,7 +300,7 @@ export default function UserSettings() {
                 {user.emails ? (
                   <>
                     <span className='font-medium'>{user.emails?.email}</span>
-                    {user.status.statusId !== StatusCodes.VERIFIED && (
+                    {user.status?.statusId !== StatusCodes.VERIFIED && (
                       <VerifyEmailButton emailId={user.emails?.emailId} />
                     )}
                   </>
