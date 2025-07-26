@@ -125,7 +125,8 @@ module.exports.getSingleExhibit = catchAsync(async (req, res, next) => {
 // Soft delete
 module.exports.deleteExhibit = catchAsync(async (req, res, next) => {
   const exhibitId = req.params.exhibitId;
-  const statusCode = statusCodes.ARCHIVED;
+  const statusCode = statusCodes.DELETED;
+  const userId = res.locals.user.userId;
 
   validateFields({
     exhibitId,
@@ -140,6 +141,16 @@ module.exports.deleteExhibit = catchAsync(async (req, res, next) => {
     if (!softDelete) {
       return next(new AppError('Exhibit not found or already deleted.', 404));
     }
+
+    // Log admin audit for soft delete
+    await logAdminAudit({
+      userId,
+      ipAddress: req.ip,
+      entityName: 'exhibit',
+      entityId: exhibitId,
+      actionTypeId: AuditActions.DELETE,
+      logText: `Exhibit with ID ${exhibitId} soft deleted by Admin ${userId}`,
+    });
 
     res.status(200).json({
       status: 'success',

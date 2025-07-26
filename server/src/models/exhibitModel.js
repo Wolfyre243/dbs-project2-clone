@@ -165,7 +165,7 @@ module.exports.softDeleteExhibit = async (exhibitId, statusCode) => {
   try {
     const updatedExhibit = await prisma.exhibit.update({
       where: {
-        exhibitId: parseInt(exhibitId),
+        exhibitId: exhibitId, // Keep as string (UUID)
       },
       data: {
         statusId: statusCode,
@@ -173,16 +173,11 @@ module.exports.softDeleteExhibit = async (exhibitId, statusCode) => {
     });
 
     if (!updatedExhibit) {
-      logger.warn(`Exhibit with ID ${exhibitId} not found for soft delete.`);
-      return null;
+      throw new AppError(`Exhibit with ID ${exhibitId} not found for soft delete.`, 404);
     }
 
-    logger.info(
-      `Exhibit with ID ${exhibitId} soft deleted (status set to ${statusCode}).`,
-    );
     return { id: exhibitId, status: statusCode };
   } catch (error) {
-    logger.error(`Error soft deleting exhibit with ID ${exhibitId}:`, error);
     throw new AppError('Failed to delete exhibit', 500);
   }
 };

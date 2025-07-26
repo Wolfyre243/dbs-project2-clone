@@ -1,5 +1,7 @@
 import { type ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
+import { isAxiosError } from 'axios';
+import { toast } from 'sonner';
 
 import { Button } from '~/components/ui/button';
 import { Checkbox } from '~/components/ui/checkbox';
@@ -9,12 +11,15 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu';
 import { Link } from 'react-router';
-import { toast } from 'sonner';
+import useApiPrivate from '~/hooks/useApiPrivate';
+
+// Define meta type for TanStack Table
+interface TableMeta {
+  onDelete?: (exhibitId: string) => void;
+}
 
 export type Exhibit = {
   exhibitId: string;
@@ -27,7 +32,7 @@ export type Exhibit = {
   supportedLanguages: string[];
 };
 
-export const columns: ColumnDef<Exhibit>[] = [
+export const columns: ColumnDef<Exhibit, any>[] = [
   {
     id: 'select',
     header: ({ table }) => (
@@ -77,7 +82,7 @@ export const columns: ColumnDef<Exhibit>[] = [
     ),
     cell: ({ row }) => {
       const value = row.original.description;
-      return value?.length > 30 ? value.slice(0, 30) + '...' : value;
+      return value?.length ? value.slice(0, 30) + '...' : value;
     },
   },
   {
@@ -146,8 +151,32 @@ export const columns: ColumnDef<Exhibit>[] = [
   },
   {
     id: 'actions',
-    cell: ({ row }) => {
+    cell: ({ row, table }) => {
       const exhibit = row.original;
+      const apiPrivate = useApiPrivate();
+
+      const handleDelete = async () => {
+        try {
+          const response = await apiPrivate.delete(`/exhibit/${exhibit.exhibitId}`);
+          if (response.status === 200) {
+            toast.success('Exhibit deleted successfully!', {
+              duration: 2000,
+            });
+            // Trigger table data refresh
+            (table.options.meta as TableMeta)?.onDelete?.(exhibit.exhibitId);
+          }
+        } catch (error) {
+          if (isAxiosError(error)) {
+            toast.error(error.response?.data.message || 'Failed to delete exhibit', {
+              duration: 2000,
+            });
+          } else {
+            toast.error('An unexpected error occurred', {
+              duration: 2000,
+            });
+          }
+        }
+      };
 
       return (
         <DropdownMenu>
@@ -168,12 +197,16 @@ export const columns: ColumnDef<Exhibit>[] = [
             >
               Copy Exhibit ID
             </DropdownMenuItem>
-            {/* TODO Turn into redirect buttons */}
             <DropdownMenuItem>
               <Link to={`/admin/tour-editor/view-exhibit/${exhibit.exhibitId}`}>
                 View Exhibit
               </Link>
             </DropdownMenuItem>
+            {exhibit.status !== 'Deleted' && (
+              <DropdownMenuItem onClick={handleDelete}>
+                Delete Exhibit
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       );
