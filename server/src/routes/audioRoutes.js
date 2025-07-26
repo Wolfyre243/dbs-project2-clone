@@ -18,11 +18,13 @@ const {
 const storage = multer.memoryStorage();
 
 // The API only allows for wav files
+// To allow images (png, jpg, jpeg), use:
+// file.mimetype === 'image/png' || file.mimetype === 'image/jpeg'
 const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
     if (
-      file.mimetype === 'audio/wav' ||
+      file.mimetype === 'image/png' ||
       file.mimetype === 'audio/x-wav' ||
       file.mimetype === 'audio/wave'
     ) {
@@ -42,7 +44,7 @@ audioRouter.use(jwtMiddleware.verifyToken, authMiddleware.verifyIsAdmin);
 
 audioRouter.post(
   '/upload',
-  //  TODO: Validation
+  [generateAudioValidationRules()],
   //rateLimiter,
   upload.single('file'),
   audioController.uploadAudio,

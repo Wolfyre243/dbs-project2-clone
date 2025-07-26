@@ -32,7 +32,7 @@ module.exports.createExhibitWithAssets = async ({
   createdBy,
   modifiedBy,
   subtitleIdArr,
-  // imageId,
+  imageId,
   statusId = statusCodes.ACTIVE,
 }) => {
   try {
@@ -43,7 +43,7 @@ module.exports.createExhibitWithAssets = async ({
           description,
           createdBy,
           modifiedBy,
-          // imageId,
+          imageId,
           statusId,
         },
       });
@@ -245,6 +245,11 @@ module.exports.getExhibitById = async (exhibitId) => {
             },
           },
         },
+        image: {
+          select: {
+            fileLink: true,
+          },
+        },
         status: true,
         exhibitCreatedBy: true,
       },
@@ -257,6 +262,7 @@ module.exports.getExhibitById = async (exhibitId) => {
       subtitles: exhibit.subtitles.map((s) => ({ ...s.subtitle })),
       status: exhibit.status.statusName,
       createdBy: exhibit.exhibitCreatedBy.username,
+      imageLink: exhibit.image.fileLink,
     });
   } catch (error) {
     console.error('Error fetching exhibit:', error);

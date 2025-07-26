@@ -16,25 +16,6 @@ const {
   validate,
 } = require('../middlewares/validators');
 
-const storage = multer.memoryStorage();
-
-const upload = multer({
-  storage,
-  fileFilter: (req, file, cb) => {
-    if (
-      file.mimetype === 'audio/wav' ||
-      file.mimetype === 'audio/x-wav' ||
-      file.mimetype === 'audio/wave' ||
-      file.mimetype === 'image/jpg' ||
-      file.mimetype === 'image/jpeg'
-    ) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only .wav or .jpg files are allowed'), false);
-    }
-  },
-});
-
 // -----------------------------------SET UP ROUTES-----------------------------------
 // Create the router
 const exhibitRouter = express.Router();

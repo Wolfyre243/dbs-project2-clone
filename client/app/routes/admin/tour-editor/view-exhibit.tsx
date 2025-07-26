@@ -51,7 +51,7 @@ interface Exhibit {
   exhibitId: string;
   title: string;
   description: string;
-  imageUrl?: string;
+  imageLink?: string;
   createdBy: string;
   modifiedBy: string;
   createdAt: string;
@@ -100,9 +100,9 @@ function ExhibitMetadata({ exhibit }: { exhibit: Exhibit }) {
       <div className='font-semibold mb-2 flex items-center gap-2'>
         <ImageIcon className='h-5 w-5' /> Exhibit Image
       </div>
-      {exhibit.imageUrl ? (
+      {exhibit.imageLink ? (
         <img
-          src={exhibit.imageUrl}
+          src={exhibit.imageLink}
           alt='Exhibit'
           className='max-h-64 rounded border object-contain'
         />

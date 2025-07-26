@@ -3,70 +3,75 @@ const { PrismaClient, Prisma } = require('../generated/prisma');
 const AppError = require('../utils/AppError');
 const prisma = new PrismaClient();
 const logger = require('../utils/logger');
+const { deleteFile } = require('../utils/fileUploader');
+const { convertDatesToStrings } = require('../utils/formatters');
 
 module.exports.getAllImages = async () => {
   try {
     const images = await prisma.image.findMany();
-    logger.info(`Fetched ${images.length} images from database`);
-    return images;
+
+    return images.map((i) => convertDatesToStrings(i));
   } catch (error) {
-    logger.error('Error fetching images:', error);
-    throw new AppError('Failed to fetch images', 500);
+    throw error;
   }
 };
 
-module.exports.getImageById = async(imageId) => {
-    try {
-        const image = await prisma.image.findUnique({
-            where: { imageId: imageId },
-        });
-        logger.info(`Image with ID ${imageId} retrieved successfully`);
-        return image;
-    } catch (e) {
-        if (e instanceof Prisma.PrismaClientKnownRequestError) {
-            if (e.code === 'P2025') {
-                throw new AppError(`Image with ID ${imageId} not found`, 404);
-            }
-        }
-        console.error(e);
-        logger.error(`Error fetching image with ID ${imageId}`, e);
-        throw new AppError(`Failed to fetch image by ID`, 500);
-    };
+module.exports.getImageById = async (imageId) => {
+  try {
+    const image = await prisma.image.findUnique({
+      where: { imageId: imageId },
+    });
+
+    logger.info(`Image with ID ${imageId} retrieved successfully`);
+    return convertDatesToStrings(image);
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError) {
+      if (e.code === 'P2025') {
+        throw new AppError(`Image with ID ${imageId} not found`, 404);
+      }
+    }
+    console.error(e);
+    throw e;
+  }
 };
 
-module.exports.createImage = async ({description,
-            fileLink,
-            fileName,
-            createdBy,
-            statusId, }) => {
+module.exports.createImage = async ({
+  description = undefined,
+  fileLink,
+  fileName,
+  createdBy,
+  statusId = statusCodes.ACTIVE,
+}) => {
   try {
     const image = await prisma.image.create({
       data: {
-        description: description,
-        createdBy: createdBy,
-        statusId: statusId,
-        fileLink: fileLink,
-        fileName: fileName,
+        description,
+        createdBy,
+        statusId,
+        fileLink,
+        fileName,
       },
     });
-    logger.info(`Image created with ID: ${image.imageId}`);
-    return image;
+
+    return convertDatesToStrings(image);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2002') {
-        throw new AppError('Image with given unique field already exists.', 400);
+        throw new AppError(
+          'Image with given unique field already exists.',
+          400,
+        );
       }
     }
-    console.error(error);
-    logger.error('Error creating image:', error);
-    throw new AppError('Failed to create image', 500);
+
+    throw error;
   }
 };
 
 module.exports.updateImage = async (imageId, updateData) => {
   try {
     const updatedImage = await prisma.image.update({
-      where: { imageId:imageId },
+      where: { imageId: imageId },
       data: updateData,
     });
     logger.info(`Image with ID ${imageId} updated successfully`);
@@ -77,9 +82,8 @@ module.exports.updateImage = async (imageId, updateData) => {
         throw new AppError(`Image with ID ${imageId} not found`, 404);
       }
     }
-    console.error("ERRROR: " + error);
-    logger.error(`Error updating image with ID ${imageId}:`, error);
-    throw new AppError('Failed to update image', 500);
+    console.error('ERRROR: ' + error);
+    throw error;
   }
 };
 
@@ -97,33 +101,36 @@ module.exports.archiveImage = async (imageId, statusId) => {
         throw new AppError(`Image with ID ${imageId} not found`, 404);
       }
     }
-    console.log("ERROR:" + error)
-    logger.error(`Error archiving image with ID ${imageId}:`, error);
-    throw new AppError('Failed to archive image', 500);
+    console.log('ERROR:' + error);
+    throw error;
   }
 };
 
 module.exports.unarchiveImage = async function (imageId) {
-    try {
-        const image = await prisma.image.update({
-            where: { imageId },
-            data: { statusId: statusCodes.ACTIVE }, 
-        });
-        return image;
-    } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
-            throw new AppError('Image not found', 404);
-        }
-        throw error;
+  try {
+    const image = await prisma.image.update({
+      where: { imageId },
+      data: { statusId: statusCodes.ACTIVE },
+    });
+    return image;
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2025'
+    ) {
+      throw new AppError('Image not found', 404);
     }
+    throw error;
+  }
 };
 
 module.exports.deleteImage = async (imageId) => {
   try {
-    const deletedImage = await prisma.image.delete({
-      where: { imageId: imageId },
+    const deletedImage = await prisma.image.update({
+      where: { imageId },
+      data: { statusId: statusCodes.DELETED },
     });
-    logger.info(`Image with ID ${imageId} deleted successfully`);
+
     return deletedImage;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -131,7 +138,31 @@ module.exports.deleteImage = async (imageId) => {
         throw new AppError(`Image with ID ${imageId} not found`, 404);
       }
     }
-    logger.error(`Error deleting image with ID ${imageId}:`, error);
-    throw new AppError('Failed to delete image', 500);
+    throw error;
+  }
+};
+
+module.exports.hardDeleteImage = async (imageId) => {
+  try {
+    const { fileName } = await prisma.image.findUnique({
+      where: { imageId },
+      select: { fileName: true },
+    });
+
+    // Delete from supabase
+    await deleteFile('images', fileName);
+
+    const image = await prisma.image.delete({
+      where: { imageId },
+    });
+
+    return image;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2025') {
+        throw new AppError(`Image with ID ${imageId} not found`, 404);
+      }
+    }
+    throw error;
   }
 };

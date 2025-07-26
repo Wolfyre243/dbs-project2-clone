@@ -61,6 +61,7 @@ const loginValidationRules = () => [
 const createExhibitionValidationRules = () => [
   titleValidation().notEmpty().withMessage('Title is required'),
   descriptionValidation(),
+  body('imageId').notEmpty().withMessage('Image ID is required'),
 ];
 
 const createSubtitleValidationRules = () => [
@@ -73,11 +74,10 @@ const generateAudioValidationRules = () => [
   languageCodeValidation().notEmpty().withMessage('Language Code is required'),
 ];
 
-const createImageValidationRules = () => [
-  body('description').notEmpty().withMessage('Description is required'),
-  body('fileLink').notEmpty().withMessage('File link is required'),
-  body('fileName').notEmpty().withMessage('File name is required'),
-];
+// const createImageValidationRules = () => [
+//   body('fileLink').notEmpty().withMessage('File link is required'),
+//   body('fileName').notEmpty().withMessage('File name is required'),
+// ];
 
 module.exports = {
   validate,
@@ -88,5 +88,5 @@ module.exports = {
   createExhibitionValidationRules,
   generateAudioValidationRules,
   createSubtitleValidationRules,
-  createImageValidationRules,
+  // createImageValidationRules,
 };

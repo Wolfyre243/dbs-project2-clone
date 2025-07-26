@@ -6,7 +6,6 @@ import Roles from '~/rolesConfig';
 
 export default function TourEditorLayout() {
   return (
-    // TODO: Add menu bar
     <div className='flex justify-stretch flex-col h-full '>
       <Outlet />
     </div>

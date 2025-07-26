@@ -45,7 +45,7 @@ type ExhibitData = {
   description: string;
   createdBy: string;
   modifiedBy: string;
-  imageId: string | null;
+  imageLink: string | null;
   createdAt: string;
   modifiedAt: string;
   subtitles: ExhibitSubtitle[];
@@ -60,7 +60,9 @@ export default function SingleExhibit() {
   const [exhibit, setExhibit] = useState<ExhibitData | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedLanguage, setSelectedLanguage] = useState<string>('');
-  const [currentWordIndices, setCurrentWordIndices] = useState<Record<string, number | null>>({});
+  const [currentWordIndices, setCurrentWordIndices] = useState<
+    Record<string, number | null>
+  >({});
   const audioRefs = useRef<Record<string, HTMLAudioElement | null>>({});
   const apiPrivate = useApiPrivate();
 
@@ -90,11 +92,11 @@ export default function SingleExhibit() {
     // Reset indices for unselected subtitles when language changes
     if (exhibit) {
       const validSubtitleIds = exhibit.subtitles
-        .filter(sub => sub.languageCode === selectedLanguage)
-        .map(sub => sub.subtitleId);
-      setCurrentWordIndices(prev => {
+        .filter((sub) => sub.languageCode === selectedLanguage)
+        .map((sub) => sub.subtitleId);
+      setCurrentWordIndices((prev) => {
         const newIndices = { ...prev };
-        Object.keys(newIndices).forEach(id => {
+        Object.keys(newIndices).forEach((id) => {
           if (!validSubtitleIds.includes(id)) delete newIndices[id];
         });
         return newIndices;
@@ -106,40 +108,68 @@ export default function SingleExhibit() {
       if (audioElement && exhibit) {
         const duration = audioElement.duration;
         if (isFinite(duration) && duration > 0) {
-          const subtitle = exhibit.subtitles.find(s => s.subtitleId === subtitleId);
+          const subtitle = exhibit.subtitles.find(
+            (s) => s.subtitleId === subtitleId,
+          );
           if (subtitle) {
-            const isSpaceSeparated = ['en-GB', 'es-ES', 'fr-FR', 'de-DE', 'ru-RU', 'it-IT', 'ms-MY', 'ta-IN', 'hi-IN'].includes(subtitle.languageCode);
-            const units = isSpaceSeparated ? subtitle.subtitleText.split(' ') : subtitle.subtitleText.split(''); // Dynamic splitting
+            const isSpaceSeparated = [
+              'en-GB',
+              'es-ES',
+              'fr-FR',
+              'de-DE',
+              'ru-RU',
+              'it-IT',
+              'ms-MY',
+              'ta-IN',
+              'hi-IN',
+            ].includes(subtitle.languageCode);
+            const units = isSpaceSeparated
+              ? subtitle.subtitleText.split(' ')
+              : subtitle.subtitleText.split(''); // Dynamic splitting
             // Line 150-151: Adjusted for language-specific units
             const segmentSize = 8;
-            const segmentDuration = duration / Math.ceil(units.length / segmentSize);
+            const segmentDuration =
+              duration / Math.ceil(units.length / segmentSize);
             const currentTime = audioElement.currentTime;
             const index = Math.floor(currentTime / segmentDuration);
-            setCurrentWordIndices(prev => ({
+            setCurrentWordIndices((prev) => ({
               ...prev,
-              [subtitleId]: index >= 0 && index * segmentSize < units.length ? index : null
+              [subtitleId]:
+                index >= 0 && index * segmentSize < units.length ? index : null,
             }));
           }
         }
       }
     };
 
-    exhibit?.subtitles.forEach(subtitle => {
+    exhibit?.subtitles.forEach((subtitle) => {
       const audioElement = audioRefs.current[subtitle.subtitleId];
       if (audioElement) {
-        audioElement.addEventListener('timeupdate', () => handleTimeUpdate(subtitle.subtitleId));
-        audioElement.addEventListener('pause', () => handleTimeUpdate(subtitle.subtitleId));
-        audioElement.addEventListener('ended', () => handleTimeUpdate(subtitle.subtitleId));
+        audioElement.addEventListener('timeupdate', () =>
+          handleTimeUpdate(subtitle.subtitleId),
+        );
+        audioElement.addEventListener('pause', () =>
+          handleTimeUpdate(subtitle.subtitleId),
+        );
+        audioElement.addEventListener('ended', () =>
+          handleTimeUpdate(subtitle.subtitleId),
+        );
       }
     });
 
     return () => {
-      exhibit?.subtitles.forEach(subtitle => {
+      exhibit?.subtitles.forEach((subtitle) => {
         const audioElement = audioRefs.current[subtitle.subtitleId];
         if (audioElement) {
-          audioElement.removeEventListener('timeupdate', () => handleTimeUpdate(subtitle.subtitleId));
-          audioElement.removeEventListener('pause', () => handleTimeUpdate(subtitle.subtitleId));
-          audioElement.removeEventListener('ended', () => handleTimeUpdate(subtitle.subtitleId));
+          audioElement.removeEventListener('timeupdate', () =>
+            handleTimeUpdate(subtitle.subtitleId),
+          );
+          audioElement.removeEventListener('pause', () =>
+            handleTimeUpdate(subtitle.subtitleId),
+          );
+          audioElement.removeEventListener('ended', () =>
+            handleTimeUpdate(subtitle.subtitleId),
+          );
         }
       });
     };
@@ -172,11 +202,9 @@ export default function SingleExhibit() {
     >
       <div className='flex flex-col items-center gap-4'>
         <motion.img
-          src={
-            exhibit.imageId ? `/images/${exhibit.imageId}` : PLACEHOLDER_IMAGE
-          }
+          src={exhibit.imageLink ?? PLACEHOLDER_IMAGE}
           alt={exhibit.title}
-          className='w-[400px] h-[250px] object-cover rounded-lg border'
+          className='max-w-3xl object-cover rounded-lg border'
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.7, ease: 'easeOut' }}
@@ -230,10 +258,21 @@ export default function SingleExhibit() {
               <div className='flex items-center gap-3 mb-2 p-4 rounded-lg border bg-muted'>
                 <span className='text-base'>
                   {(() => {
-                    const isSpaceSeparated = ['en-GB', 'es-ES', 'fr-FR', 'de-DE', 'ru-RU', 'it-IT', 'ms-MY', 'ta-IN', 'hi-IN'].includes(subtitle.languageCode);
+                    const isSpaceSeparated = [
+                      'en-GB',
+                      'es-ES',
+                      'fr-FR',
+                      'de-DE',
+                      'ru-RU',
+                      'it-IT',
+                      'ms-MY',
+                      'ta-IN',
+                      'hi-IN',
+                    ].includes(subtitle.languageCode);
                     return subtitle.subtitleText
                       .split(isSpaceSeparated ? ' ' : '')
-                      .reduce((acc, unit, index) => { // Dynamic splitting
+                      .reduce((acc, unit, index) => {
+                        // Dynamic splitting
                         const segmentIndex = Math.floor(index / 8);
                         if (index % 8 === 0) acc.push([]);
                         acc[acc.length - 1].push(unit);
@@ -245,14 +284,31 @@ export default function SingleExhibit() {
                           style={{
                             padding: '2px 4px',
                             borderRadius: '4px',
-                            background: groupIndex === currentWordIndices[subtitle.subtitleId] ? 'linear-gradient(90deg, #ffeb3b, #ffca28)' : 'transparent',
-                            fontWeight: groupIndex === currentWordIndices[subtitle.subtitleId] ? '500' : '300',
+                            background:
+                              groupIndex ===
+                              currentWordIndices[subtitle.subtitleId]
+                                ? 'linear-gradient(90deg, #ffeb3b, #ffca28)'
+                                : 'transparent',
+                            fontWeight:
+                              groupIndex ===
+                              currentWordIndices[subtitle.subtitleId]
+                                ? '500'
+                                : '300',
                             transition: 'all 0.3s ease',
-                            boxShadow: groupIndex === currentWordIndices[subtitle.subtitleId] ? '0 2px 6px rgba(255, 215, 0, 0.4)' : 'none',
-                            color: groupIndex === currentWordIndices[subtitle.subtitleId] ? '#1a1a1a' : '#ffffff',
+                            boxShadow:
+                              groupIndex ===
+                              currentWordIndices[subtitle.subtitleId]
+                                ? '0 2px 6px rgba(255, 215, 0, 0.4)'
+                                : 'none',
+                            color:
+                              groupIndex ===
+                              currentWordIndices[subtitle.subtitleId]
+                                ? '#1a1a1a'
+                                : '#ffffff',
                           }}
                         >
-                          {group.join(isSpaceSeparated ? ' ' : '') + ' '} {/* Dynamic joining */}
+                          {group.join(isSpaceSeparated ? ' ' : '') + ' '}{' '}
+                          {/* Dynamic joining */}
                         </span>
                       ));
                   })()}

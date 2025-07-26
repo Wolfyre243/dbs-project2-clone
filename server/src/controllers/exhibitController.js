@@ -10,27 +10,15 @@ const { logAdminAudit } = require('../utils/auditlogs');
 // Create Exhibit controller function
 // Takes in an array of subtitle and audio IDs
 module.exports.createExhibit = catchAsync(async (req, res, next) => {
-  const { title, assetData } = req.body;
+  const { title, assetData, imageId } = req.body;
   const description = req.body.description;
 
   const userId = res.locals.user.userId;
-  // const imageId = res.locals.imageId;
-  // const imageId = req.body.imageId; // Assuming imageId is provided in the request
 
   // Validate required fields
   if (!Array.isArray(assetData.subtitleIds)) {
     throw new AppError('Subtitle IDs must be an array', 400);
   }
-
-  // Validate imageId if provided
-  // if (imageId) {
-  //   const image = await prisma.image.findUnique({
-  //     where: { imageId },
-  //   });
-  //   if (!image) {
-  //     throw new AppError('Invalid imageId provided', 400);
-  //   }
-  // }
 
   // Create exhibit
   const exhibit = await exhibitModel.createExhibitWithAssets({
@@ -39,8 +27,7 @@ module.exports.createExhibit = catchAsync(async (req, res, next) => {
     createdBy: userId,
     modifiedBy: userId,
     subtitleIdArr: assetData.subtitleIds,
-    // TODO: To implement images
-    // imageId,
+    imageId,
   });
 
   logger.info(

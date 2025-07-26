@@ -12,29 +12,24 @@ const { encryptData, decryptData } = require('../utils/encryption');
 // Impoort Models
 const imageModel = require('../models/imageModel');
 const { logAdminAudit } = require('../utils/auditlogs');
-
+const { uploadFile } = require('../utils/fileUploader');
 
 // Getting all images
-module.exports.getAllImages = catchAsync( async(req, res, next) => {
-    try {
-        const images = await imageModel.getAllImages();
-        res.status(200).json({
-            status: 'success',
-            data: images,
-        });
-    } catch (error) {
-        logger.error('Error to retrieve images:', error);
-        next(error);
-    }
+// TODO: Pagination
+module.exports.getAllImages = catchAsync(async (req, res, next) => {
+  const images = await imageModel.getAllImages();
+  res.status(200).json({
+    status: 'success',
+    data: images,
+  });
 });
 
 //Getting image by ID
-module.exports.getImageById = catchAsync( async(req, res, next) => {
-    try {
-        const imageId = req.params.imageId;
-        const imageData = await imageModel.getImageById(imageId);
+module.exports.getImageById = catchAsync(async (req, res, next) => {
+  const imageId = req.params.imageId;
+  const imageData = await imageModel.getImageById(imageId);
 
-            await logAdminAudit({
+  await logAdminAudit({
     userId: res.locals.user.userId,
     ipAddress: req.ip,
     entityName: 'image',
@@ -43,33 +38,24 @@ module.exports.getImageById = catchAsync( async(req, res, next) => {
     logText: 'Image retrieved by ID successfully',
   });
 
-        res.status(200).json({
-            status: 'success',
-            message: `Image with ID ${imageId} retrieved successfully`,
-            image: imageData
-        });
-    } catch (error) {
-        logger.error('Error fetching image by ID:', error);
-        next(error);
-    }
-})
+  res.status(200).json({
+    status: 'success',
+    message: `Image with ID ${imageId} retrieved successfully`,
+    image: imageData,
+  });
+});
 
 // Creating new image
-module.exports.createImage = catchAsync( async(req, res, next) => {
-    try {
-        const { description, fileLink, fileName } = req.body;
-        const createdBy = res.locals.user.userId;
-        const statusId = statusCodes.ACTIVE;
+module.exports.createImage = catchAsync(async (req, res, next) => {
+  const description = req.body.description;
+  const createdBy = res.locals.user.userId;
 
-        const image = await imageModel.createImage({
-            description,
-            fileLink,
-            fileName,
-            createdBy,
-            statusId, 
-        });
+  const image = await imageModel.createImage({
+    description,
+    createdBy,
+  });
 
-            await logAdminAudit({
+  await logAdminAudit({
     userId: res.locals.user.userId,
     ipAddress: req.ip,
     entityName: 'image',
@@ -78,37 +64,66 @@ module.exports.createImage = catchAsync( async(req, res, next) => {
     logText: 'Image created successfully',
   });
 
-        logger.info(`Image created successfully by user ${createdBy}`);
+  logger.info(`Image created successfully by user ${createdBy}`);
 
-        res.status(201).json({
-            status: 'success',
-            data: image,
-        });
-    } catch (error) {
-        logger.error('Error creating image:', error);
-        next(error);
-    }
+  res.status(201).json({
+    status: 'success',
+    data: image,
+  });
+});
+
+module.exports.uploadImage = catchAsync(async (req, res, next) => {
+  const description = req.body.description;
+  const createdBy = res.locals.user.userId;
+
+  logger.debug(`Received file: ${req.file.originalname}`);
+
+  const { fileLink, fileName } = await uploadFile(req.file, 'images');
+
+  const image = await imageModel.createImage({
+    description,
+    createdBy,
+    fileLink,
+    fileName,
+  });
+
+  await logAdminAudit({
+    userId: createdBy,
+    ipAddress: req.ip,
+    entityName: 'image',
+    entityId: image.imageId,
+    actionTypeId: AuditActions.CREATE,
+    logText: 'Image created successfully',
+  });
+
+  logger.info(`Image created successfully by user ${createdBy}`);
+
+  res.status(201).json({
+    status: 'success',
+    data: {
+      ...image,
+    },
+  });
 });
 
 // Update new image
-module.exports.updateImage = catchAsync( async(req, res, next) => {
-    try {
-        const imageId = req.params.imageId;
-        const { description, fileLink, fileName } = req.body;
-        const updateData = {
-            description,
-            fileLink,
-            fileName,
-        };
+module.exports.updateImage = catchAsync(async (req, res, next) => {
+  const imageId = req.params.imageId;
+  const { description, fileLink, fileName } = req.body;
+  const updateData = {
+    description,
+    fileLink,
+    fileName,
+  };
 
-        const updatedImage = await imageModel.updateImage(imageId, updateData);
+  const updatedImage = await imageModel.updateImage(imageId, updateData);
 
-        if (!updatedImage) {
-            logger.warn(`Image with ID ${imageId} not found for update`);
-            throw new AppError('Image not found', 404);
-        }
+  if (!updatedImage) {
+    logger.warn(`Image with ID ${imageId} not found for update`);
+    throw new AppError('Image not found', 404);
+  }
 
-            await logAdminAudit({
+  await logAdminAudit({
     userId: res.locals.user.userId,
     ipAddress: req.ip,
     entityName: 'image',
@@ -117,65 +132,55 @@ module.exports.updateImage = catchAsync( async(req, res, next) => {
     logText: 'Image updated successfully',
   });
 
-        logger.info(`Image with ID ${imageId} updated`);
+  logger.info(`Image with ID ${imageId} updated`);
 
-        res.status(200).json({
-            status: 'success',
-            data: updatedImage,
-        });
-    } catch (error) {
-        logger.error('Error updating image:', error);
-        next(error);
-    }
+  res.status(200).json({
+    status: 'success',
+    data: updatedImage,
+  });
 });
 
 // Archiving image
-module.exports.archiveImage = catchAsync( async(req, res, next) => {
-    try {
-        const imageId = req.params.imageId;
-        const statusId = statusCodes.DELETED;
+module.exports.archiveImage = catchAsync(async (req, res, next) => {
+  const imageId = req.params.imageId;
+  const statusId = statusCodes.DELETED;
 
-        const archivedImage = await imageModel.archiveImage(imageId, statusId);
+  const archivedImage = await imageModel.archiveImage(imageId, statusId);
 
-        if (!archivedImage) {
-            logger.warn(`Image with ID ${imageId} not found for archive`);
-            throw new AppError('Image not found', 404);
-        }
+  if (!archivedImage) {
+    logger.warn(`Image with ID ${imageId} not found for archive`);
+    throw new AppError('Image not found', 404);
+  }
 
-            await logAdminAudit({
+  await logAdminAudit({
     userId: res.locals.user.userId,
     ipAddress: req.ip,
     entityName: 'image',
     entityId: imageId,
-    actionTypeId:AuditActions.DELETE,
+    actionTypeId: AuditActions.DELETE,
     logText: 'Image archived successfully',
   });
 
-        logger.info(`Image with ID ${imageId} archived`);
+  logger.info(`Image with ID ${imageId} archived`);
 
-        res.status(200).json({
-            status: 'success',
-            data: archivedImage,
-            message: 'Image archived successfully',
-        });
-    } catch (error) {
-        logger.error('Error archiving image:', error);
-        next(error);
-    }
+  res.status(200).json({
+    status: 'success',
+    data: archivedImage,
+    message: 'Image archived successfully',
+  });
 });
 
 // Deleting image
-module.exports.deleteImage = catchAsync( async(req, res, next) => {
-    try {
-        const imageId = req.params.imageId;
-        const deletedImage = await imageModel.deleteImage(imageId);
+module.exports.deleteImage = catchAsync(async (req, res, next) => {
+  const imageId = req.params.imageId;
+  const deletedImage = await imageModel.deleteImage(imageId);
 
-        if(!deletedImage) {
-            logger.warn(`Image with ID ${imageId} not found for deletion`);
-            throw new AppError('Image not found', 404);
-        }
+  if (!deletedImage) {
+    logger.warn(`Image with ID ${imageId} not found for deletion`);
+    throw new AppError('Image not found', 404);
+  }
 
-            await logAdminAudit({
+  await logAdminAudit({
     userId: res.locals.user.userId,
     ipAddress: req.ip,
     entityName: 'image',
@@ -184,50 +189,63 @@ module.exports.deleteImage = catchAsync( async(req, res, next) => {
     logText: 'Image deleted successfully',
   });
 
-        logger.info(`Image with ID ${imageId} deleted successfully`);
-        res.status(200).json({
-            status: 'success',
-            message: 'Image deleted successfully',
-            data: deletedImage,
-        });
-    } catch (error) {
-        logger.error('Error deleting imasge:', error);
-        next(error);
-    }
+  logger.info(`Image with ID ${imageId} deleted successfully`);
+  res.status(200).json({
+    status: 'success',
+    message: 'Image deleted successfully',
+    data: deletedImage,
+  });
+});
+
+module.exports.hardDeleteImage = catchAsync(async (req, res, next) => {
+  const imageId = req.params.imageId;
+  const userId = res.locals.user.userId;
+
+  const deletedImage = await imageModel.deleteImage(imageId);
+
+  await logAdminAudit({
+    userId,
+    ipAddress: req.ip,
+    entityName: 'image',
+    entityId: imageId,
+    actionTypeId: AuditActions.DELETE,
+    logText: `Image deleted successfully with ID ${imageId}`,
+  });
+
+  logger.info(`Image with ID ${imageId} deleted successfully`);
+  res.status(200).json({
+    status: 'success',
+    message: 'Image hard deleted successfully',
+  });
 });
 
 // Unarchiving image
 module.exports.unarchiveImage = catchAsync(async (req, res, next) => {
-    try {
-        const imageId = req.params.imageId;
-        const userId = res.locals.user.userId;
+  const imageId = req.params.imageId;
+  const userId = res.locals.user.userId;
 
-        // Check if image exists
-        const image = await imageModel.getImageById(imageId);
-        if (!image) {
-            throw new AppError('Image not found', 404);
-        }
+  // Check if image exists
+  const image = await imageModel.getImageById(imageId);
+  if (!image) {
+    throw new AppError('Image not found', 404);
+  }
 
-        // Unarchive image (set status to ACTIVE)
-        await imageModel.unarchiveImage(imageId);
+  // Unarchive image (set status to ACTIVE)
+  await imageModel.unarchiveImage(imageId);
 
-        logger.info(`Unarchived image ${imageId}`);
+  logger.info(`Unarchived image ${imageId}`);
 
-        await logAdminAudit({
-            userId,
-            ipAddress: req.ip,
-            entityName: 'image',
-            entityId: imageId,
-            actionTypeId: AuditActions.UPDATE,
-            logText: `Unarchived image with ID ${imageId}`,
-        });
+  await logAdminAudit({
+    userId,
+    ipAddress: req.ip,
+    entityName: 'image',
+    entityId: imageId,
+    actionTypeId: AuditActions.UPDATE,
+    logText: `Unarchived image with ID ${imageId}`,
+  });
 
-        res.status(200).json({
-            status: 'success',
-            message: 'Image unarchived successfully',
-        });
-    } catch (error) {
-        logger.error('Error unarchiving image:', error);
-        next(error);
-    }
+  res.status(200).json({
+    status: 'success',
+    message: 'Image unarchived successfully',
+  });
 });

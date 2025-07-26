@@ -46,7 +46,8 @@ interface AssetData {
 interface ExhibitMetadata {
   title: string;
   description: string;
-  imageUrl?: string;
+  imageId?: string;
+  imageLink?: string;
 }
 
 interface ValidationErrors {
@@ -114,53 +115,88 @@ export default function TourEditorCreateExhibitPage() {
   const [exhibitMetadata, setExhibitMetadata] = useState<ExhibitMetadata>({
     title: '',
     description: '',
-    imageUrl: undefined,
   });
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  // const [imageFile, setImageFile] = useState<File | null>(null);
+  // const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
 
   // Drag and drop handlers
   const handleImageDrop = async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/')) {
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
-      // Optionally: upload immediately
-      // await uploadImage(file);
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setImageError('Only image files (PNG, JPEG, JPG) are accepted.');
+      return;
     }
+    setImageError(null);
+    const { imageId, imageLink } = (await uploadImage(file)) ?? {};
+    setExhibitMetadata((prev) => ({
+      ...prev,
+      imageId,
+      imageLink,
+    }));
   };
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
-      // await uploadImage(file);
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setImageError('Only image files (PNG, JPEG, JPG) are accepted.');
+      return;
+    }
+    setImageError(null);
+    const { imageId, imageLink } = (await uploadImage(file)) ?? {};
+    setExhibitMetadata((prev) => ({
+      ...prev,
+      imageId,
+      imageLink,
+    }));
+  };
+
+  const uploadImage = async (file: File) => {
+    setIsUploadingImage(true);
+
+    try {
+      // Example: upload to /upload/image endpoint (adjust as needed)
+      const formData = new FormData();
+      formData.append('image', file);
+      // You may need to adjust the endpoint to match your backend
+      const { data: responseData } = await apiPrivate.post(
+        '/image/upload',
+        formData,
+        {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        },
+      );
+
+      return {
+        imageId: responseData.data.imageId,
+        imageLink: responseData.data.fileLink,
+      };
+    } catch (err) {
+      toast.error('Failed to upload image');
+    } finally {
+      setIsUploadingImage(false);
     }
   };
 
-  // const uploadImage = async (file: File) => {
-  //   setIsUploadingImage(true);
-  //   try {
-  //     // Example: upload to /upload/image endpoint (adjust as needed)
-  //     const formData = new FormData();
-  //     formData.append('file', file);
-  //     // You may need to adjust the endpoint to match your backend
-  //     const response = await apiPrivate.post('/upload/image', formData, {
-  //       headers: { 'Content-Type': 'multipart/form-data' },
-  //     });
-  //     const url =
-  //       response.data.url || response.data.fileUrl || response.data.fileLink;
-  //     setExhibitMetadata((prev) => ({ ...prev, imageUrl: url }));
-  //   } catch (err) {
-  //     toast.error('Failed to upload image');
-  //   } finally {
-  //     setIsUploadingImage(false);
-  //   }
-  // };
+  const handleDeleteImage = async () => {
+    try {
+      await apiPrivate.delete(`/image/hard-delete/${exhibitMetadata.imageId}`);
+      setExhibitMetadata({
+        ...exhibitMetadata,
+        imageId: undefined,
+        imageLink: undefined,
+      });
+
+      toast.success('Image deleted');
+    } catch (err) {
+      toast.error('Failed to delete audio');
+    }
+  };
 
   const [subtitles, setSubtitles] = useState<SubtitleItem[]>([]);
   const [subtitleFormData, setSubtitleFormData] = useState<SubtitleFormData>({
@@ -193,12 +229,10 @@ export default function TourEditorCreateExhibitPage() {
       formData.append('file', file);
       formData.append('languageCode', subtitleFormData.languageCode);
 
+      // Remove Content-Type header to let browser set it (fixes many upload issues)
       const { data: responseData } = await apiPrivate.post(
         '/audio/upload',
         formData,
-        {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        },
       );
 
       const { audioId, fileLink } = responseData.data;
@@ -331,36 +365,37 @@ export default function TourEditorCreateExhibitPage() {
   };
 
   // Update subtitle text
-  const updateSubtitleText = (id: string, text: string) => {
-    setSubtitles((prev) =>
-      prev.map((subtitle) =>
-        subtitle.subtitleId === id ? { ...subtitle, text } : subtitle,
-      ),
-    );
+  // const updateSubtitleText = (id: string, text: string) => {
+  //   setSubtitles((prev) =>
+  //     prev.map((subtitle) =>
+  //       subtitle.subtitleId === id ? { ...subtitle, text } : subtitle,
+  //     ),
+  //   );
 
-    // Validate and update errors
-    const error = validateSubtitleText(text);
-    setValidationErrors((prev) => {
-      const newErrors = { ...prev };
-      if (error) {
-        newErrors[`subtitle-${id}`] = error;
-      } else {
-        delete newErrors[`subtitle-${id}`];
-      }
-      return newErrors;
-    });
-  };
+  //   // Validate and update errors
+  //   const error = validateSubtitleText(text);
+  //   setValidationErrors((prev) => {
+  //     const newErrors = { ...prev };
+  //     if (error) {
+  //       newErrors[`subtitle-${id}`] = error;
+  //     } else {
+  //       delete newErrors[`subtitle-${id}`];
+  //     }
+  //     return newErrors;
+  //   });
+  // };
 
   // Update subtitle language
-  const updateSubtitleLanguage = (id: string, languageCode: string) => {
-    setSubtitles((prev) =>
-      prev.map((subtitle) =>
-        subtitle.subtitleId === id ? { ...subtitle, languageCode } : subtitle,
-      ),
-    );
-  };
+  // const updateSubtitleLanguage = (id: string, languageCode: string) => {
+  //   setSubtitles((prev) =>
+  //     prev.map((subtitle) =>
+  //       subtitle.subtitleId === id ? { ...subtitle, languageCode } : subtitle,
+  //     ),
+  //   );
+  // };
 
   // Generate TTS audio for a subtitle
+
   const generateAudio = async () => {
     // let subtitle = subtitles.find((s) => s.id === subtitleId);
     const subtitle = subtitleFormData;
@@ -392,29 +427,7 @@ export default function TourEditorCreateExhibitPage() {
 
       // const generatedSubtitleId = responseData.data.subtitleId;
 
-      // If subtitle does not have a backend id, create it first
-      // if (!subtitle.id || subtitle.id.startsWith('temp-')) {
-      // Update the subtitle in state with the backend id
-      // setSubtitles((prev) =>
-      //   prev.map((s) =>
-      //     s.id === subtitleId ? { ...s, id: generatedSubtitleId } : s,
-      //   ),
-      // );
-
-      // subtitle = { ...subtitle, id: generatedSubtitleId };
-      // subtitleId = generatedSubtitleId;
-      // }
-
       const { audioId, fileLink } = responseData.data;
-
-      // Update subtitle with audio data
-      // setSubtitles((prev) =>
-      //   prev.map((s) =>
-      //     s.id === subtitleId
-      //       ? { ...s, audioId, fileLink, isGenerating: false }
-      //       : s,
-      //   ),
-      // );
       setSubtitleFormData({
         ...subtitleFormData,
         audioId,
@@ -426,13 +439,6 @@ export default function TourEditorCreateExhibitPage() {
     } catch (error) {
       console.error('Error generating audio:', error);
       toast.error('Failed to generate audio');
-
-      // Remove loading state
-      // setSubtitles((prev) =>
-      //   prev.map((s) =>
-      //     s.id === subtitleId ? { ...s, isGenerating: false } : s,
-      //   ),
-      // );
       setSubtitleFormData({ ...subtitleFormData, isGenerating: false });
     }
   };
@@ -440,18 +446,6 @@ export default function TourEditorCreateExhibitPage() {
   const handleDeleteAudio = async () => {
     try {
       await apiPrivate.delete(`/audio/hard-delete/${subtitleFormData.audioId}`);
-      // Update form data
-      // setSubtitles((prev) =>
-      //   prev.map((s) =>
-      //     s.id === subtitle.id
-      //       ? {
-      //           ...s,
-      //           audioId: undefined,
-      //           fileLink: undefined,
-      //         }
-      //       : s,
-      //   ),
-      // );
       setSubtitleFormData({
         ...subtitleFormData,
         audioId: undefined,
@@ -511,13 +505,13 @@ export default function TourEditorCreateExhibitPage() {
     }
 
     // Check that all subtitles have generated audio
-    const subtitlesWithoutAudio = subtitles.filter((s) => !s.audioId);
-    if (subtitlesWithoutAudio.length > 0) {
-      toast.error(
-        'Please generate audio for all subtitles before creating the exhibit',
-      );
-      return;
-    }
+    // const subtitlesWithoutAudio = subtitles.filter((s) => !s.audioId);
+    // if (subtitlesWithoutAudio.length > 0) {
+    //   toast.error(
+    //     'Please generate audio for all subtitles before creating the exhibit',
+    //   );
+    //   return;
+    // }
 
     const assetData: AssetData = {
       subtitleIds: subtitles.map((s) => s.subtitleId),
@@ -641,24 +635,17 @@ export default function TourEditorCreateExhibitPage() {
               <CardContent className='space-y-4 h-full'>
                 <div className='space-y-4 h-full'>
                   {/* Show preview and remove button if image is uploaded */}
-                  {imagePreview || exhibitMetadata.imageUrl ? (
+                  {exhibitMetadata.imageLink ? (
                     <div className='flex flex-col items-center'>
                       <img
-                        src={imagePreview || exhibitMetadata.imageUrl}
+                        src={exhibitMetadata.imageLink}
                         alt='Exhibit'
                         className='max-h-80 object-contain mb-2 rounded'
                       />
                       <Button
                         variant='destructive'
                         size='sm'
-                        onClick={() => {
-                          setImageFile(null);
-                          setImagePreview(null);
-                          setExhibitMetadata((prev) => ({
-                            ...prev,
-                            imageUrl: undefined,
-                          }));
-                        }}
+                        onClick={handleDeleteImage}
                       >
                         Remove Image
                       </Button>
@@ -679,11 +666,16 @@ export default function TourEditorCreateExhibitPage() {
                       <input
                         id='exhibit-image-input'
                         type='file'
-                        accept='image/*'
+                        accept='image/png, image/jpeg'
                         className='hidden'
                         onChange={handleImageChange}
                         disabled={isUploadingImage}
                       />
+                      {imageError && (
+                        <span className='text-xs text-red-600 mt-2'>
+                          {imageError}
+                        </span>
+                      )}
                       {isUploadingImage && (
                         <span className='text-xs text-muted-foreground mt-2'>
                           Uploading...
@@ -909,7 +901,8 @@ export default function TourEditorCreateExhibitPage() {
                 isCreatingExhibit ||
                 subtitles.every((s) => !s.audioId) ||
                 !exhibitMetadata.title.trim() ||
-                !exhibitMetadata.description.trim()
+                !exhibitMetadata.description.trim() ||
+                !exhibitMetadata.imageLink
               }
               size='lg'
             >

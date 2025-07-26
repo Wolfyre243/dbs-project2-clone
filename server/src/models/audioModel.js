@@ -160,7 +160,7 @@ module.exports.unarchiveAudio = async function (audioId) {
 };
 
 // soft delete audio by setting status to deleted
-module.exports.softDeleteAudio = async function (audioId, userId, ipAddress) {
+module.exports.softDeleteAudio = async function (audioId) {
   try {
     const audio = await prisma.audio.update({
       where: { audioId },
