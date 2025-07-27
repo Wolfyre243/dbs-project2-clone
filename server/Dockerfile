@@ -13,6 +13,8 @@ FROM node:${NODE_VERSION}-alpine
 # Use production node environment by default.
 # ENV NODE_ENV production
 
+USER root
+
 WORKDIR /usr/src/app
 
 # Copy package files for dependency installation
