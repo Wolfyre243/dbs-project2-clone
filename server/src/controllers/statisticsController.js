@@ -104,7 +104,7 @@ module.exports.getDisplayMemberSignUps = catchAsync(async (req, res, next) => {
 module.exports.getDisplayCommonLanguagesUsed = catchAsync(
   async (req, res, next) => {
     const {
-      limit = 3, // Default to top 3 languages
+      limit = req.query.limit || 3, // Default to top 3 languages
       userType = 'Members', // 'Members', 'All', 'Guests'
       startDate = null,
       endDate = null,
