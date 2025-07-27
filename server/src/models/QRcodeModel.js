@@ -22,11 +22,10 @@ module.exports.generateQRCode = async (createdBy, exhibitId) => {
 
       // Generate JWT for QR code access
       const qrJwt = generateQrJwt(exhibitId);
+      const qrCodeUrl = `/home/exhibits/${exhibitId}?token=${qrJwt}`;
 
       //Generate image buffer with JWT in URL
-      const { buffer } = await generateQrImageBuffer(
-        `/home/exhibits/${exhibitId}?token=${qrJwt}`,
-      );
+      const { buffer } = await generateQrImageBuffer(qrCodeUrl);
 
       const { fileLink, fileName } = await saveImageFile(buffer);
 
@@ -52,6 +51,7 @@ module.exports.generateQRCode = async (createdBy, exhibitId) => {
         qrCode = await tx.qrCode.update({
           where: { exhibitId },
           data: {
+            url: qrCodeUrl,
             imageId: image.imageId,
           },
         });
@@ -60,6 +60,7 @@ module.exports.generateQRCode = async (createdBy, exhibitId) => {
           data: {
             exhibitId,
             imageId: image.imageId,
+            url: qrCodeUrl,
             createdBy,
             statusId: statusCodes.ACTIVE,
           },
@@ -70,6 +71,7 @@ module.exports.generateQRCode = async (createdBy, exhibitId) => {
         qrCodeId: qrCode.qrCodeId,
         fileLink,
         fileName,
+        url: qrCodeUrl,
         qrJwt,
       };
     });
@@ -82,75 +84,6 @@ module.exports.generateQRCode = async (createdBy, exhibitId) => {
     }
     throw error;
   }
-};
-
-module.exports.reGenerateQRcode = async (qrCodeId, createdBy, ipAddress) => {
-  // Find the record
-  const qrCode = await prisma.qrCode.findUnique({
-    where: { qrCodeId },
-  });
-
-  if (!qrCode) {
-    throw new AppError(`QR code not found`, 404);
-  }
-
-  // Re-generate new buffer
-  const { buffer } = await generateQrImageBuffer(
-    `/exhibit/${qrCode.exhibitId}`,
-  );
-
-  // Upload new QR code image to supabase
-  const { fileLink, fileName } = await uploadFile(
-    { buffer, originalname: `qr-exhibit-${qrCode.exhibitId}.png` },
-    'images',
-  );
-
-  // Delete exisitng qr-code and image records and supabase file
-  await module.exports.hardDeleteQRCode(qrCodeId);
-
-  //Creating new image record beofre creating qrcode record
-  const image = await require('./imageModel').createImage({
-    description: null, // or provide a string if you want
-    fileLink,
-    fileName,
-    createdBy,
-    statusId: statusCodes.ACTIVE,
-  });
-
-  await logAdminAudit({
-    userId: createdBy,
-    ipAddress,
-    entityName: 'image',
-    entityId: image.imageId,
-    actionTypeId: AuditActions.CREATE,
-    logText: 'Image created successfully',
-  });
-
-  // Create new QR code record
-  const newQRCode = await prisma.qrCode.create({
-    data: {
-      createdBy: createdBy,
-      exhibitId: qrCode.exhibitId,
-      imageId: image.imageId,
-      statusId: statusCodes.ACTIVE,
-    },
-  });
-
-  // Audit CREATE QR-CODE action
-  await logAdminAudit({
-    userId: createdBy,
-    ipAddress,
-    entityName: 'qrCode',
-    entityId: newQRCode.qrCodeId,
-    actionTypeId: AuditActions.CREATE,
-    logText: 'QR-code record created successfully for regeneration',
-  });
-
-  return {
-    newQrCodeId: newQRCode.qrCodeId,
-    fileLink,
-    fileName,
-  };
 };
 
 module.exports.getQRCodeById = async (qrCodeId) => {

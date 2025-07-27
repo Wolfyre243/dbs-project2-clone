@@ -200,7 +200,7 @@ module.exports.getAllSubtitles = async ({
   filter = {},
 }) => {
   try {
-    let where = { ...filter };
+    let where = { ...filter, statusId: statusCodes.ACTIVE };
 
     // Conditional search terms
     if (search && search.trim() !== '') {
@@ -218,14 +218,21 @@ module.exports.getAllSubtitles = async ({
       skip: (page - 1) * pageSize,
       take: pageSize,
       where: where,
-      select: {
-        subtitleId: true,
-        subtitleText: true,
-        languageCode: true,
-        createdBy: true,
-        createdAt: true,
-        modifiedAt: true,
-        statusId: true,
+      // select: {
+      //   subtitleId: true,
+      //   subtitleText: true,
+      //   languageCode: true,
+      //   createdBy: true,
+      //   createdAt: true,
+      //   modifiedAt: true,
+      //   statusId: true,
+      // },
+      include: {
+        subtitleCreatedBy: {
+          select: {
+            username: true,
+          },
+        },
       },
       orderBy: {
         [sortBy]: order,
@@ -234,7 +241,10 @@ module.exports.getAllSubtitles = async ({
 
     return {
       subtitles: subtitlesRaw.map((subtitle) =>
-        convertDatesToStrings(subtitle),
+        convertDatesToStrings({
+          ...subtitle,
+          createdBy: subtitle.subtitleCreatedBy.username,
+        }),
       ),
       subtitleCount,
     };

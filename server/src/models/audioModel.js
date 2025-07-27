@@ -121,16 +121,18 @@ module.exports.archiveAudio = async function (audioId) {
 //Hard delete audio
 module.exports.hardDeleteAudio = async function (audioId) {
   try {
-    const { fileName } = await prisma.audio.findUnique({
+    const audio = await prisma.audio.findUnique({
       where: { audioId },
       select: { fileName: true },
     });
 
+    console.log(audio);
+
     // Delete from supabase
-    await deleteFile('audio', fileName);
+    await deleteFile('audio', audio.fileName);
 
     // Delete from database
-    const audio = await prisma.audio.delete({
+    const deletedAudio = await prisma.audio.delete({
       where: { audioId },
     });
 
@@ -207,11 +209,23 @@ module.exports.getAllAudio = async ({
       orderBy: { [sortBy]: order },
       skip: (page - 1) * pageSize,
       take: pageSize,
+      include: {
+        audioCreatedBy: {
+          select: {
+            username: true,
+          },
+        },
+      },
     });
 
     return {
       pageCount: Math.ceil(audioCount / pageSize),
-      audioList: audioList.map((audio) => convertDatesToStrings(audio)),
+      audioList: audioList.map((audio) =>
+        convertDatesToStrings({
+          ...audio,
+          createdBy: audio.audioCreatedBy.username,
+        }),
+      ),
     };
   } catch (error) {
     throw error;

@@ -351,7 +351,7 @@ export default function SingleExhibit() {
             .sort((a, b) => b - a)
             .slice(0, maxWordsToHighlight);
 
-          const lastWordIndex = subtitle.wordTimings.length - 1;
+          const lastWordIndex = subtitle.wordTimings.length;
           if (
             activeIndices.length === 0 &&
             currentTime >= subtitle.wordTimings[lastWordIndex].start - 0.3 &&
@@ -398,6 +398,16 @@ export default function SingleExhibit() {
       <div className='flex items-center justify-center h-[60vh]'>
         <span className='text-lg font-semibold text-red-500'>
           {exhibitError}
+        </span>
+      </div>
+    );
+  }
+
+  if (subtitleError) {
+    return (
+      <div className='flex items-center justify-center h-[60vh]'>
+        <span className='text-lg font-semibold text-red-500'>
+          {subtitleError}
         </span>
       </div>
     );

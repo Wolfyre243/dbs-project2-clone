@@ -50,7 +50,7 @@ const userValidationRules = () => [
   lastNameValidation().notEmpty().withMessage('Last Name is required'),
   dobValidation().notEmpty().withMessage('Date of Birth is required'),
   genderValidation(),
-  userLanguageCodeValidation(),
+  languageCodeValidation(),
 ];
 
 const loginValidationRules = () => [

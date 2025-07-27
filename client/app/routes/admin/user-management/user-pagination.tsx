@@ -133,7 +133,7 @@ export default function AdminUserPagination() {
 
   return (
     <div className='flex flex-col p-6'>
-      <h1 className='text-3xl font-bold'>User Management</h1>
+      <h1 className='text-3xl font-bold mb-4'>User Management</h1>
       <div className='flex flex-col gap-3'>
         <div className='flex flex-col md:flex-row w-full gap-3 h-fit'>
           <input
