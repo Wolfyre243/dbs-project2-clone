@@ -22,9 +22,15 @@ const exhibitRouter = express.Router();
 
 exhibitRouter.use(jwtMiddleware.verifyToken);
 
+// Excluding subtitles & audio
+exhibitRouter.get(
+  '/public/:exhibitId',
+  exhibitController.getSingleExhibitMetadata,
+);
+
 // Admin Exhibit Routes
-// router.post('/create-exhibit', exhibitController.createExhibit);             // -- C
-exhibitRouter.get('/:exhibitId', exhibitController.getSingleExhibit); // -- R
+// Has all details for admin
+exhibitRouter.get('/:exhibitId', exhibitController.getSingleExhibit);
 
 // QR code token validation route
 exhibitRouter.post(
@@ -35,12 +41,12 @@ exhibitRouter.put(
   '/',
   authMiddleware.verifyIsAdmin,
   exhibitController.updateExhibit,
-); // -- U
+);
 exhibitRouter.delete(
   '/:exhibitId',
   authMiddleware.verifyIsAdmin,
   exhibitController.deleteExhibit,
-); // -- D
+);
 
 exhibitRouter.post(
   '/',

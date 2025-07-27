@@ -265,3 +265,22 @@ module.exports.getSubtitleById = catchAsync(async (req, res, next) => {
     },
   });
 });
+
+// Get all subtitles by exhibit ID
+module.exports.getSubtitlesByExhibitId = catchAsync(async (req, res, next) => {
+  const { exhibitId } = req.params;
+
+  const subtitles = await subtitleModel.getAllSubtitlesByExhibitId(exhibitId);
+  if (!subtitles) {
+    return next(new AppError('Subtitle not found', 404));
+  }
+
+  logger.info(
+    `Fetched ${subtitles.length} subtitles for exhibit ID ${exhibitId}.`,
+  );
+
+  res.status(200).json({
+    status: 'success',
+    data: subtitles,
+  });
+});

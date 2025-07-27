@@ -122,6 +122,19 @@ module.exports.getSingleExhibit = catchAsync(async (req, res, next) => {
   });
 });
 
+module.exports.getSingleExhibitMetadata = catchAsync(async (req, res, next) => {
+  const exhibitId = req.params.exhibitId;
+
+  const exhibit = await exhibitModel.getExhibitMetadataById(exhibitId);
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      exhibit,
+    },
+  });
+});
+
 // Soft delete
 module.exports.deleteExhibit = catchAsync(async (req, res, next) => {
   const exhibitId = req.params.exhibitId;
