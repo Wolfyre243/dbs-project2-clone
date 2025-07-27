@@ -3,6 +3,7 @@ const prisma = new PrismaClient();
 const AppError = require('../utils/AppError');
 const { convertDatesToStrings } = require('../utils/formatters');
 const Roles = require('../configs/roleConfig');
+const EventTypes = require('../configs/eventTypes');
 
 // Get simple user count statistics for regular users only (excludes admins)
 module.exports.getUserCountStatistics = async (filter = {}) => {
@@ -217,9 +218,15 @@ module.exports.getDisplayMemberSignUps = async ({
     }
 
     if (!timeSeriesData[timeKey]) {
-      timeSeriesData[timeKey] = 0;
+      timeSeriesData[timeKey] = {
+        Children: 0,
+        Youth: 0,
+        Adults: 0,
+        Seniors: 0,
+        Unknown: 0,
+      };
     }
-    timeSeriesData[timeKey]++;
+    timeSeriesData[timeKey][member.ageGroup]++;
   });
 
   // Convert breakdowns to arrays with percentages
@@ -243,9 +250,9 @@ module.exports.getDisplayMemberSignUps = async ({
 
   // Convert time series to array and sort
   const timeSeriesArray = Object.entries(timeSeriesData)
-    .map(([time, count]) => ({
-      [granularity]: time,
-      count,
+    .map(([time, groupCounts]) => ({
+      period: time,
+      ...groupCounts,
     }))
     .sort((a, b) => a[granularity].localeCompare(b[granularity]));
 
@@ -514,11 +521,6 @@ function getAgeRangeFilter(ageGroup) {
       return null;
   }
 }
-
-// Add these imports at the top if not already present
-const EventTypes = require('../configs/eventTypes');
-
-// Add this new method to the existing file
 
 // Get QR code scan trends and statistics
 module.exports.getQRCodeScanTrends = async ({
