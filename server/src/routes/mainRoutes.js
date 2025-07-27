@@ -25,7 +25,7 @@ mainRouter.use('/language', languageRouter);
 mainRouter.use('/image', imageRouter);
 mainRouter.use('/qrcode', QRcodeRouter);
 mainRouter.use('/statistics', statisticsRouter);
-mainRouter.use('/survey', survey);
+//mainRouter.use('/survey', survey);
 mainRouter.get('/', (req, res) => {
   res.redirect('/docs');
 });
