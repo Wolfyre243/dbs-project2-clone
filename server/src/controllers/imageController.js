@@ -17,10 +17,26 @@ const { uploadFile } = require('../utils/fileUploader');
 // Getting all images
 // TODO: Pagination
 module.exports.getAllImages = catchAsync(async (req, res, next) => {
-  const images = await imageModel.getAllImages();
+  const {
+    page = 1,
+    pageSize = 10,
+    sortBy = 'createdAt',
+    order = 'desc',
+    search = '',
+  } = req.query;
+
+  const result = await imageModel.getAllImages({
+    page: parseInt(page),
+    pageSize: parseInt(pageSize),
+    sortBy,
+    order,
+    search,
+  });
+
   res.status(200).json({
     status: 'success',
-    data: images,
+    pageCount: Math.ceil(result.imageCount / pageSize),
+    data: result.images,
   });
 });
 

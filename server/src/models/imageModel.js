@@ -6,11 +6,38 @@ const logger = require('../utils/logger');
 const { deleteFile } = require('../utils/fileUploader');
 const { convertDatesToStrings } = require('../utils/formatters');
 
-module.exports.getAllImages = async () => {
+module.exports.getAllImages = async ({
+  page,
+  pageSize,
+  sortBy,
+  order,
+  search,
+}) => {
   try {
-    const images = await prisma.image.findMany();
+    let where = {};
 
-    return images.map((i) => convertDatesToStrings(i));
+    if (search && search.trim() !== '') {
+      where.OR = [
+        { fileName: { contains: search } },
+        { fileLink: { contains: search } },
+      ];
+    }
+
+    const imageCount = await prisma.image.count({ where });
+
+    const imagesRaw = await prisma.image.findMany({
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      where,
+      orderBy: {
+        [sortBy]: order,
+      },
+    });
+
+    return {
+      images: imagesRaw.map((img) => convertDatesToStrings(img)),
+      imageCount,
+    };
   } catch (error) {
     throw error;
   }
