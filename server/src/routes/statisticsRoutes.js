@@ -18,4 +18,25 @@ const statisticsRouter = express.Router();
 
 statisticsRouter.use(jwtMiddleware.verifyToken);
 
+// Statistics for getting the count of all users ( Filter by per day, per month, etc. )
+statisticsRouter.get(
+  '/count-of-users',
+  authMiddleware.verifyIsAdmin,
+  statisticsController.getCountOfUsers,
+);
+
+// // Statistics for getting the count of users ( Can filter by gender, by age group, per day, per month, per year, etc. )
+// statisticsRouter.get('/display-member-sign-ups',
+//   authMiddleware.verifyIsAdmin,
+//   statisticsController.getDisplayMemberSignUps,
+// );
+
+// // Statistics for getting the most common languages used by users
+// statisticsRouter.get('/display-common-languages-used',
+//   authMiddleware.verifyIsAdmin,
+//   statisticsController.getDisplayCommonLanguagesUsed,
+// );
+
+// Todo:  Display trend of QR code being scanned
+
 module.exports = statisticsRouter;
