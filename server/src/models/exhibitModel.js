@@ -4,7 +4,10 @@ const prisma = new PrismaClient();
 const AppError = require('../utils/AppError');
 const { encryptData, decryptData } = require('../utils/encryption');
 const { convertDatesToStrings } = require('../utils/formatters');
-const { generateWordTimings } = require('../utils/echogardenHelper');
+const {
+  generateWordTimings,
+  generateWordTimingsBatch,
+} = require('../utils/echogardenHelper');
 
 // TODO: Add back imageId
 module.exports.createExhibit = async ({
@@ -173,7 +176,10 @@ module.exports.softDeleteExhibit = async (exhibitId, statusCode) => {
     });
 
     if (!updatedExhibit) {
-      throw new AppError(`Exhibit with ID ${exhibitId} not found for soft delete.`, 404);
+      throw new AppError(
+        `Exhibit with ID ${exhibitId} not found for soft delete.`,
+        404,
+      );
     }
 
     return { id: exhibitId, status: statusCode };
@@ -290,43 +296,75 @@ module.exports.getExhibitById = async (exhibitId) => {
       throw new AppError('Exhibit not found', 404);
     }
 
-    console.log('Exhibit subtitles:', exhibit.subtitles); // Debug log
+    // console.log('Exhibit subtitles:', exhibit.subtitles); // Debug log
 
-    // const enrichedSubtitles = await Promise.all(
-    //   exhibit.subtitles.map(async (s) => {
-    //     console.log('Subtitle object:', s.subtitle); // Debug log
-    //     const subtitleText = s.subtitle.subtitleText;
-    //     const audioUrl = s.subtitle.audio?.fileLink;
-    //     const languageCode = s.subtitle.languageCode;
+    // TODO: Optimise loading time
+    // Collect subtitles for batch processing
+    const cleanedSubtitles = [];
+    const seenSubtitleIds = new Set();
+    const seenTexts = new Set();
 
-    //     console.log('Processing subtitle:', {
-    //       subtitleText,
-    //       audioUrl,
-    //       languageCode,
-    //     }); // Debug
+    for (const s of exhibit.subtitles) {
+      const subtitle = s.subtitle;
+      // Remove extra spaces from subtitleText
+      const cleanedText = subtitle.subtitleText
+        .replace(/\s+/g, ' ') // Normalize multiple spaces to single
+        .trim();
 
-    //     const wordTimings =
-    //       audioUrl && subtitleText && languageCode
-    //         ? generateWordTimings(audioUrl, subtitleText, languageCode)
-    //         : [];
+      // Skip duplicates based on subtitleId or cleaned text
+      if (
+        !seenSubtitleIds.has(subtitle.subtitleId) &&
+        !seenTexts.has(cleanedText)
+      ) {
+        cleanedSubtitles.push({
+          ...s,
+          subtitle: { ...subtitle, subtitleText: cleanedText },
+        });
+        seenSubtitleIds.add(subtitle.subtitleId);
+        seenTexts.add(cleanedText);
+      } else {
+        console.warn(
+          `Skipping duplicate subtitle: ${subtitle.subtitleId}, text: ${cleanedText}`,
+        );
+      }
+    }
 
-    //     return {
-    //       ...s.subtitle,
-    //       wordTimings: await wordTimings,
-    //     };
-    //   }),
-    // );
+    const subtitlesToProcess = cleanedSubtitles
+      .map((s) => ({
+        subtitleId: s.subtitle.subtitleId,
+        audioUrl: s.subtitle.audio?.fileLink,
+        text: s.subtitle.subtitleText,
+        languageCode: s.subtitle.languageCode,
+      }))
+      .filter((s) => s.audioUrl && s.text && s.languageCode);
 
-    console.log('Finished processing subtitles');
+    // Batch process wordTimings
+    const start = Date.now();
+    const batchedResults = await generateWordTimingsBatch(subtitlesToProcess);
+    console.log(`Batch processing took ${Date.now() - start}ms`);
+
+    // Map results
+    const wordTimingsMap = batchedResults.reduce(
+      (acc, { subtitleId, wordTimings }) => {
+        acc[subtitleId] = wordTimings;
+        return acc;
+      },
+      {},
+    );
+
+    const enrichedSubtitles = exhibit.subtitles.map((s) => ({
+      ...s.subtitle,
+      wordTimings: wordTimingsMap[s.subtitle.subtitleId] || [],
+    }));
 
     return convertDatesToStrings({
       ...exhibit,
       statusId: undefined,
       exhibitCreatedBy: undefined,
-      supportedLanguages: exhibit.subtitles.map((s) => s.languageCode),
-      // supportedLanguages: enrichedSubtitles.map((s) => s.languageCode),
-      // subtitles: enrichedSubtitles,
-      subtitles: exhibit.subtitles.map((s) => ({ ...s.subtitle })),
+      // subtitles: exhibit.subtitles.map((s) => ({ ...s.subtitle })),
+      // supportedLanguages: exhibit.subtitles.map((s) => s.subtitle.languageCode),
+      supportedLanguages: enrichedSubtitles.map((s) => s.languageCode),
+      subtitles: enrichedSubtitles,
       status: exhibit.status.statusName,
       createdBy: exhibit.exhibitCreatedBy.username,
       imageLink: exhibit.image.fileLink,
