@@ -13,6 +13,7 @@ const logEventAudit = require('../utils/eventlogs');
 
 // Get simple user count statistics for dashboard boxes (excludes admins)
 module.exports.getCountOfUsers = catchAsync(async (req, res, next) => {
+  const userId = res.locals.user.userId;
   const {
     timeFilter = null, // 'today', 'month', 'year', 'custom'
     startDate = null,
@@ -46,12 +47,6 @@ module.exports.getCountOfUsers = catchAsync(async (req, res, next) => {
 
   const result = await statisticsModel.getUserCountStatistics(filter);
 
-  // Log admin audit
-  await logAdminAudit(
-    res.locals.user.userId,
-    AuditActions.READ,
-    `Viewed user statistics for dashboard with filters: ${JSON.stringify(req.query)}`,
-  );
 
   res.status(200).json({
     status: 'success',
