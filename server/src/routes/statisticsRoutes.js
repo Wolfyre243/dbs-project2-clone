@@ -25,18 +25,27 @@ statisticsRouter.get(
   statisticsController.getCountOfUsers,
 );
 
-// // Statistics for getting the count of users ( Can filter by gender, by age group, per day, per month, per year, etc. )
-// statisticsRouter.get('/display-member-sign-ups',
-//   authMiddleware.verifyIsAdmin,
-//   statisticsController.getDisplayMemberSignUps,
-// );
+// Not Tested
 
-// // Statistics for getting the most common languages used by users
-// statisticsRouter.get('/display-common-languages-used',
-//   authMiddleware.verifyIsAdmin,
-//   statisticsController.getDisplayCommonLanguagesUsed,
-// );
+// Statistics for getting the count of users ( Can filter by gender, by age group, per day, per month, per year, etc. )
+statisticsRouter.get(
+  '/display-member-sign-ups',
+  authMiddleware.verifyIsAdmin,
+  statisticsController.getDisplayMemberSignUps,
+);
+
+// Statistics for getting the most common languages used by users
+statisticsRouter.get(
+  '/display-common-languages-used',
+  authMiddleware.verifyIsAdmin,
+  statisticsController.getDisplayCommonLanguagesUsed,
+);
 
 // Todo:  Display trend of QR code being scanned
+statisticsRouter.get(
+  '/qr-scan-trends',
+  authMiddleware.verifyIsAdmin,
+  statisticsController.getQRCodeScanTrends,
+);
 
 module.exports = statisticsRouter;

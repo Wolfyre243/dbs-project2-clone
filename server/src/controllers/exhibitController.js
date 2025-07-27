@@ -183,6 +183,22 @@ module.exports.validateQrToken = catchAsync(async (req, res, next) => {
     if (payload.exhibitId !== exhibitId) {
       throw new AppError('Invalid QR token for this exhibit', 403);
     }
+
+    // Log the QR scan event for statistics
+    const userId = res.locals.user?.userId || null;
+
+    await logEventAudit(
+      userId,
+      EventTypes.QR_SCANNED,
+      'qr_code',
+      payload.qrCodeId || exhibitId,
+      `QR code scanned for exhibit: ${exhibitId}`,
+    );
+
+    logger.info(
+      `QR code scanned for exhibit ${exhibitId} by user ${userId || 'guest'}`,
+    );
+
     res.status(200).json({ status: 'success', valid: true });
   } catch (err) {
     throw new AppError('Invalid or expired QR token', 403);
