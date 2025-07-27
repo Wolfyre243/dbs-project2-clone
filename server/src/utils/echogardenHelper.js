@@ -89,7 +89,7 @@ module.exports.generateWordTimings = async (audioUrl, text, languageCode) => {
 }; */
 
 // utils/echogardenHelper.js
-const speech = require('@google-cloud/speech').v1;
+const speech = require('@google-cloud/speech');
 const axios = require('axios'); // Add axios to dependencies if not already present
 const levenshtein = require('fast-levenshtein');
 
