@@ -41,6 +41,11 @@ subtitleRouter.delete('/:subtitleId', subtitleController.softDeleteSubtitle);
 subtitleRouter.get('/', subtitleController.getAllSubtitles);
 
 //get single subtitle by ID
+subtitleRouter.get(
+  '/exhibit/:exhibitId',
+  subtitleController.getSubtitlesByExhibitId,
+);
+
 subtitleRouter.get('/:subtitleId', subtitleController.getSubtitleById);
 
 // Hard delete subtitle by removing the record

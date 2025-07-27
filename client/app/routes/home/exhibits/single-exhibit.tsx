@@ -51,9 +51,9 @@ type ExhibitData = {
   imageLink: string | null;
   createdAt: string;
   modifiedAt: string;
-  subtitles: ExhibitSubtitle[];
   status: string;
   supportedLanguages: string[];
+  subtitles: ExhibitSubtitle[]; // Add subtitles field
 };
 
 const PLACEHOLDER_IMAGE =
@@ -73,12 +73,14 @@ function Subtitle({
   currentWordIndices,
   audioRefs,
   handleTimeUpdate,
+  handleAudioEnded,
 }: {
   subtitle: ExhibitSubtitle;
   selectedLanguage: string;
   currentWordIndices: Record<string, number[]>;
   audioRefs: React.MutableRefObject<Record<string, HTMLAudioElement | null>>;
   handleTimeUpdate: (subtitleId: string) => void;
+  handleAudioEnded: (subtitleId: string) => void;
 }) {
   const isSpaceSeparated = [
     'en-GB',
@@ -98,7 +100,6 @@ function Subtitle({
       ? normalizedText.split(/\s+/).filter((w) => w)
       : normalizedText.split('');
 
-    // Map timings to textWords
     let units = textWords.map((word, index) => {
       const timing = subtitle.wordTimings[index];
       return {
@@ -108,7 +109,6 @@ function Subtitle({
       };
     });
 
-    // Group Chinese characters (cmn-CN)
     if (subtitle.languageCode === 'cmn-CN') {
       units = units.reduce(
         (acc, timing, index) => {
@@ -127,14 +127,8 @@ function Subtitle({
 
     console.log('Units:', units);
     return units;
-  }, [
-    subtitle.wordTimings,
-    subtitle.subtitleText,
-    subtitle.languageCode,
-    isSpaceSeparated,
-  ]);
+  }, [subtitle.wordTimings, subtitle.subtitleText, subtitle.languageCode]);
 
-  // Group consecutive highlighted indices
   const renderWords = () => {
     const highlightedIndices = currentWordIndices[subtitle.subtitleId] || [];
     const elements = [];
@@ -142,12 +136,10 @@ function Subtitle({
 
     while (i < units.length) {
       if (highlightedIndices.includes(i)) {
-        // Start of a highlighted group
         let groupWords = [units[i].word];
         let groupStart = i;
         let j = i + 1;
 
-        // Collect consecutive highlighted words
         while (
           j < units.length &&
           highlightedIndices.includes(j) &&
@@ -157,7 +149,6 @@ function Subtitle({
           j++;
         }
 
-        // Render highlighted group
         elements.push(
           <span
             key={i}
@@ -175,14 +166,12 @@ function Subtitle({
           </span>,
         );
 
-        // Add space after group if needed
         if (isSpaceSeparated && j < units.length) {
-          elements.push('');
+          elements.push(' ');
         }
 
         i = j;
       } else {
-        // Non-highlighted word
         elements.push(
           <span
             key={i}
@@ -190,15 +179,13 @@ function Subtitle({
             style={{
               borderRadius: '3px',
               fontWeight: '300',
-              // color: '#000000',
             }}
           >
             {units[i].word}
           </span>,
         );
 
-        // Add space after if needed
-        if (isSpaceSeparated && i < units.length) {
+        if (isSpaceSeparated && i < units.length - 1) {
           elements.push(' ');
         }
 
@@ -226,6 +213,7 @@ function Subtitle({
         src={subtitle.audio.fileLink}
         className='w-full mb-5'
         onTimeUpdate={() => handleTimeUpdate(subtitle.subtitleId)}
+        onEnded={() => handleAudioEnded(subtitle.subtitleId)}
       >
         Your browser does not support the audio element.
       </audio>
@@ -238,12 +226,15 @@ function Subtitle({
 
 export default function SingleExhibit() {
   const [exhibit, setExhibit] = useState<ExhibitData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [subtitles, setSubtitles] = useState<ExhibitSubtitle[] | null>(null);
+  const [exhibitLoading, setExhibitLoading] = useState(true);
+  const [subtitleLoading, setSubtitleLoading] = useState(true);
+  const [exhibitError, setExhibitError] = useState<string | null>(null);
+  const [subtitleError, setSubtitleError] = useState<string | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState<string>('');
   const [currentWordIndices, setCurrentWordIndices] = useState<
     Record<string, number[]>
-  >({}); // Change to store array of indices
+  >({});
   const audioRefs = useRef<Record<string, HTMLAudioElement | null>>({});
   const apiPrivate = useApiPrivate();
   const [searchParams] = useSearchParams();
@@ -254,44 +245,85 @@ export default function SingleExhibit() {
     const token = searchParams.get('token');
     let cancelled = false;
 
-    if (!exhibitId || !token) {
-      setError('Access denied: QR code token or exhibit ID missing.');
-      setLoading(false);
-      return;
-    }
-
-    async function validateAndFetch() {
-      setLoading(true);
-      setError(null);
+    async function fetchExhibit() {
+      setExhibitLoading(true);
+      setExhibitError(null);
 
       try {
         await apiPrivate.post(`/exhibit/${exhibitId}/validate-qr-token`, {
           token,
         });
-        const { data: responseData } = await apiPrivate.get(
-          `/exhibit/${exhibitId}`,
+        const { data: metadataResponseData } = await apiPrivate.get(
+          `/exhibit/public/${exhibitId}`,
         );
         if (!cancelled) {
-          setExhibit(responseData.data.exhibit);
+          setExhibit(metadataResponseData.data.exhibit);
         }
       } catch (err: any) {
+        console.error('Exhibit fetch error:', err);
         if (!cancelled) {
           setExhibit(null);
-          setError('Access denied: Invalid or expired QR code token.');
+          setExhibitError(
+            err.response?.status === 403
+              ? 'Access denied: Invalid or expired QR code token.'
+              : 'Error loading exhibit.',
+          );
         }
       } finally {
         if (!cancelled) {
-          setLoading(false);
+          setExhibitLoading(false);
         }
       }
     }
 
-    validateAndFetch();
+    if (exhibitId && token) {
+      fetchExhibit();
+    } else {
+      setExhibitError('Access denied: QR code token or exhibit ID missing.');
+      setExhibitLoading(false);
+    }
 
     return () => {
       cancelled = true;
     };
   }, [params.exhibitId, searchParams, apiPrivate]);
+
+  useEffect(() => {
+    const exhibitId = params.exhibitId;
+    let cancelled = false;
+
+    async function fetchSubtitles() {
+      setSubtitleLoading(true);
+      setSubtitleError(null);
+
+      try {
+        const { data: subtitlesResponseData } = await apiPrivate.get(
+          `/subtitle/exhibit/${exhibitId}`,
+        );
+        if (!cancelled) {
+          setSubtitles(subtitlesResponseData.data);
+        }
+      } catch (err: any) {
+        console.error('Subtitle fetch error:', err);
+        if (!cancelled) {
+          setSubtitles(null);
+          setSubtitleError('Error loading subtitles.');
+        }
+      } finally {
+        if (!cancelled) {
+          setSubtitleLoading(false);
+        }
+      }
+    }
+
+    if (exhibitId) {
+      fetchSubtitles();
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [params.exhibitId, apiPrivate]);
 
   useEffect(() => {
     if (exhibit && exhibit.supportedLanguages.length > 0) {
@@ -302,28 +334,27 @@ export default function SingleExhibit() {
   const handleTimeUpdate = useCallback(
     debounce((subtitleId: string) => {
       const audioElement = audioRefs.current[subtitleId];
-      if (audioElement && exhibit) {
-        const subtitle = exhibit.subtitles.find(
-          (s) => s.subtitleId === subtitleId,
-        );
+      if (audioElement && subtitles) {
+        const subtitle = subtitles.find((s) => s.subtitleId === subtitleId);
         if (subtitle && subtitle.wordTimings?.length) {
           const currentTime = audioElement.currentTime;
           const duration = audioElement.duration || Infinity;
-          const maxWordsToHighlight = 3; // Controls max words (e.g., 2 or 3)
+          const maxWordsToHighlight = 3;
           let activeIndices = subtitle.wordTimings
             .map((timing, index) =>
-              currentTime >= timing.start - 0.1 &&
-              currentTime <= timing.end + 0.3
+              currentTime >= timing.start - 0.3 &&
+              currentTime <= timing.end + 0.5
                 ? index
                 : -1,
             )
             .filter((index) => index >= 0)
+            .sort((a, b) => b - a)
             .slice(0, maxWordsToHighlight);
 
-          const lastWordIndex = subtitle.wordTimings.length;
+          const lastWordIndex = subtitle.wordTimings.length - 1;
           if (
             activeIndices.length === 0 &&
-            currentTime >= subtitle.wordTimings[lastWordIndex].start - 0.2 &&
+            currentTime >= subtitle.wordTimings[lastWordIndex].start - 0.3 &&
             currentTime <= duration
           ) {
             activeIndices = [lastWordIndex];
@@ -332,6 +363,7 @@ export default function SingleExhibit() {
           console.log('Time update:', {
             subtitleId,
             currentTime,
+            duration,
             activeIndices,
             words: activeIndices.map((i) => subtitle.wordTimings[i]?.word),
           });
@@ -341,11 +373,19 @@ export default function SingleExhibit() {
           }));
         }
       }
-    }, 100),
-    [exhibit],
+    }, 50),
+    [subtitles],
   );
 
-  if (loading) {
+  const handleAudioEnded = useCallback((subtitleId: string) => {
+    console.log('Audio ended:', { subtitleId });
+    setCurrentWordIndices((prev) => ({
+      ...prev,
+      [subtitleId]: [],
+    }));
+  }, []);
+
+  if (exhibitLoading) {
     return (
       <div className='flex items-center justify-center h-[60vh]'>
         <span className='text-lg font-semibold'>Loading exhibit...</span>
@@ -353,10 +393,12 @@ export default function SingleExhibit() {
     );
   }
 
-  if (error) {
+  if (exhibitError) {
     return (
       <div className='flex items-center justify-center h-[60vh]'>
-        <span className='text-lg font-semibold text-red-500'>{error}</span>
+        <span className='text-lg font-semibold text-red-500'>
+          {exhibitError}
+        </span>
       </div>
     );
   }
@@ -408,8 +450,13 @@ export default function SingleExhibit() {
         </Select>
       </div>
       <div className='flex flex-col gap-6'>
-        {exhibit.subtitles
-          .filter((subtitle) => subtitle.languageCode === selectedLanguage)
+        {subtitleLoading && (
+          <div className='flex items-center justify-center'>
+            <span className='text-lg font-semibold'>Loading subtitles...</span>
+          </div>
+        )}
+        {subtitles
+          ?.filter((subtitle) => subtitle.languageCode === selectedLanguage)
           .map((subtitle) => (
             <Subtitle
               key={subtitle.subtitleId}
@@ -418,6 +465,7 @@ export default function SingleExhibit() {
               currentWordIndices={currentWordIndices}
               audioRefs={audioRefs}
               handleTimeUpdate={handleTimeUpdate}
+              handleAudioEnded={handleAudioEnded}
             />
           ))}
       </div>

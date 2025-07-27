@@ -4,6 +4,10 @@ const { PrismaClient } = require('../generated/prisma');
 const { convertDatesToStrings } = require('../utils/formatters');
 const { deleteFile } = require('../utils/fileUploader');
 const AppError = require('../utils/AppError');
+const {
+  generateWordTimings,
+  generateWordTimingsBatch,
+} = require('../utils/echogardenHelper');
 
 const prisma = new PrismaClient();
 
@@ -284,6 +288,92 @@ module.exports.getSubtitleById = async (subtitleId) => {
       throw new AppError('Subtitle not found', 404);
     }
     return convertDatesToStrings(subtitle);
+  } catch (error) {
+    throw error;
+  }
+};
+
+module.exports.getAllSubtitlesByExhibitId = async (exhibitId) => {
+  try {
+    const subtitles = await prisma.exhibitSubtitle.findMany({
+      where: { exhibitId },
+      include: {
+        subtitle: {
+          select: {
+            subtitleId: true,
+            subtitleText: true,
+            languageCode: true,
+            createdBy: true,
+            createdAt: true,
+            modifiedAt: true,
+            statusId: true,
+            audio: true,
+          },
+        },
+      },
+    });
+
+    // TODO: Optimise loading time
+    // Load per language?
+    // Collect subtitles for batch processing
+    const cleanedSubtitles = [];
+    const seenSubtitleIds = new Set();
+    const seenTexts = new Set();
+
+    for (const s of subtitles) {
+      const subtitle = s.subtitle;
+      // Remove extra spaces from subtitleText
+      const cleanedText = subtitle.subtitleText
+        .replace(/\s+/g, ' ') // Normalize multiple spaces to single
+        .trim();
+
+      // Skip duplicates based on subtitleId or cleaned text
+      if (
+        !seenSubtitleIds.has(subtitle.subtitleId) &&
+        !seenTexts.has(cleanedText)
+      ) {
+        cleanedSubtitles.push({
+          ...s,
+          subtitle: { ...subtitle, subtitleText: cleanedText },
+        });
+        seenSubtitleIds.add(subtitle.subtitleId);
+        seenTexts.add(cleanedText);
+      } else {
+        console.warn(
+          `Skipping duplicate subtitle: ${subtitle.subtitleId}, text: ${cleanedText}`,
+        );
+      }
+    }
+
+    const subtitlesToProcess = cleanedSubtitles
+      .map((s) => ({
+        subtitleId: s.subtitle.subtitleId,
+        audioUrl: s.subtitle.audio?.fileLink,
+        text: s.subtitle.subtitleText,
+        languageCode: s.subtitle.languageCode,
+      }))
+      .filter((s) => s.audioUrl && s.text && s.languageCode);
+
+    // Batch process wordTimings
+    const start = Date.now();
+    const batchedResults = await generateWordTimingsBatch(subtitlesToProcess);
+    console.log(`Batch processing took ${Date.now() - start}ms`);
+
+    // Map results
+    const wordTimingsMap = batchedResults.reduce(
+      (acc, { subtitleId, wordTimings }) => {
+        acc[subtitleId] = wordTimings;
+        return acc;
+      },
+      {},
+    );
+
+    const enrichedSubtitles = subtitles.map((s) => ({
+      ...s.subtitle,
+      wordTimings: wordTimingsMap[s.subtitle.subtitleId] || [],
+    }));
+
+    return enrichedSubtitles.map((s) => convertDatesToStrings(s));
   } catch (error) {
     throw error;
   }

@@ -255,6 +255,52 @@ module.exports.getAllExhibits = async ({
   };
 };
 
+module.exports.getExhibitMetadataById = async (exhibitId) => {
+  try {
+    const exhibit = await prisma.exhibit.findUnique({
+      where: { exhibitId },
+      include: {
+        subtitles: {
+          select: {
+            subtitle: {
+              select: {
+                languageCode: true,
+              },
+            },
+          },
+        },
+        image: {
+          select: {
+            fileLink: true,
+          },
+        },
+        status: true,
+        exhibitCreatedBy: true,
+      },
+    });
+
+    if (!exhibit) {
+      throw new AppError('Exhibit not found', 404);
+    }
+
+    return convertDatesToStrings({
+      ...exhibit,
+      statusId: undefined,
+      exhibitCreatedBy: undefined,
+      subtitles: undefined,
+      status: exhibit.status.statusName,
+      createdBy: exhibit.exhibitCreatedBy.username,
+      imageLink: exhibit.image.fileLink,
+      supportedLanguages: exhibit.subtitles.map((s) => s.subtitle.languageCode),
+    });
+  } catch (error) {
+    if (error.code === 'P2025') {
+      throw new AppError('Exhibit not found', 404);
+    }
+    throw error;
+  }
+};
+
 // Get Exhibits By Exhibit ID
 module.exports.getExhibitById = async (exhibitId) => {
   try {
@@ -298,73 +344,14 @@ module.exports.getExhibitById = async (exhibitId) => {
 
     // console.log('Exhibit subtitles:', exhibit.subtitles); // Debug log
 
-    // TODO: Optimise loading time
-    // Collect subtitles for batch processing
-    const cleanedSubtitles = [];
-    const seenSubtitleIds = new Set();
-    const seenTexts = new Set();
-
-    for (const s of exhibit.subtitles) {
-      const subtitle = s.subtitle;
-      // Remove extra spaces from subtitleText
-      const cleanedText = subtitle.subtitleText
-        .replace(/\s+/g, ' ') // Normalize multiple spaces to single
-        .trim();
-
-      // Skip duplicates based on subtitleId or cleaned text
-      if (
-        !seenSubtitleIds.has(subtitle.subtitleId) &&
-        !seenTexts.has(cleanedText)
-      ) {
-        cleanedSubtitles.push({
-          ...s,
-          subtitle: { ...subtitle, subtitleText: cleanedText },
-        });
-        seenSubtitleIds.add(subtitle.subtitleId);
-        seenTexts.add(cleanedText);
-      } else {
-        console.warn(
-          `Skipping duplicate subtitle: ${subtitle.subtitleId}, text: ${cleanedText}`,
-        );
-      }
-    }
-
-    const subtitlesToProcess = cleanedSubtitles
-      .map((s) => ({
-        subtitleId: s.subtitle.subtitleId,
-        audioUrl: s.subtitle.audio?.fileLink,
-        text: s.subtitle.subtitleText,
-        languageCode: s.subtitle.languageCode,
-      }))
-      .filter((s) => s.audioUrl && s.text && s.languageCode);
-
-    // Batch process wordTimings
-    const start = Date.now();
-    const batchedResults = await generateWordTimingsBatch(subtitlesToProcess);
-    console.log(`Batch processing took ${Date.now() - start}ms`);
-
-    // Map results
-    const wordTimingsMap = batchedResults.reduce(
-      (acc, { subtitleId, wordTimings }) => {
-        acc[subtitleId] = wordTimings;
-        return acc;
-      },
-      {},
-    );
-
-    const enrichedSubtitles = exhibit.subtitles.map((s) => ({
-      ...s.subtitle,
-      wordTimings: wordTimingsMap[s.subtitle.subtitleId] || [],
-    }));
-
     return convertDatesToStrings({
       ...exhibit,
       statusId: undefined,
       exhibitCreatedBy: undefined,
-      // subtitles: exhibit.subtitles.map((s) => ({ ...s.subtitle })),
-      // supportedLanguages: exhibit.subtitles.map((s) => s.subtitle.languageCode),
-      supportedLanguages: enrichedSubtitles.map((s) => s.languageCode),
-      subtitles: enrichedSubtitles,
+      subtitles: exhibit.subtitles.map((s) => ({ ...s.subtitle })),
+      supportedLanguages: exhibit.subtitles.map((s) => s.subtitle.languageCode),
+      // supportedLanguages: enrichedSubtitles.map((s) => s.languageCode),
+      // subtitles: enrichedSubtitles,
       status: exhibit.status.statusName,
       createdBy: exhibit.exhibitCreatedBy.username,
       imageLink: exhibit.image.fileLink,
