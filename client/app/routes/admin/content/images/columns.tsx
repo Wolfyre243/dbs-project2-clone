@@ -1,6 +1,12 @@
 import { type ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
-
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '~/components/ui/dialog';
 import { Button } from '~/components/ui/button';
 import { Checkbox } from '~/components/ui/checkbox';
 import { DataTableColumnHeader } from '~/components/ui/data-table-column-header';
@@ -114,28 +120,43 @@ export const columns: ColumnDef<Image>[] = [
       const image = row.original;
 
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant='ghost' className='h-8 w-8 p-0'>
-              <span className='sr-only'>Open menu</span>
-              <MoreHorizontal className='h-4 w-4' />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align='end'>
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() =>
-                navigator.clipboard.writeText(image.imageId.toString())
-              }
-            >
-              Copy Image ID
-            </DropdownMenuItem>
-            {/* TODO Turn into redirect buttons */}
-            <DropdownMenuItem>View image</DropdownMenuItem>
-            <DropdownMenuItem>View activity</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Dialog>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant='ghost' className='h-8 w-8 p-0'>
+                <span className='sr-only'>Open menu</span>
+                <MoreHorizontal className='h-4 w-4' />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align='end'>
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() =>
+                  navigator.clipboard.writeText(image.imageId.toString())
+                }
+              >
+                Copy Image ID
+              </DropdownMenuItem>
+              <DialogTrigger asChild>
+                <DropdownMenuItem>View image</DropdownMenuItem>
+              </DialogTrigger>
+              <DropdownMenuItem>View activity</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Image Preview</DialogTitle>
+            </DialogHeader>
+            <div className='max-h-96 overflow-y-auto p-4 border-2 rounded-lg'>
+              <img
+                src={image.fileLink}
+                alt={image.fileName}
+                className='max-w-full h-auto object-contain'
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
       );
     },
   },

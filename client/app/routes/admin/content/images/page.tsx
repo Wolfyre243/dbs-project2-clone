@@ -5,16 +5,13 @@ import { DataTable } from '~/components/ui/data-table';
 import useApiPrivate from '~/hooks/useApiPrivate';
 import useAuth from '~/hooks/useAuth';
 import { useSearchParams } from 'react-router';
-import { Button } from '~/components/ui/button';
-import { PaginationFilterDropdown } from '~/components/pagination-filters';
+import { Input } from '~/components/ui/input';
 
 export default function AdminImagePagination() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [data, setData] = useState<Image[]>([]);
   const [pageCount, setPageCount] = useState<number>();
   const [currentPage, setCurrentPage] = useState<number>();
-  const [languageData, setLanguageData] = useState<any[]>([]);
-  const [languageFilterValue, setLanguageFilterValue] = useState('');
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const { accessToken } = useAuth();
@@ -30,55 +27,29 @@ export default function AdminImagePagination() {
         page: '1',
       });
     }
-    // eslint-disable-next-line
-  }, [sorting]);
-
-  useEffect(() => {
-    // Update searchParams when languageFilterValue changes
-    if (languageFilterValue !== undefined) {
-      setSearchParams({
-        ...Object.fromEntries(searchParams),
-        languageCode: languageFilterValue || '',
-        page: '1',
-      });
-    }
-    // eslint-disable-next-line
-  }, [languageFilterValue]);
+  }, [sorting, setSearchParams]);
 
   useEffect(() => {
     (async () => {
       try {
-        const { data: responseData } = await apiPrivate.get('/audio', {
+        const { data: responseData } = await apiPrivate.get('/image', {
           params: {
             page: searchParams.get('page') || null,
             pageSize: searchParams.get('pageSize') || null,
             sortBy: searchParams.get('sortBy') || null,
             order: searchParams.get('order') || null,
             search: searchParams.get('search') || null,
-            languageCodeFilter: searchParams.get('languageCode') || null,
           },
         });
-        setData(responseData.data.audioList);
-        setPageCount(responseData.data.pageCount);
-        setCurrentPage(Number(searchParams.get('page')));
+        setData(responseData.data);
+        setPageCount(responseData.pageCount);
+        setCurrentPage(Number(searchParams.get('page')) || 1);
       } catch (error: any) {
         setData([]);
-        console.log(error.response?.data?.message);
+        console.error('Error fetching images:', error.response?.data?.message);
       }
     })();
-  }, [accessToken, searchParams]);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const { data: responseData } = await apiPrivate.get('/language');
-        setLanguageData(responseData.data);
-      } catch (error: any) {
-        setLanguageData([]);
-        console.log(error.response?.data?.message);
-      }
-    })();
-  }, [accessToken, searchParams]);
+  }, [accessToken, searchParams, apiPrivate]);
 
   const handlePrevious = () => {
     const currentPage = Number(searchParams.get('page')) || 1;
@@ -135,31 +106,13 @@ export default function AdminImagePagination() {
   return (
     <div className='flex flex-col gap-3'>
       <div className='flex flex-col md:flex-row w-full gap-3 h-fit'>
-        <input
+        <Input
           type='text'
-          placeholder='Search audio...'
+          placeholder='Search images...'
           className='p-2 border rounded-md md:w-1/4 text-sm'
           defaultValue={searchParams.get('search') || ''}
           onChange={(e) => handleSearchChange(e.target.value)}
         />
-        <div className='flex flex-row items-center gap-3'>
-          <PaginationFilterDropdown
-            filterTitle={'Language'}
-            filterOptionList={languageData}
-            valueAccessor='languageCode'
-            nameAccessor='languageCode'
-            selectedValue={languageFilterValue}
-            setSelectedValue={setLanguageFilterValue}
-            placeholder='Filter Language'
-          />
-          {languageFilterValue !== '' ? (
-            <Button onClick={() => setLanguageFilterValue('')}>
-              Reset Filters
-            </Button>
-          ) : (
-            ''
-          )}
-        </div>
       </div>
       <DataTable
         columns={columns}
