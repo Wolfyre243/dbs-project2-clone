@@ -20,6 +20,7 @@ import {
   AlertCircle,
   Upload,
   UploadCloud,
+  LoaderCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -119,6 +120,7 @@ export default function TourEditorCreateExhibitPage() {
   // const [imageFile, setImageFile] = useState<File | null>(null);
   // const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isCreatingSubtitle, setIsCreatingSubtitle] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
 
   // Drag and drop handlers
@@ -330,29 +332,37 @@ export default function TourEditorCreateExhibitPage() {
       return;
     }
 
-    const { data: responseData } = await apiPrivate.post('/subtitle', {
-      ...subtitleFormData,
-    });
+    setIsCreatingSubtitle(true);
+    try {
+      const { data: responseData } = await apiPrivate.post('/subtitle', {
+        ...subtitleFormData,
+      });
 
-    setSubtitles((prev) => [
-      ...prev,
-      {
-        text: subtitleFormData.text,
-        languageCode: subtitleFormData.languageCode,
-        audioId: subtitleFormData.audioId as string,
-        fileLink: subtitleFormData.fileLink as string,
-        subtitleId: responseData.data.subtitleId,
-      },
-    ]);
+      setSubtitles((prev) => [
+        ...prev,
+        {
+          text: subtitleFormData.text,
+          languageCode: subtitleFormData.languageCode,
+          audioId: subtitleFormData.audioId as string,
+          fileLink: subtitleFormData.fileLink as string,
+          subtitleId: responseData.data.subtitleId,
+        },
+      ]);
 
-    // Reset data
-    setSubtitleFormData({
-      text: '',
-      languageCode: '',
-      audioId: undefined,
-      fileLink: undefined,
-      isGenerating: undefined,
-    });
+      // Reset data
+      setSubtitleFormData({
+        text: '',
+        languageCode: '',
+        audioId: undefined,
+        fileLink: undefined,
+        isGenerating: undefined,
+      });
+    } catch (error) {
+      console.error('Error creating subtitle: ', error);
+      toast.error('Failed to create subtitle');
+    } finally {
+      setIsCreatingSubtitle(false);
+    }
   };
 
   // Remove a subtitle item and delete its audio/subtitle if present
@@ -880,11 +890,21 @@ export default function TourEditorCreateExhibitPage() {
                       !subtitleFormData.text.trim() ||
                       !subtitleFormData.languageCode ||
                       subtitleFormData.isGenerating ||
-                      !subtitleFormData.audioId
+                      !subtitleFormData.audioId ||
+                      isCreatingSubtitle
                     }
                   >
-                    <Plus />
-                    Create Subtitle
+                    {isCreatingSubtitle ? (
+                      <>
+                        <LoaderCircle className='animate-spin' />
+                        Creating Subtitle...
+                      </>
+                    ) : (
+                      <>
+                        <Plus />
+                        Create Subtitle
+                      </>
+                    )}
                   </Button>
                 </div>
 

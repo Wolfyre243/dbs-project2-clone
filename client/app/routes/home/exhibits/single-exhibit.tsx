@@ -152,11 +152,11 @@ function Subtitle({
         elements.push(
           <span
             key={i}
-            className='px-1 py-0.5'
+            className=''
             style={{
               borderRadius: '3px',
               background: 'linear-gradient(90deg, #ffeb3b, #ffca28)',
-              fontWeight: '500',
+              fontWeight: '400',
               transition: 'all 0.3s ease',
               boxShadow: '0 2px 2px rgba(255, 215, 0, 0.4)',
               color: '#1a1a1a',
@@ -178,7 +178,7 @@ function Subtitle({
             className=''
             style={{
               borderRadius: '3px',
-              fontWeight: '300',
+              fontWeight: '400',
             }}
           >
             {units[i].word}
@@ -339,7 +339,7 @@ export default function SingleExhibit() {
         if (subtitle && subtitle.wordTimings?.length) {
           const currentTime = audioElement.currentTime;
           const duration = audioElement.duration || Infinity;
-          const maxWordsToHighlight = 3;
+          const maxWordsToHighlight = 2;
           let activeIndices = subtitle.wordTimings
             .map((timing, index) =>
               currentTime >= timing.start - 0.3 &&
@@ -347,7 +347,7 @@ export default function SingleExhibit() {
                 ? index
                 : -1,
             )
-            .filter((index) => index >= 0)
+            .filter((index) => index >= -1)
             .sort((a, b) => b - a)
             .slice(0, maxWordsToHighlight);
 
@@ -373,7 +373,7 @@ export default function SingleExhibit() {
           }));
         }
       }
-    }, 50),
+    }, 30),
     [subtitles],
   );
 
