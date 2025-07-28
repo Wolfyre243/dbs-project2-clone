@@ -113,14 +113,6 @@ export default function LandingPage() {
               ) : (
                 ''
               )}
-
-              <Button
-                size='lg'
-                className='px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300 hover:scale-105'
-              >
-                <Play className='mr-2 w-5 h-5' />
-                Watch Demo
-              </Button>
             </div>
           </div>
         </section>

@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select';
+import api from '~/services/api';
 
 export function LanguageSelect({
   className,
@@ -19,6 +20,7 @@ export function LanguageSelect({
   required = false,
   value,
   onValueChange,
+  disabledLanguageCodes = [],
 }: {
   className?: string;
   placeholder?: string;
@@ -27,6 +29,7 @@ export function LanguageSelect({
   required?: boolean;
   value?: string;
   onValueChange?: (val: string) => void;
+  disabledLanguageCodes?: string[];
 }) {
   const [internalValue, setInternalValue] = useState<string>('');
   const [languages, setLanguages] = useState<
@@ -39,7 +42,7 @@ export function LanguageSelect({
     (async () => {
       try {
         setLoading(true);
-        const { data: responseData } = await apiPrivate.get('/language/name');
+        const { data: responseData } = await api.get('/language/name');
         setLanguages(responseData.data);
       } catch (error) {
         console.log(error);
@@ -47,7 +50,7 @@ export function LanguageSelect({
         setLoading(false);
       }
     })();
-  }, [apiPrivate]);
+  }, [api]);
 
   const controlled = value !== undefined && onValueChange !== undefined;
   const selectValue = controlled ? value : internalValue;
@@ -66,7 +69,11 @@ export function LanguageSelect({
               <SelectLabel>Loading</SelectLabel>
             ) : (
               languages.map((lang, i) => (
-                <SelectItem key={i} value={lang.languageCode}>
+                <SelectItem
+                  key={i}
+                  value={lang.languageCode}
+                  disabled={disabledLanguageCodes.includes(lang.languageCode)}
+                >
                   {lang.languageName}
                 </SelectItem>
               ))

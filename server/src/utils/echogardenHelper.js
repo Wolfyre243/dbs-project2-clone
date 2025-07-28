@@ -89,7 +89,7 @@ module.exports.generateWordTimings = async (audioUrl, text, languageCode) => {
 }; */
 
 // utils/echogardenHelper.js
-const speech = require('@google-cloud/speech').v1;
+const speech = require('@google-cloud/speech');
 const axios = require('axios'); // Add axios to dependencies if not already present
 const levenshtein = require('fast-levenshtein');
 
@@ -114,11 +114,11 @@ const client = new speech.SpeechClient();
 // OLD CODE
 const generateWordTimings = async (audioUrl, text, languageCode) => {
   try {
-    console.log('Calling Google Speech-to-Text with:', {
-      audioUrl,
-      text,
-      languageCode,
-    });
+    // console.log('Calling Google Speech-to-Text with:', {
+    //   audioUrl,
+    //   text,
+    //   languageCode,
+    // });
 
     const audioResponse = await axios.get(audioUrl, {
       responseType: 'arraybuffer',
@@ -153,7 +153,7 @@ const generateWordTimings = async (audioUrl, text, languageCode) => {
           (wordInfo.endTime?.nanos || 0) / 1e9,
       }));
 
-    console.log('Google Speech-to-Text result:', wordTimings);
+    // console.log('Google Speech-to-Text result:', wordTimings);
     return wordTimings;
   } catch (error) {
     console.error('Google Speech-to-Text error:', error.message, error.stack);

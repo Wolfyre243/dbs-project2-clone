@@ -197,7 +197,7 @@ module.exports.getAllExhibits = async ({
   search,
   filter = {},
 }) => {
-  let where = { ...filter };
+  let where = { ...filter, statusId: statusCodes.ACTIVE };
 
   // Conditional search terms
   if (search && search.trim() !== '') {
@@ -335,6 +335,7 @@ module.exports.getExhibitById = async (exhibitId) => {
             fileLink: true,
           },
         },
+        url: true,
       },
     });
 

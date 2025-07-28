@@ -316,6 +316,14 @@ export default function TourEditorCreateExhibitPage() {
 
   // Add a new subtitle item (local only, not yet created on backend)
   const addSubtitle = async () => {
+    // Prevent duplicate language subtitles
+    if (
+      subtitles.some((s) => s.languageCode === subtitleFormData.languageCode)
+    ) {
+      toast.error('This language already has a subtitle.');
+      return;
+    }
+
     if (!subtitleFormData.audioId && !subtitleFormData.fileLink) {
       // console.log('No audio file selected');
       toast.error('No audio file selected!');
@@ -715,13 +723,15 @@ export default function TourEditorCreateExhibitPage() {
                         fieldName={`languageCode`}
                         value={subtitleFormData.languageCode}
                         onValueChange={(languageCode) =>
-                          // updateSubtitleLanguage(subtitle.id, languageCode)
                           setSubtitleFormData({
                             ...subtitleFormData,
                             languageCode,
                           })
                         }
                         placeholder='Select language'
+                        disabledLanguageCodes={subtitles.map(
+                          (s) => s.languageCode,
+                        )}
                       />
                     </div>
                     {/* Subtitle Text */}

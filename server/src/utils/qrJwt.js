@@ -9,14 +9,14 @@ const {
 
 // Generate a JWT for QR code access
 function generateQrJwt(exhibitId) {
-  const payload = { exhibitId, type: 'qr' };
+  const payload = { exhibitId };
   // No expiry for permanent QR codes; otherwise, add: expiresIn: verifyTokenDuration
   return jwt.sign(payload, verifySK, { algorithm: tokenAlgorithm });
 }
 
 // Verify a QR JWT and return the payload if valid, else throw
 function verifyQrJwt(token) {
-  return jwt.verify(token, verifySK, { algorithms: [tokenAlgorithm] });
+  return jwt.verify(token, verifySK, { algorithm: tokenAlgorithm });
 }
 
 module.exports = {

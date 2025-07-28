@@ -21,8 +21,7 @@ export default function AdminContentPage() {
           <AdminAudioPagination />
         </TabsContent>
         <TabsContent value='images'>
-          { <AdminImagePagination /> }
-          <Card>Image Pagination Here</Card>
+          <AdminImagePagination />
         </TabsContent>
       </Tabs>
     </div>

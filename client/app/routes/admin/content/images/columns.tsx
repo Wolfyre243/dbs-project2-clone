@@ -69,12 +69,6 @@ export const columns: ColumnDef<Image>[] = [
     ),
   },
   {
-    accessorKey: 'description',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Description' />
-    ),
-  },
-  {
     accessorKey: 'createdBy',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='Created By' />
@@ -103,15 +97,9 @@ export const columns: ColumnDef<Image>[] = [
     },
   },
   {
-    accessorKey: 'statusId',
+    accessorKey: 'status',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='Status ID' />
-    ),
-  },
-  {
-    accessorKey: 'fileLink',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='File Link' />
     ),
   },
   {
@@ -129,8 +117,6 @@ export const columns: ColumnDef<Image>[] = [
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align='end'>
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() =>
                   navigator.clipboard.writeText(image.imageId.toString())
@@ -141,7 +127,6 @@ export const columns: ColumnDef<Image>[] = [
               <DialogTrigger asChild>
                 <DropdownMenuItem>View image</DropdownMenuItem>
               </DialogTrigger>
-              <DropdownMenuItem>View activity</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <DialogContent>

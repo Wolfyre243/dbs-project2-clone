@@ -165,6 +165,7 @@ model qrCode {
   qrCodeId        String   @id @default(uuid()) @map("qr_code_id") @db.Uuid
   createdBy       String   @map("created_by") @db.Uuid
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  url             String   @default("")
   exhibitId       String   @unique @map("exhibit_id") @db.Uuid
   imageId         String   @unique @map("image_id") @db.Uuid
   statusId        Int      @map("status_id")
@@ -204,7 +205,7 @@ model eventType {
 
 model event {
   eventId     String    @id @default(uuid()) @map("event_id") @db.Uuid
-  entityId    Int       @map("entity_id")
+  entityId    String    @map("entity_id")
   entityName  String    @map("entity_name") @db.VarChar(100)
   eventTypeId Int       @map("event_type_id") @db.Integer
   timestamp   DateTime  @db.Timestamptz(6)

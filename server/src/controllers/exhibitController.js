@@ -9,6 +9,7 @@ const { logAdminAudit } = require('../utils/auditlogs');
 const generateQrImageBuffer = require('../utils/generateQrImageBuffer');
 const qrModel = require('../models/QRcodeModel');
 const { saveAudioFile } = require('../utils/fileUploader');
+const { logUserEvent } = require('../utils/eventlogs');
 
 // Create Exhibit controller function
 // Takes in an array of subtitle and audio IDs
@@ -179,9 +180,9 @@ module.exports.deleteExhibit = catchAsync(async (req, res, next) => {
 });
 
 const { verifyQrJwt } = require('../utils/qrJwt');
+const EventTypes = require('../configs/eventTypes');
 
 // Validate QR JWT for exhibit access
-// TODO: Add event logging here using eventLogger utility function
 // to log users scanning w/ QR code
 module.exports.validateQrToken = catchAsync(async (req, res, next) => {
   const { exhibitId } = req.params;
@@ -191,31 +192,28 @@ module.exports.validateQrToken = catchAsync(async (req, res, next) => {
     throw new AppError('Missing QR token', 400);
   }
 
-  try {
-    const payload = verifyQrJwt(token);
-    if (payload.exhibitId !== exhibitId) {
-      throw new AppError('Invalid QR token for this exhibit', 403);
-    }
-
-    // Log the QR scan event for statistics
-    const userId = res.locals.user?.userId || null;
-
-    await logEventAudit(
-      userId,
-      EventTypes.QR_SCANNED,
-      'qr_code',
-      payload.qrCodeId || exhibitId,
-      `QR code scanned for exhibit: ${exhibitId}`,
-    );
-
-    logger.info(
-      `QR code scanned for exhibit ${exhibitId} by user ${userId || 'guest'}`,
-    );
-
-    res.status(200).json({ status: 'success', valid: true });
-  } catch (err) {
-    throw new AppError('Invalid or expired QR token', 403);
+  const payload = verifyQrJwt(token);
+  if (payload.exhibitId !== exhibitId) {
+    throw new AppError('Invalid QR token for this exhibit', 403);
   }
+
+  // Log the QR scan event for statistics
+  const userId = res.locals.user?.userId || null;
+
+  await logUserEvent({
+    userId,
+    entityId: payload.exhibitId,
+    entityName: 'exhibit',
+    eventTypeId: EventTypes.QR_SCANNED,
+    details: `QR code scanned for exhibit ${exhibitId}`,
+    role: res.locals.user?.userId,
+  });
+
+  logger.info(
+    `QR code scanned for exhibit ${exhibitId} by user ${userId || 'guest'}`,
+  );
+
+  res.status(200).json({ status: 'success', valid: true });
 });
 
 // Get all exhibits with pagination, sorting, and search

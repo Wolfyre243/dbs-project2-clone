@@ -108,16 +108,16 @@ export const columns: ColumnDef<Subtitle>[] = [
       });
     },
   },
-  {
-    accessorKey: 'modifiedBy',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Modified By' />
-    ),
-    cell: ({ row }) => {
-      const value = row.original.modifiedBy;
-      return value?.length > 8 ? value.slice(0, 8) + '...' : value;
-    },
-  },
+  // {
+  //   accessorKey: 'modifiedBy',
+  //   header: ({ column }) => (
+  //     <DataTableColumnHeader column={column} title='Modified By' />
+  //   ),
+  //   cell: ({ row }) => {
+  //     const value = row.original.modifiedBy;
+  //     return value?.length > 8 ? value.slice(0, 8) + '...' : value;
+  //   },
+  // },
   {
     accessorKey: 'modifiedAt',
     header: ({ column }) => (

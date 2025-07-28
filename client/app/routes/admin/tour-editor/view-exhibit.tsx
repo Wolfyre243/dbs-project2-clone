@@ -85,13 +85,15 @@ interface Exhibit {
   modifiedAt: string;
   supportedLanguages: string[];
   subtitles?: Subtitle[];
-  qrCode: {
-    qrCodeId: string;
-    image: {
-      fileLink: string;
-    };
-  };
   statusId: number;
+}
+
+interface ExhibitQrCode {
+  qrCodeId: string;
+  image: {
+    fileLink: string;
+  };
+  url: string;
 }
 
 interface ExhibitMetadata {
@@ -464,30 +466,28 @@ function ExhibitMetadata({
 }
 
 function ExhibitQrCard({
-  qrCodeId,
-  qrImageLink,
+  qrCode,
   exhibitId,
-  setExhibit,
+  setQrCode,
 }: {
-  qrCodeId: string;
-  qrImageLink: string;
+  qrCode: ExhibitQrCode | null;
   exhibitId: string;
-  setExhibit: any;
+  setQrCode: any;
 }) {
   const apiPrivate = useApiPrivate();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleRefreshQR = async () => {
+    setIsRefreshing(true);
     try {
       const { data: responseData } = await apiPrivate.post(
         `/qrcode/regenerate/${exhibitId}`,
       );
 
-      await setExhibit((prev: Exhibit) => ({
+      await setQrCode((prev: ExhibitQrCode) => ({
         ...prev,
-        qrCode: {
-          qrCodeId: responseData.data.qrCodeId,
-          image: { fileLink: responseData.data.fileLink },
-        },
+        qrCodeId: responseData.data.qrCodeId,
+        image: { fileLink: responseData.data.fileLink },
       }));
 
       toast.success('Successfully regenerated QR Code');
@@ -500,6 +500,8 @@ function ExhibitQrCard({
       }
       console.log(error);
       toast.error('Failed to regenerate QR Code');
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
@@ -514,14 +516,14 @@ function ExhibitQrCard({
               variant={'secondary'}
               size={'icon'}
             >
-              <RefreshCcw />
+              <RefreshCcw className={`${isRefreshing ? 'animate-spin' : ''}`} />
             </Button>
           </CardTitle>
         </CardHeader>
         <CardContent className='flex flex-col gap-2 w-full h-fit'>
-          {qrImageLink ? (
+          {qrCode?.image.fileLink ? (
             <img
-              src={qrImageLink}
+              src={qrCode.image.fileLink}
               alt='QR Code'
               className='h-60 w-60 rounded-lg object-contain'
             />
@@ -531,13 +533,24 @@ function ExhibitQrCard({
               <span className='ml-2'>QR Code Placeholder</span>
             </div>
           )}
-          <Button asChild>
-            <Link
-              className='px-4 py-1 w-fit rounded-md'
-              to={`/home/exhibits/${exhibitId}`}
-            >
-              View Live
-            </Link>
+          <Button
+            asChild
+            className={isRefreshing ? 'bg-muted text-muted-foreground' : ''}
+            disabled={isRefreshing}
+          >
+            {!isRefreshing ? (
+              <Link
+                className='px-4 py-1 w-fit rounded-md'
+                to={qrCode?.url ?? `/home/exhibits/${exhibitId}`}
+              >
+                View Live
+              </Link>
+            ) : (
+              <p className='flex flex-row w-fit'>
+                <Loader2 className='animate-spin' />
+                Loading...
+              </p>
+            )}
           </Button>
         </CardContent>
       </Card>
@@ -924,6 +937,9 @@ function SubtitleManagementSection({
                   setEditFormData({ ...editFormData, languageCode })
                 }
                 placeholder='Select language'
+                disabledLanguageCodes={subtitles
+                  .filter((s) => s.subtitleId !== editingSubtitle?.subtitleId)
+                  .map((s) => s.languageCode)}
               />
               {validationErrors.languageCode && (
                 <div className='flex items-center gap-2 text-sm text-red-600'>
@@ -1071,6 +1087,7 @@ function SubtitleManagementSection({
                   setAddFormData({ ...addFormData, languageCode })
                 }
                 placeholder='Select language'
+                disabledLanguageCodes={subtitles.map((s) => s.languageCode)}
               />
               {validationErrors.languageCode && (
                 <div className='flex items-center gap-2 text-sm text-red-600'>
@@ -1177,7 +1194,15 @@ function SubtitleManagementSection({
             <Button variant='outline' onClick={() => setAddDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleAddSubtitle} disabled={isSaving}>
+            <Button
+              onClick={handleAddSubtitle}
+              disabled={
+                !Boolean(addFormData.text) ||
+                !Boolean(addFormData.languageCode) ||
+                !Boolean(addFormData.audioId) ||
+                isSaving
+              }
+            >
               {isSaving ? (
                 <>
                   <Loader2 className='h-4 w-4 mr-2 animate-spin' />
@@ -1247,6 +1272,7 @@ function SubtitleManagementSection({
 export default function AdminViewExhibitPage() {
   const { exhibitId } = useParams();
   const [exhibit, setExhibit] = useState<Exhibit | null>(null);
+  const [qrCode, setQrCode] = useState<ExhibitQrCode | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const navigate = useNavigate();
@@ -1261,6 +1287,7 @@ export default function AdminViewExhibitPage() {
         );
         console.log(responseData.data.exhibit);
         setExhibit(responseData.data.exhibit);
+        setQrCode(responseData.data.exhibit.qrCode);
       } catch (err) {
         setExhibit(null);
       } finally {
@@ -1416,10 +1443,9 @@ export default function AdminViewExhibitPage() {
             onUpdate={handleUpdateExhibit}
           />
           <ExhibitQrCard
-            qrCodeId={exhibit.qrCode?.qrCodeId}
-            qrImageLink={exhibit.qrCode?.image.fileLink}
+            qrCode={qrCode}
             exhibitId={exhibit.exhibitId}
-            setExhibit={setExhibit}
+            setQrCode={setQrCode}
           />
         </div>
         <div className='w-full flex flex-col gap-8'>

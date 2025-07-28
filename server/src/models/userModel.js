@@ -76,7 +76,7 @@ module.exports.create = async ({
           userId: user.userId,
           firstName: firstName,
           lastName: lastName,
-          languageCode: languageCode.toLowerCase(),
+          languageCode,
           gender: gender.toUpperCase(),
           dob: new Date(dob).toISOString(),
           modifiedBy: user.userId,
@@ -371,9 +371,11 @@ module.exports.getAllUsers = async ({
   };
 };
 
-
 // update user profile, username, lastname, firstname, statusid
-module.exports.updateUserProfileWithStatus = async (userId, { username, firstName, lastName, statusId }) => {
+module.exports.updateUserProfileWithStatus = async (
+  userId,
+  { username, firstName, lastName, statusId },
+) => {
   try {
     const updatedUser = await prisma.users.update({
       where: { userId: userId },

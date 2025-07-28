@@ -14,7 +14,9 @@ module.exports.getAllImages = async ({
   search,
 }) => {
   try {
-    let where = {};
+    let where = {
+      statusId: statusCodes.ACTIVE,
+    };
 
     if (search && search.trim() !== '') {
       where.OR = [
@@ -29,13 +31,33 @@ module.exports.getAllImages = async ({
       skip: (page - 1) * pageSize,
       take: pageSize,
       where,
+      include: {
+        imageCreatedBy: {
+          select: {
+            username: true,
+          },
+        },
+        status: {
+          select: {
+            statusName: true,
+          },
+        },
+      },
       orderBy: {
         [sortBy]: order,
       },
     });
 
     return {
-      images: imagesRaw.map((img) => convertDatesToStrings(img)),
+      images: imagesRaw.map((img) =>
+        convertDatesToStrings({
+          ...img,
+          createdBy: undefined,
+          statusId: undefined,
+          createdBy: img.imageCreatedBy.username,
+          status: img.status.statusName,
+        }),
+      ),
       imageCount,
     };
   } catch (error) {

@@ -20,7 +20,7 @@ const {
 // Create the router
 const languageRouter = express.Router();
 
-languageRouter.use(jwtMiddleware.verifyToken);
+// languageRouter.use(jwtMiddleware.verifyToken);
 
 languageRouter.get('/', languageController.retrieveAllLanguages);
 languageRouter.get('/name', languageController.retrieveAllLanguagesWithName);
