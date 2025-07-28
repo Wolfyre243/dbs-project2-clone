@@ -31,15 +31,27 @@ export function DatePicker({
   fieldName,
   label,
   required = true,
+  onChange,
 }: {
   fieldName: string;
   label?: string;
   required?: boolean;
+  onChange?: (val: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [date, setDate] = useState<Date | undefined>(new Date('2025-06-01'));
   const [month, setMonth] = useState<Date | undefined>(date);
   const [value, setValue] = useState(formatDate(date));
+
+  const handleChange = (val: string) => {
+    setValue(val);
+    if (isValidDate(new Date(val))) {
+      setDate(new Date(val));
+      setMonth(new Date(val));
+      if (onChange) onChange(val);
+    }
+  };
+
   return (
     <div className='flex flex-col gap-3'>
       <Label htmlFor={fieldName} className='px-1'>
@@ -52,14 +64,7 @@ export function DatePicker({
           value={value}
           placeholder='June 01, 2025'
           className='bg-background pr-10'
-          onChange={(e) => {
-            const date = new Date(e.target.value);
-            setValue(e.target.value);
-            if (isValidDate(date)) {
-              setDate(date);
-              setMonth(date);
-            }
-          }}
+          onChange={(e) => handleChange(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'ArrowDown') {
               e.preventDefault();
@@ -93,8 +98,10 @@ export function DatePicker({
               onMonthChange={setMonth}
               onSelect={(date) => {
                 setDate(date);
-                setValue(formatDate(date));
+                const formatted = formatDate(date);
+                setValue(formatted);
                 setOpen(false);
+                if (onChange) onChange(formatted);
               }}
             />
           </PopoverContent>

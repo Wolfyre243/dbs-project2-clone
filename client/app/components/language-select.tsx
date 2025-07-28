@@ -20,6 +20,7 @@ export function LanguageSelect({
   required = false,
   value,
   onValueChange,
+  onChange,
   disabledLanguageCodes = [],
 }: {
   className?: string;
@@ -28,6 +29,7 @@ export function LanguageSelect({
   fieldName: string;
   required?: boolean;
   value?: string;
+  onChange?: any;
   onValueChange?: (val: string) => void;
   disabledLanguageCodes?: string[];
 }) {
@@ -86,6 +88,7 @@ export function LanguageSelect({
         name={fieldName}
         value={selectValue}
         required={required}
+        onChange={onChange}
       />
     </>
   );

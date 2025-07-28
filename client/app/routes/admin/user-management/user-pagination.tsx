@@ -7,6 +7,7 @@ import useAuth from '~/hooks/useAuth';
 import { useSearchParams } from 'react-router';
 import { Button } from '~/components/ui/button';
 import { PaginationFilterDropdown } from '~/components/pagination-filters';
+import Roles from '~/rolesConfig';
 
 export default function AdminUserPagination() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -15,6 +16,7 @@ export default function AdminUserPagination() {
   const [currentPage, setCurrentPage] = useState<number>();
   const [languageData, setLanguageData] = useState<any[]>([]);
   const [languageFilterValue, setLanguageFilterValue] = useState('');
+  const [roleFilterValue, setRoleFilterValue] = useState(null);
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const { accessToken } = useAuth();
@@ -44,6 +46,17 @@ export default function AdminUserPagination() {
   }, [languageFilterValue]);
 
   useEffect(() => {
+    // Update searchParams when languageFilterValue changes
+    if (roleFilterValue !== undefined) {
+      setSearchParams({
+        ...Object.fromEntries(searchParams),
+        roleFilter: roleFilterValue || '',
+        page: '1',
+      });
+    }
+  }, [roleFilterValue]);
+
+  useEffect(() => {
     (async () => {
       try {
         const { data: responseData } = await apiPrivate.get('/user', {
@@ -54,6 +67,7 @@ export default function AdminUserPagination() {
             order: searchParams.get('order') || null,
             search: searchParams.get('search') || null,
             languageCodeFilter: searchParams.get('languageCode') || null,
+            roleFilter: searchParams.get('roleFilter') || null,
           },
         });
         // Ensure table data includes age, gender, and language from backend response
@@ -143,9 +157,19 @@ export default function AdminUserPagination() {
             defaultValue={searchParams.get('search') || ''}
             onChange={(e) => handleSearchChange(e.target.value)}
           />
-          <div className='flex flex-row items-center gap-3'>
-            {/* You may add user-specific filters here */}
-          </div>
+          {/* <div className='flex flex-row items-center gap-3'>
+            <PaginationFilterDropdown
+              filterTitle={'Role'}
+              filterOptionList={Object.entries(Roles).map(([key, value]) => ({
+                [key]: value.toString(),
+              }))}
+              valueAccessor='roleValue'
+              nameAccessor='roleName'
+              selectedValue={roleFilterValue ?? ''}
+              setSelectedValue={setRoleFilterValue}
+              placeholder='Filter Role'
+            />
+          </div> */}
         </div>
         <DataTable
           columns={columns}

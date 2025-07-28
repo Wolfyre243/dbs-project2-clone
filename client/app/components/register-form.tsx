@@ -25,18 +25,27 @@ export function RegistrationGenderSelect({
   label,
   fieldName,
   required = false,
+  onChange,
 }: {
   className?: string;
   placeholder?: string;
   label?: string;
   fieldName: string;
   required?: boolean;
+  onChange: any;
 }) {
   const [value, setValue] = useState<string>('');
 
+  const handleValueChange = (val: string) => {
+    setValue(val);
+    if (onChange) {
+      onChange({ target: { value: val } });
+    }
+  };
+
   return (
     <>
-      <Select value={value} onValueChange={setValue}>
+      <Select value={value} onValueChange={handleValueChange}>
         <SelectTrigger className={cn('w-full', className)}>
           <SelectValue placeholder={placeholder ?? 'Gender'} />
         </SelectTrigger>
@@ -48,7 +57,13 @@ export function RegistrationGenderSelect({
           </SelectGroup>
         </SelectContent>
       </Select>
-      <input type='hidden' name={fieldName} value={value} required={required} />
+      <input
+        type='hidden'
+        name={fieldName}
+        value={value}
+        required={required}
+        onChange={onChange}
+      />
     </>
   );
 }
@@ -63,6 +78,31 @@ export function MemberRegisterForm({
   submitCb: (e: React.FormEvent) => Promise<void>;
   ref: React.RefObject<HTMLFormElement | null>;
 }) {
+  // Live password validation state
+  const [password, setPassword] = useState('');
+  const passwordRequirements = [
+    {
+      label: 'At least one lowercase letter',
+      test: (pw: string) => /[a-z]/.test(pw),
+    },
+    {
+      label: 'At least one uppercase letter',
+      test: (pw: string) => /[A-Z]/.test(pw),
+    },
+    {
+      label: 'At least one digit',
+      test: (pw: string) => /\d/.test(pw),
+    },
+    {
+      label: 'At least one special character (@$!%*?&)',
+      test: (pw: string) => /[@$!%*?&]/.test(pw),
+    },
+    {
+      label: '6-50 characters',
+      test: (pw: string) => pw.length >= 6 && pw.length <= 50,
+    },
+  ];
+
   return (
     <div className={cn('flex flex-col gap-6 w-full', className)} {...props}>
       <form ref={ref} onSubmit={submitCb}>
@@ -121,10 +161,10 @@ export function MemberRegisterForm({
               <div className='grid grid-cols-2 gap-5 w-full'>
                 <div className='flex flex-col gap-3'>
                   <Label htmlFor='gender'>Gender</Label>
-                  <RegistrationGenderSelect
+                  {/* <RegistrationGenderSelect
                     fieldName='gender'
                     required={true}
-                  />
+                  /> */}
                 </div>
                 <div className='flex flex-col gap-3'>
                   <Label htmlFor='languageCode'>Language</Label>
@@ -157,7 +197,26 @@ export function MemberRegisterForm({
                 type='password'
                 placeholder='password123'
                 required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete='new-password'
               />
+              {/* Live password validation feedback */}
+              <div className='flex flex-col gap-1 text-sm mt-1'>
+                {passwordRequirements.map((req, idx) => (
+                  <div key={idx} className='flex items-center gap-2'>
+                    <span
+                      style={{
+                        color: req.test(password) ? 'green' : 'red',
+                        fontWeight: req.test(password) ? 'bold' : 'normal',
+                      }}
+                    >
+                      {req.test(password) ? '✓' : '✗'}
+                    </span>
+                    <span>{req.label}</span>
+                  </div>
+                ))}
+              </div>
               <Label htmlFor='confirmPassword'>Confirm Password</Label>
               <Input
                 id='confirmPassword'
@@ -165,9 +224,16 @@ export function MemberRegisterForm({
                 type='password'
                 placeholder='password123'
                 required
+                autoComplete='new-password'
               />
             </div>
-            <Button type='submit' className='w-full'>
+            <Button
+              type='submit'
+              className='w-full'
+              disabled={
+                !passwordRequirements.every((req) => req.test(password))
+              }
+            >
               Register
             </Button>
           </div>
