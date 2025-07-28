@@ -25,14 +25,14 @@ statisticsRouter.get(
   statisticsController.getCountOfUsers,
 );
 
-// Not Tested
-
 // Statistics for getting the count of users ( Can filter by gender, by age group, per day, per month, per year, etc. )
 statisticsRouter.get(
   '/display-member-sign-ups',
   authMiddleware.verifyIsAdmin,
   statisticsController.getDisplayMemberSignUps,
 );
+
+// Not Tested
 
 // Statistics for getting the most common languages used by users
 statisticsRouter.get(

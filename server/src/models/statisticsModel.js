@@ -101,190 +101,198 @@ module.exports.getDisplayMemberSignUps = async ({
   ageGroup = 'All',
   granularity = 'day',
 }) => {
-  // Base filter for Members only
-  const baseMemberFilter = {
-    userRoles: {
-      roleId: Roles.MEMBER,
-    },
-  };
-
-  // Build where clause
-  let where = {
-    AND: [baseMemberFilter],
-  };
-
-  // Add date filtering
-  if (startDate || endDate) {
-    const dateFilter = {};
-    if (startDate) {
-      dateFilter.gte = new Date(startDate);
-    }
-    if (endDate) {
-      const endDateObj = new Date(endDate);
-      endDateObj.setHours(23, 59, 59, 999);
-      dateFilter.lte = endDateObj;
-    }
-    where.AND.push({ createdAt: dateFilter });
-  }
-
-  // Add gender filtering
-  if (gender !== 'All') {
-    where.AND.push({
-      userProfile: {
-        gender: gender,
+  try {
+    // Base filter for Members only
+    const baseMemberFilter = {
+      userRoles: {
+        roleId: Roles.MEMBER,
       },
-    });
-  }
+    };
 
-  // Add age group filtering
-  if (ageGroup !== 'All') {
-    const ageRangeFilter = getAgeRangeFilter(ageGroup);
-    if (ageRangeFilter) {
+    // Build where clause
+    let where = {
+      AND: [baseMemberFilter],
+    };
+
+    // Add date filtering
+    if (startDate || endDate) {
+      const dateFilter = {};
+      if (startDate) {
+        dateFilter.gte = new Date(startDate);
+      }
+      if (endDate) {
+        const endDateObj = new Date(endDate);
+        endDateObj.setHours(23, 59, 59, 999);
+        dateFilter.lte = endDateObj;
+      }
+      where.AND.push({ createdAt: dateFilter });
+    }
+
+    // Add gender filtering
+    if (gender !== 'All') {
       where.AND.push({
         userProfile: {
-          dob: ageRangeFilter,
+          gender: gender,
         },
       });
     }
-  }
 
-  // Get total count with filters
-  const totalMembers = await prisma.users.count({ where });
+    // Add age group filtering
+    if (ageGroup !== 'All') {
+      const ageRangeFilter = getAgeRangeFilter(ageGroup);
+      if (ageRangeFilter) {
+        where.AND.push({
+          userProfile: {
+            dob: ageRangeFilter,
+          },
+        });
+      }
+    }
 
-  // Get members with profiles for detailed analysis
-  const members = await prisma.users.findMany({
-    where,
-    select: {
-      userId: true,
-      createdAt: true,
-      userProfile: {
-        select: {
-          dob: true,
-          gender: true,
+    // Get total count with filters
+    const totalMembers = await prisma.users.count({ where });
+
+    // Get members with profiles for detailed analysis
+    const members = await prisma.users.findMany({
+      where,
+      select: {
+        userId: true,
+        createdAt: true,
+        userProfile: {
+          select: {
+            dob: true,
+            gender: true,
+          },
         },
       },
-    },
-  });
+    });
 
-  // Process members for age group analysis
-  const processedMembers = members.map((member) => {
-    const age = calculateAge(member.userProfile?.dob);
-    const memberAgeGroup = getAgeGroup(age);
-    return {
-      ...member,
-      age,
-      ageGroup: memberAgeGroup,
-      gender: member.userProfile?.gender || 'Unknown',
-    };
-  });
-
-  // Generate breakdowns
-  const ageGroupBreakdown = {};
-  const genderBreakdown = {};
-  const timeSeriesData = {};
-
-  // Initialize age groups
-  ['Children', 'Youth', 'Adults', 'Seniors', 'Unknown'].forEach((group) => {
-    ageGroupBreakdown[group] = 0;
-  });
-
-  // Initialize genders
-  ['M', 'F', 'Unknown'].forEach((g) => {
-    genderBreakdown[g] = 0;
-  });
-
-  // Process each member
-  processedMembers.forEach((member) => {
-    // Age group breakdown
-    ageGroupBreakdown[member.ageGroup]++;
-
-    // Gender breakdown
-    genderBreakdown[member.gender]++;
-
-    // Time series data based on granularity
-    let timeKey;
-    const createdDate = new Date(member.createdAt);
-
-    switch (granularity) {
-      case 'day':
-        timeKey = createdDate.toISOString().split('T')[0]; // YYYY-MM-DD
-        break;
-      case 'month':
-        timeKey = `${createdDate.getFullYear()}-${String(createdDate.getMonth() + 1).padStart(2, '0')}`; // YYYY-MM
-        break;
-      case 'year':
-        timeKey = createdDate.getFullYear().toString(); // YYYY
-        break;
-    }
-
-    if (!timeSeriesData[timeKey]) {
-      timeSeriesData[timeKey] = {
-        Children: 0,
-        Youth: 0,
-        Adults: 0,
-        Seniors: 0,
-        Unknown: 0,
+    // Process members for age group analysis
+    const processedMembers = members.map((member) => {
+      const age = calculateAge(member.userProfile?.dob);
+      const memberAgeGroup = getAgeGroup(age);
+      return {
+        ...member,
+        age,
+        ageGroup: memberAgeGroup,
+        gender: member.userProfile?.gender || 'Unknown',
       };
-    }
-    timeSeriesData[timeKey][member.ageGroup]++;
-  });
+    });
 
-  // Convert breakdowns to arrays with percentages
-  const ageGroupArray = Object.entries(ageGroupBreakdown)
-    .map(([group, count]) => ({
-      ageGroup: group,
-      count,
-      percentage:
-        totalMembers > 0 ? Math.round((count / totalMembers) * 100) : 0,
-    }))
-    .filter((item) => item.count > 0); // Only include groups with members
+    // Generate breakdowns
+    const ageGroupBreakdown = {};
+    const genderBreakdown = {};
+    const timeSeriesData = {};
 
-  const genderArray = Object.entries(genderBreakdown)
-    .map(([genderType, count]) => ({
-      gender: genderType,
-      count,
-      percentage:
-        totalMembers > 0 ? Math.round((count / totalMembers) * 100) : 0,
-    }))
-    .filter((item) => item.count > 0); // Only include genders with members
+    // Initialize age groups
+    ['Children', 'Youth', 'Adults', 'Seniors', 'Unknown'].forEach((group) => {
+      ageGroupBreakdown[group] = 0;
+    });
 
-  // Convert time series to array and sort
-  const timeSeriesArray = Object.entries(timeSeriesData)
-    .map(([time, groupCounts]) => ({
-      period: time,
-      ...groupCounts,
-    }))
-    .sort((a, b) => a[granularity].localeCompare(b[granularity]));
+    // Initialize genders
+    ['M', 'F', 'Unknown'].forEach((g) => {
+      genderBreakdown[g] = 0;
+    });
 
-  return {
-    summary: {
-      totalMembers,
-      filters: {
-        dateRange:
-          startDate && endDate ? `${startDate} to ${endDate}` : 'All time',
-        gender:
-          gender === 'All' ? 'All genders' : gender === 'M' ? 'Male' : 'Female',
-        ageGroup: ageGroup === 'All' ? 'All age groups' : ageGroup,
-        granularity,
+    // Process each member
+    processedMembers.forEach((member) => {
+      // Age group breakdown
+      ageGroupBreakdown[member.ageGroup]++;
+
+      // Gender breakdown
+      genderBreakdown[member.gender]++;
+
+      // Time series data based on granularity
+      let timeKey;
+      const createdDate = new Date(member.createdAt);
+
+      switch (granularity) {
+        case 'day':
+          timeKey = createdDate.toISOString().split('T')[0]; // YYYY-MM-DD
+          break;
+        case 'month':
+          timeKey = `${createdDate.getFullYear()}-${String(createdDate.getMonth() + 1).padStart(2, '0')}`; // YYYY-MM
+          break;
+        case 'year':
+          timeKey = createdDate.getFullYear().toString(); // YYYY
+          break;
+      }
+
+      if (!timeSeriesData[timeKey]) {
+        timeSeriesData[timeKey] = {
+          Children: 0,
+          Youth: 0,
+          Adults: 0,
+          Seniors: 0,
+          Unknown: 0,
+        };
+      }
+      timeSeriesData[timeKey][member.ageGroup]++;
+    });
+
+    // Convert breakdowns to arrays with percentages
+    const ageGroupArray = Object.entries(ageGroupBreakdown)
+      .map(([group, count]) => ({
+        ageGroup: group,
+        count,
+        percentage:
+          totalMembers > 0 ? Math.round((count / totalMembers) * 100) : 0,
+      }))
+      .filter((item) => item.count > 0); // Only include groups with members
+
+    const genderArray = Object.entries(genderBreakdown)
+      .map(([genderType, count]) => ({
+        gender: genderType,
+        count,
+        percentage:
+          totalMembers > 0 ? Math.round((count / totalMembers) * 100) : 0,
+      }))
+      .filter((item) => item.count > 0); // Only include genders with members
+
+    // Convert time series to array and sort
+    const timeSeriesArray = Object.entries(timeSeriesData)
+      .map(([time, groupCounts]) => ({
+        period: time,
+        ...groupCounts,
+      }))
+      .sort((a, b) => a.period.localeCompare(b.period));
+
+    return {
+      summary: {
+        totalMembers,
+        filters: {
+          dateRange:
+            startDate && endDate ? `${startDate} to ${endDate}` : 'All time',
+          gender:
+            gender === 'All'
+              ? 'All genders'
+              : gender === 'M'
+                ? 'Male'
+                : 'Female',
+          ageGroup: ageGroup === 'All' ? 'All age groups' : ageGroup,
+          granularity,
+        },
       },
-    },
-    breakdowns: {
-      byAgeGroup: ageGroupArray,
-      byGender: genderArray,
-    },
-    timeSeries: {
-      granularity,
-      data: timeSeriesArray,
-    },
-    quickStats: {
-      children: ageGroupBreakdown.Children,
-      youth: ageGroupBreakdown.Youth,
-      adults: ageGroupBreakdown.Adults,
-      seniors: ageGroupBreakdown.Seniors,
-      male: genderBreakdown.M,
-      female: genderBreakdown.F,
-    },
-  };
+      breakdowns: {
+        byAgeGroup: ageGroupArray,
+        byGender: genderArray,
+      },
+      timeSeries: {
+        granularity,
+        data: timeSeriesArray,
+      },
+      quickStats: {
+        children: ageGroupBreakdown.Children,
+        youth: ageGroupBreakdown.Youth,
+        adults: ageGroupBreakdown.Adults,
+        seniors: ageGroupBreakdown.Seniors,
+        male: genderBreakdown.M,
+        female: genderBreakdown.F,
+      },
+    };
+  } catch (error) {
+    throw new AppError('Failed to get member sign-ups statistics', 500);
+  }
 };
 
 // Get most common languages used by users
