@@ -53,7 +53,7 @@ type ExhibitData = {
   modifiedAt: string;
   status: string;
   supportedLanguages: string[];
-  subtitles: ExhibitSubtitle[]; // Add subtitles field
+  subtitles: ExhibitSubtitle[];
 };
 
 const PLACEHOLDER_IMAGE =
@@ -125,7 +125,6 @@ function Subtitle({
       );
     }
 
-    console.log('Units:', units);
     return units;
   }, [subtitle.wordTimings, subtitle.subtitleText, subtitle.languageCode]);
 
@@ -152,7 +151,7 @@ function Subtitle({
         elements.push(
           <span
             key={i}
-            className=''
+            className='px-1 py-0.5'
             style={{
               borderRadius: '3px',
               background: 'linear-gradient(90deg, #ffeb3b, #ffca28)',
@@ -175,7 +174,7 @@ function Subtitle({
         elements.push(
           <span
             key={i}
-            className=''
+            className='px-1 py-0.5'
             style={{
               borderRadius: '3px',
               fontWeight: '400',
@@ -202,7 +201,7 @@ function Subtitle({
       initial={{ opacity: 0, x: -30 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.5, delay: 0.3 }}
-      className=''
+      className='w-full'
     >
       <audio
         ref={(audioElement) => {
@@ -211,14 +210,14 @@ function Subtitle({
         }}
         controls
         src={subtitle.audio.fileLink}
-        className='w-full mb-5'
+        className='w-full mb-4 sm:mb-5'
         onTimeUpdate={() => handleTimeUpdate(subtitle.subtitleId)}
         onEnded={() => handleAudioEnded(subtitle.subtitleId)}
       >
         Your browser does not support the audio element.
       </audio>
-      <div className='flex items-center gap-3 mb-2 p-4 rounded-lg bg-muted'>
-        <span className='text-base'>{renderWords()}</span>
+      <div className='flex items-center gap-2 sm:gap-3 mb-2 p-3 sm:p-4 rounded-lg bg-muted text-sm sm:text-base'>
+        <span className='flex-1'>{renderWords()}</span>
       </div>
     </motion.div>
   );
@@ -360,13 +359,6 @@ export default function SingleExhibit() {
             activeIndices = [lastWordIndex];
           }
 
-          console.log('Time update:', {
-            subtitleId,
-            currentTime,
-            duration,
-            activeIndices,
-            words: activeIndices.map((i) => subtitle.wordTimings[i]?.word),
-          });
           setCurrentWordIndices((prev) => ({
             ...prev,
             [subtitleId]: activeIndices,
@@ -378,7 +370,6 @@ export default function SingleExhibit() {
   );
 
   const handleAudioEnded = useCallback((subtitleId: string) => {
-    console.log('Audio ended:', { subtitleId });
     setCurrentWordIndices((prev) => ({
       ...prev,
       [subtitleId]: [],
@@ -388,7 +379,7 @@ export default function SingleExhibit() {
   if (exhibitLoading) {
     return (
       <div className='flex items-center justify-center h-[60vh]'>
-        <span className='text-lg font-semibold'>Loading exhibit...</span>
+        <span className='text-base sm:text-lg font-semibold'>Loading exhibit...</span>
       </div>
     );
   }
@@ -396,7 +387,7 @@ export default function SingleExhibit() {
   if (exhibitError) {
     return (
       <div className='flex items-center justify-center h-[60vh]'>
-        <span className='text-lg font-semibold text-red-500'>
+        <span className='text-base sm:text-lg font-semibold text-red-500'>
           {exhibitError}
         </span>
       </div>
@@ -406,7 +397,7 @@ export default function SingleExhibit() {
   if (subtitleError) {
     return (
       <div className='flex items-center justify-center h-[60vh]'>
-        <span className='text-lg font-semibold text-red-500'>
+        <span className='text-base sm:text-lg font-semibold text-red-500'>
           {subtitleError}
         </span>
       </div>
@@ -416,7 +407,7 @@ export default function SingleExhibit() {
   if (!exhibit) {
     return (
       <div className='flex items-center justify-center h-[60vh]'>
-        <span className='text-lg font-semibold text-red-500'>
+        <span className='text-base sm:text-lg font-semibold text-red-500'>
           Exhibit not found.
         </span>
       </div>
@@ -428,24 +419,24 @@ export default function SingleExhibit() {
       initial={{ opacity: 0, y: 40 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: 'easeOut' }}
-      className='max-w-3xl mx-auto py-8'
+      className='w-full max-w-md sm:max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8'
     >
-      <div className='flex flex-col items-center gap-4'>
+      <div className='flex flex-col items-center gap-4 sm:gap-6'>
         <motion.img
           src={exhibit.imageLink ?? PLACEHOLDER_IMAGE}
           alt={exhibit.title}
-          className='max-w-3xl object-cover rounded-lg border'
+          className='w-full h-auto object-cover rounded-lg border aspect-[4/3] sm:aspect-[16/9]'
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.7, ease: 'easeOut' }}
         />
-        <h1 className='text-3xl font-bold text-center'>{exhibit.title}</h1>
-        <p className='text-lg text-muted-foreground text-center'>
+        <h1 className='text-2xl sm:text-3xl font-bold text-center'>{exhibit.title}</h1>
+        <p className='text-base sm:text-lg text-muted-foreground text-center'>
           {exhibit.description}
         </p>
       </div>
-      <Separator className='my-6' />
-      <div className='mb-6 w-full max-w-xs'>
+      <Separator className='my-4 sm:my-6' />
+      <div className='mb-4 sm:mb-6 w-full max-w-xs mx-auto'>
         <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
           <SelectTrigger>
             <SelectValue placeholder='Select language' />
@@ -459,10 +450,10 @@ export default function SingleExhibit() {
           </SelectContent>
         </Select>
       </div>
-      <div className='flex flex-col gap-6'>
+      <div className='flex flex-col gap-4 sm:gap-6'>
         {subtitleLoading && (
           <div className='flex items-center justify-center'>
-            <span className='text-lg font-semibold'>Loading subtitles...</span>
+            <span className='text-base sm:text-lg font-semibold'>Loading subtitles...</span>
           </div>
         )}
         {subtitles
