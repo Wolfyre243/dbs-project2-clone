@@ -379,7 +379,9 @@ export default function SingleExhibit() {
   if (exhibitLoading) {
     return (
       <div className='flex items-center justify-center h-[60vh]'>
-        <span className='text-base sm:text-lg font-semibold'>Loading exhibit...</span>
+        <span className='text-base sm:text-lg font-semibold'>
+          Loading exhibit...
+        </span>
       </div>
     );
   }
@@ -430,13 +432,15 @@ export default function SingleExhibit() {
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.7, ease: 'easeOut' }}
         />
-        <h1 className='text-2xl sm:text-3xl font-bold text-center'>{exhibit.title}</h1>
+        <h1 className='text-2xl sm:text-3xl font-bold text-center'>
+          {exhibit.title}
+        </h1>
         <p className='text-base sm:text-lg text-muted-foreground text-center'>
           {exhibit.description}
         </p>
       </div>
       <Separator className='my-4 sm:my-6' />
-      <div className='mb-4 sm:mb-6 w-full max-w-xs mx-auto'>
+      <div className='mb-4 sm:mb-6 w-full mx-auto'>
         <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
           <SelectTrigger>
             <SelectValue placeholder='Select language' />
@@ -453,7 +457,9 @@ export default function SingleExhibit() {
       <div className='flex flex-col gap-4 sm:gap-6'>
         {subtitleLoading && (
           <div className='flex items-center justify-center'>
-            <span className='text-base sm:text-lg font-semibold'>Loading subtitles...</span>
+            <span className='text-base sm:text-lg font-semibold'>
+              Loading subtitles...
+            </span>
           </div>
         )}
         {subtitles
