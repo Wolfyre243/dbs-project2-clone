@@ -3,6 +3,7 @@ import { IconTrendingDown, IconTrendingUp } from '@tabler/icons-react';
 import { Badge } from '~/components/ui/badge';
 import { DatePicker } from '~/components/date-picker';
 import useApiPrivate from '~/hooks/useApiPrivate';
+import { TrendingUp } from 'lucide-react';
 import {
   Card,
   CardAction,
@@ -20,6 +21,8 @@ import {
   ResponsiveContainer,
   LineChart,
   Line,
+  Pie,
+  PieChart,
 } from 'recharts';
 
 import {

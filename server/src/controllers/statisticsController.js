@@ -100,36 +100,20 @@ module.exports.getDisplayMemberSignUps = catchAsync(async (req, res, next) => {
   });
 });
 
-// Get most common languages used by members (top 3)
+// Get all common languages used by members
 module.exports.getDisplayCommonLanguagesUsed = catchAsync(
   async (req, res, next) => {
-    const {
-      limit = req.query.limit || 3, // Default to top 3 languages
-      userType = 'Members', // 'Members', 'All', 'Guests'
-      startDate = null,
-      endDate = null,
-    } = req.query;
+    const { limit } = req.query;
 
-    // Validate user type
-    const validUserTypes = ['Members', 'All', 'Guests'];
-    if (!validUserTypes.includes(userType)) {
-      throw new AppError(
-        'Invalid user type. Must be: Members, All, or Guests',
-        400,
-      );
-    }
-
-    // Validate limit
-    const limitNum = parseInt(limit);
-    if (isNaN(limitNum) || limitNum < 1 || limitNum > 10) {
-      throw new AppError('Invalid limit. Must be between 1 and 10', 400);
+    let parsedLimit = null;
+    if (limit && limit !== 'all') {
+      const n = parseInt(limit);
+      if (isNaN(n)) throw new AppError('Invalid limit', 400);
+      parsedLimit = n;
     }
 
     const result = await statisticsModel.getDisplayCommonLanguagesUsed({
-      limit: limitNum,
-      userType,
-      startDate,
-      endDate,
+      limit: parsedLimit, // null means show all
     });
 
     res.status(200).json({
@@ -138,8 +122,6 @@ module.exports.getDisplayCommonLanguagesUsed = catchAsync(
     });
   },
 );
-
-// Add this new controller method to the existing file
 
 // Get QR code scan trends and statistics
 module.exports.getQRCodeScanTrends = catchAsync(async (req, res, next) => {

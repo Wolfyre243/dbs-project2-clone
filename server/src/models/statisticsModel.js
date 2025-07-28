@@ -5,6 +5,71 @@ const { convertDatesToStrings } = require('../utils/formatters');
 const Roles = require('../configs/roleConfig');
 const EventTypes = require('../configs/eventTypes');
 
+// Helper functions for age calculations
+const calculateAge = (dateOfBirth) => {
+  if (!dateOfBirth) return null;
+  const today = new Date();
+  const birthDate = new Date(dateOfBirth);
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+
+  if (
+    monthDiff < 0 ||
+    (monthDiff === 0 && today.getDate() < birthDate.getDate())
+  ) {
+    age--;
+  }
+
+  return age;
+};
+
+const getAgeGroup = (age) => {
+  if (age === null || age === undefined) return 'Unknown';
+  if (age < 13) return 'Children';
+  if (age >= 13 && age <= 17) return 'Youth';
+  if (age >= 18 && age <= 64) return 'Adults';
+  if (age >= 65) return 'Seniors';
+  return 'Unknown';
+};
+
+const getAgeRangeFilter = (ageGroup) => {
+  const today = new Date();
+  const currentYear = today.getFullYear();
+
+  switch (ageGroup) {
+    case 'Children':
+      // Under 13 years old
+      const childrenMinYear = currentYear - 12;
+      return {
+        gte: new Date(childrenMinYear, 0, 1), // From this year
+      };
+    case 'Youth':
+      // 13-17 years old
+      const youthMaxYear = currentYear - 13;
+      const youthMinYear = currentYear - 17;
+      return {
+        gte: new Date(youthMinYear, 0, 1),
+        lte: new Date(youthMaxYear, 11, 31),
+      };
+    case 'Adults':
+      // 18-64 years old
+      const adultsMaxYear = currentYear - 18;
+      const adultsMinYear = currentYear - 64;
+      return {
+        gte: new Date(adultsMinYear, 0, 1),
+        lte: new Date(adultsMaxYear, 11, 31),
+      };
+    case 'Seniors':
+      // 65+ years old
+      const seniorsMaxYear = currentYear - 65;
+      return {
+        lte: new Date(seniorsMaxYear, 11, 31),
+      };
+    default:
+      return null;
+  }
+};
+
 // Get simple user count statistics for regular users only (excludes admins)
 module.exports.getUserCountStatistics = async (filter = {}) => {
   try {
@@ -296,239 +361,89 @@ module.exports.getDisplayMemberSignUps = async ({
 };
 
 // Get most common languages used by users
-module.exports.getDisplayCommonLanguagesUsed = async ({
-  limit = 3,
-  userType = 'Members',
-  startDate = null,
-  endDate = null,
-}) => {
+module.exports.getDisplayCommonLanguagesUsed = async ({ limit } = {}) => {
   try {
-    // Build base filter based on user type
-    let baseUserFilter;
-
-    switch (userType) {
-      case 'Members':
-        baseUserFilter = {
-          userRoles: {
-            roleId: Roles.MEMBER, // Only Members
-          },
-        };
-        break;
-      case 'Guests':
-        baseUserFilter = {
-          userRoles: {
-            roleId: Roles.GUEST, // Only Guests
-          },
-        };
-        break;
-      case 'All':
-        baseUserFilter = {
-          userRoles: {
-            roleId: {
-              in: [Roles.GUEST, Roles.MEMBER], // Exclude admins
-            },
-          },
-        };
-        break;
-    }
-
-    // Build where clause
-    let where = {
-      AND: [
-        baseUserFilter,
-        {
-          userProfile: {
-            languageCode: {
-              not: null, // Only users with language codes
-            },
-          },
-        },
-      ],
+    const baseUserFilter = {
+      userRoles: {
+        roleId: Roles.MEMBER,
+      },
     };
 
-    // Add date filtering if provided
-    if (startDate || endDate) {
-      const dateFilter = {};
-      if (startDate) {
-        dateFilter.gte = new Date(startDate);
-      }
-      if (endDate) {
-        const endDateObj = new Date(endDate);
-        endDateObj.setHours(23, 59, 59, 999);
-        dateFilter.lte = endDateObj;
-      }
-      where.AND.push({ createdAt: dateFilter });
-    }
-
-    // Get language usage statistics using groupBy
-    const languageStats = await prisma.users.groupBy({
-      by: ['userProfile', 'languageCode'], // Group by user profile language code
-      where,
-      _count: {
-        userId: true,
-      },
-      orderBy: {
-        _count: {
-          userId: 'desc', // Order by count descending
-        },
-      },
-      take: limit, // Limit to top N languages
-    });
-
-    // Since Prisma groupBy with nested fields is tricky, let's use a different approach
-    // Get users with their language codes
     const usersWithLanguages = await prisma.users.findMany({
-      where,
+      where: {
+        AND: [baseUserFilter],
+      },
       select: {
         userId: true,
-        createdAt: true,
         userProfile: {
-          select: {
-            languageCode: true,
-          },
+          select: { languageCode: true },
         },
       },
     });
 
-    // Process language statistics manually
     const languageCount = {};
     const languageUsers = {};
 
     usersWithLanguages.forEach((user) => {
       const langCode = user.userProfile?.languageCode;
-      if (langCode) {
-        if (!languageCount[langCode]) {
-          languageCount[langCode] = 0;
-          languageUsers[langCode] = [];
-        }
-        languageCount[langCode]++;
-        languageUsers[langCode].push(user.userId);
+      if (!langCode) return;
+
+      if (!languageCount[langCode]) {
+        languageCount[langCode] = 0;
+        languageUsers[langCode] = [];
       }
+
+      languageCount[langCode]++;
+      languageUsers[langCode].push(user.userId);
     });
 
-    // Get language details from the language table
     const allLanguageCodes = Object.keys(languageCount);
+
     const languageDetails = await prisma.language.findMany({
-      where: {
-        languageCode: {
-          in: allLanguageCodes,
-        },
-      },
-      select: {
-        languageCode: true,
-        languageName: true,
-      },
+      where: { languageCode: { in: allLanguageCodes } },
+      select: { languageCode: true, languageName: true },
     });
 
-    // Create language lookup map
     const languageMap = {};
     languageDetails.forEach((lang) => {
       languageMap[lang.languageCode] = lang.languageName;
     });
 
-    // Sort languages by count and take top N
-    const sortedLanguages = Object.entries(languageCount)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, limit);
+    const sortedLanguages = Object.entries(languageCount).sort(
+      ([, a], [, b]) => b - a,
+    );
 
-    // Calculate total users for percentage
-    const totalUsers = usersWithLanguages.length;
+    const totalUsers = usersWithLanguages.filter(
+      (u) => u.userProfile?.languageCode,
+    ).length;
 
-    // Format the results
-    const topLanguages = sortedLanguages.map(([langCode, count], index) => ({
-      rank: index + 1,
+    const allStats = sortedLanguages.map(([langCode, count], i) => ({
+      rank: i + 1,
       languageCode: langCode,
       languageName: languageMap[langCode] || langCode,
       userCount: count,
       percentage: totalUsers > 0 ? Math.round((count / totalUsers) * 100) : 0,
-      userIds: languageUsers[langCode], // Optional: include user IDs
     }));
 
-    // Get additional statistics
-    const totalLanguagesUsed = Object.keys(languageCount).length;
-    const mostPopularLanguage =
-      topLanguages.length > 0 ? topLanguages[0] : null;
+    const topLanguages =
+      typeof limit === 'number' ? allStats.slice(0, limit) : allStats;
 
     return {
       summary: {
         totalUsers,
-        totalLanguagesUsed,
-        userType,
-        dateRange:
-          startDate && endDate ? `${startDate} to ${endDate}` : 'All time',
-        topLanguagesCount: Math.min(limit, topLanguages.length),
+        totalLanguagesUsed: allLanguageCodes.length,
+        dateRange: 'All time',
+        topLanguagesCount: topLanguages.length,
       },
       topLanguages,
-      mostPopular: mostPopularLanguage,
-      allLanguageStats: Object.entries(languageCount)
-        .sort(([, a], [, b]) => b - a)
-        .map(([langCode, count]) => ({
-          languageCode: langCode,
-          languageName: languageMap[langCode] || langCode,
-          userCount: count,
-          percentage:
-            totalUsers > 0 ? Math.round((count / totalUsers) * 100) : 0,
-        })),
+      mostPopular: topLanguages[0] || null,
+      allLanguageStats: allStats,
     };
-  } catch (error) {
+  } catch (err) {
+    console.error('Language statistics error:', err);
     throw new AppError('Failed to get language statistics', 500);
   }
 };
-
-// Helper function to calculate age from date of birth
-function calculateAge(dob) {
-  if (!dob) return null;
-  const today = new Date();
-  const birthDate = new Date(dob);
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const monthDiff = today.getMonth() - birthDate.getMonth();
-  if (
-    monthDiff < 0 ||
-    (monthDiff === 0 && today.getDate() < birthDate.getDate())
-  ) {
-    age--;
-  }
-  return age;
-}
-
-// Helper function to get age group from age
-function getAgeGroup(age) {
-  if (age === null || age === undefined) return 'Unknown';
-  if (age < 13) return 'Children';
-  if (age >= 13 && age <= 17) return 'Youth';
-  if (age >= 18 && age <= 64) return 'Adults';
-  if (age >= 65) return 'Seniors';
-  return 'Unknown';
-}
-
-// Helper function to get age range filter for database query
-function getAgeRangeFilter(ageGroup) {
-  const today = new Date();
-  const currentYear = today.getFullYear();
-
-  switch (ageGroup) {
-    case 'Children': // 0-12 years old
-      return {
-        gte: new Date(currentYear - 12, 0, 1), // Born after Jan 1st of (currentYear - 12)
-      };
-    case 'Youth': // 13-17 years old
-      return {
-        gte: new Date(currentYear - 17, 0, 1), // Born after Jan 1st of (currentYear - 17)
-        lte: new Date(currentYear - 13, 11, 31), // Born before Dec 31st of (currentYear - 13)
-      };
-    case 'Adults': // 18-64 years old
-      return {
-        gte: new Date(currentYear - 64, 0, 1), // Born after Jan 1st of (currentYear - 64)
-        lte: new Date(currentYear - 18, 11, 31), // Born before Dec 31st of (currentYear - 18)
-      };
-    case 'Seniors': // 65+ years old
-      return {
-        lte: new Date(currentYear - 65, 11, 31), // Born before Dec 31st of (currentYear - 65)
-      };
-    default: // 'All'
-      return null;
-  }
-}
 
 // Get QR code scan trends and statistics
 module.exports.getQRCodeScanTrends = async ({
