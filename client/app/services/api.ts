@@ -9,7 +9,7 @@ const url =
 function axiosInstance() {
   return axios.create({
     baseURL: url,
-    timeout: 20000,
+    timeout: 50000,
     headers: {
       'Content-Type': 'application/json',
     },
@@ -19,7 +19,7 @@ function axiosInstance() {
 function axiosPrivateInstance() {
   return axios.create({
     baseURL: url,
-    timeout: 20000,
+    timeout: 50000,
     withCredentials: true,
     headers: {
       'Content-Type': 'application/json',

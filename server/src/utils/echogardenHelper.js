@@ -119,6 +119,7 @@ const generateWordTimings = async (audioUrl, text, languageCode) => {
     //   text,
     //   languageCode,
     // });
+    console.log('Starting to generate word timings...');
 
     const audioResponse = await axios.get(audioUrl, {
       responseType: 'arraybuffer',

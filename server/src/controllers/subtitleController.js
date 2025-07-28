@@ -12,6 +12,8 @@ const { encryptData, decryptData } = require('../utils/encryption');
 // Impoort Models
 const languageModel = require('../models/languageModel');
 const subtitleModel = require('../models/subtitleModel');
+const audioModel = require('../models/audioModel');
+const { generateWordTimings } = require('../utils/echogardenHelper');
 const { logAdminAudit } = require('../utils/auditlogs');
 
 module.exports.createSubtitle = catchAsync(async (req, res, next) => {
@@ -27,13 +29,25 @@ module.exports.createSubtitle = catchAsync(async (req, res, next) => {
     );
   }
 
+  let audioUrl = null;
+  if (audioId) {
+    const audio = await audioModel.getAudioById(audioId);
+    audioUrl = audio.fileLink;
+  }
+
+  let wordTimings = [];
+  if (audioUrl && text && languageCode) {
+    wordTimings = await generateWordTimings(audioUrl, text, languageCode);
+  }
+
   const subtitle = await subtitleModel.create({
     subtitleText: text,
     languageCode,
     audioId,
-    exhibitId, // Add exhibitId to link subtitle to exhibit
+    exhibitId,
     createdBy: userId,
     modifiedBy: userId,
+    wordTimings,
   });
 
   await logAdminAudit({
@@ -221,6 +235,38 @@ module.exports.updateSubtitle = catchAsync(async (req, res, next) => {
   if (text) updateData.subtitleText = text;
   if (languageCode) updateData.languageCode = languageCode;
   if (audioId) updateData.audioId = audioId;
+
+  // Regenerate word timings if any relevant field is updated
+  let wordTimings = undefined;
+  if (text || languageCode || audioId) {
+    // Fetch latest values for audioUrl, text, languageCode
+    let finalText = text;
+    let finalLanguageCode = languageCode;
+    let finalAudioId = audioId;
+
+    // If any field is missing, fetch current subtitle to fill gaps
+    if (!finalText || !finalLanguageCode || !finalAudioId) {
+      const currentSubtitle = await subtitleModel.getSubtitleById(subtitleId);
+      if (!finalText) finalText = currentSubtitle.subtitleText;
+      if (!finalLanguageCode) finalLanguageCode = currentSubtitle.languageCode;
+      if (!finalAudioId) finalAudioId = currentSubtitle.audio?.audioId;
+    }
+
+    let audioUrl = null;
+    if (finalAudioId) {
+      const audio = await audioModel.getAudioById(finalAudioId);
+      audioUrl = audio.fileLink;
+    }
+
+    if (audioUrl && finalText && finalLanguageCode) {
+      wordTimings = await generateWordTimings(
+        audioUrl,
+        finalText,
+        finalLanguageCode,
+      );
+      updateData.wordTimings = wordTimings;
+    }
+  }
 
   const updatedSubtitle = await subtitleModel.updateSubtitle(
     subtitleId,
