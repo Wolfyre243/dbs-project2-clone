@@ -224,3 +224,63 @@ module.exports.unarchiveQRCode = async function (qrCodeId, userId, ipAddress) {
     throw error;
   }
 };
+
+// Statistic qr code
+module.exports.getQRCodeScanStatistics = async ({
+  page = 1,
+  pageSize = 10,
+  sortBy = 'timestamp',
+  order = 'desc',
+  startDate,
+  endDate,
+  exhibitId,
+  qrCodeId,
+}) => {
+  try {
+    const where = {
+      entityName: 'qrCode',
+    };
+
+    if (startDate || endDate) {
+      where.timestamp = {};
+      if (startDate) where.timestamp.gte = new Date(startDate);
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        where.timestamp.lte = end;
+      }
+    }
+
+    if (exhibitId) {
+      where.details = { contains: `"exhibitId":"${exhibitId}"` };
+    }
+    if (qrCodeId) {
+      where.entityId = qrCodeId;
+    }
+
+    const totalCount = await prisma.event.count({ where });
+
+    const scans = await prisma.event.findMany({
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      where,
+      orderBy: { [sortBy]: order },
+      select: {
+        eventId: true,
+        userId: true,
+        entityId: true,
+        entityName: true,
+        eventTypeId: true,
+        timestamp: true,
+        details: true,
+      },
+    });
+
+    return {
+      scans,
+      totalCount,
+    };
+  } catch (error) {
+    throw new AppError('Failed to fetch QR code scan statistics', 500);
+  }
+};

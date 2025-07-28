@@ -49,4 +49,7 @@ QRcodeRouter.delete(
   QRcodeController.hardDeleteQRCode,
 );
 
+QRcodeRouter.get('/statistics/scans', QRcodeController.getQRCodeScanStatistics);
+
+
 module.exports = QRcodeRouter;
