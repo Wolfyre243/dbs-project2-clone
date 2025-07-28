@@ -225,62 +225,60 @@ module.exports.unarchiveQRCode = async function (qrCodeId, userId, ipAddress) {
   }
 };
 
-// Statistic qr code
-module.exports.getQRCodeScanStatistics = async ({
-  page = 1,
-  pageSize = 10,
-  sortBy = 'timestamp',
-  order = 'desc',
-  startDate,
-  endDate,
-  exhibitId,
-  qrCodeId,
-}) => {
+
+
+
+// Get scan counts grouped by exhibit
+module.exports.getScansPerExhibitStats = async () => {
   try {
     const where = {
       entityName: 'qrCode',
+      eventTypeId: 1, // QR_SCANNED
     };
 
-    if (startDate || endDate) {
-      where.timestamp = {};
-      if (startDate) where.timestamp.gte = new Date(startDate);
-      if (endDate) {
-        const end = new Date(endDate);
-        end.setHours(23, 59, 59, 999);
-        where.timestamp.lte = end;
-      }
-    }
-
-    if (exhibitId) {
-      where.details = { contains: `"exhibitId":"${exhibitId}"` };
-    }
-    if (qrCodeId) {
-      where.entityId = qrCodeId;
-    }
-
-    const totalCount = await prisma.event.count({ where });
-
+    // Get all scan events
     const scans = await prisma.event.findMany({
-      skip: (page - 1) * pageSize,
-      take: pageSize,
       where,
-      orderBy: { [sortBy]: order },
-      select: {
-        eventId: true,
-        userId: true,
-        entityId: true,
-        entityName: true,
-        eventTypeId: true,
-        timestamp: true,
-        details: true,
-      },
+      select: { details: true }
     });
 
-    return {
-      scans,
-      totalCount,
-    };
+    // Aggregate counts per exhibitId
+    const exhibitScanCounts = {};
+scans.forEach(scan => {
+  let exhibitId = null;
+  // Try to parse as JSON first
+  try {
+    const detailsObj = JSON.parse(scan.details);
+    exhibitId = detailsObj.exhibitId;
+  } catch {
+    // If not JSON, try to extract from plain text
+    const match = scan.details.match(/exhibit (\w{8}-\w{4}-\w{4}-\w{4}-\w{12})/);
+    if (match) {
+      exhibitId = match[1];
+    }
+  }
+  if (exhibitId) {
+    exhibitScanCounts[exhibitId] = (exhibitScanCounts[exhibitId] || 0) + 1;
+  }
+});
+
+    // Get exhibit info for each exhibitId
+    const exhibitIds = Object.keys(exhibitScanCounts);
+    const exhibits = await prisma.exhibit.findMany({
+      where: { exhibitId: { in: exhibitIds } },
+      select: { exhibitId: true, title: true, description: true }
+    });
+
+    // Combine counts and exhibit info
+    const result = exhibits.map(exhibit => ({
+      exhibitId: exhibit.exhibitId,
+      title: exhibit.title,
+      description: exhibit.description,
+      scanCount: exhibitScanCounts[exhibit.exhibitId] || 0,
+    }));
+
+    return result;
   } catch (error) {
-    throw new AppError('Failed to fetch QR code scan statistics', 500);
+    throw new AppError('Failed to get scans per exhibit', 500);
   }
 };

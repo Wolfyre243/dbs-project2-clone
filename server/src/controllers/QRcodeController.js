@@ -217,35 +217,13 @@ module.exports.unarchiveQRCode = catchAsync(async (req, res, next) => {
   });
 });
 
-// stat qr code 
-module.exports.getQRCodeScanStatistics = catchAsync(async (req, res, next) => {
-  const {
-    page = 1,
-    pageSize = 10,
-    sortBy = 'timestamp',
-    order = 'desc',
-    startDate,
-    endDate,
-    exhibitId,
-    qrCodeId,
-  } = req.query;
 
-  const result = await qrModel.getQRCodeScanStatistics({
-    page: parseInt(page),
-    pageSize: parseInt(pageSize),
-    sortBy,
-    order,
-    startDate,
-    endDate,
-    exhibitId,
-    qrCodeId,
-  });
+
+module.exports.getScansPerExhibit = catchAsync(async (req, res, next) => {
+  const result = await qrModel.getScansPerExhibitStats();
 
   res.status(200).json({
     status: 'success',
-    pageCount: Math.ceil(result.totalCount / pageSize),
-    data: result.scans,
-    totalCount: result.totalCount,
+    data: result,
   });
 });
-
