@@ -127,6 +127,7 @@ module.exports.getAllUsers = catchAsync(async (req, res, next) => {
     search = '',
     statusFilter = null,
     roleFilter = null,
+    languageCode = null,
   } = req.query;
 
   const filter = {};
@@ -153,8 +154,6 @@ module.exports.getAllUsers = catchAsync(async (req, res, next) => {
   });
 });
 
-
-
 // Update user profile username, first name, lastname, status
 module.exports.updateUserProfile = catchAsync(async (req, res, next) => {
   const userId = res.locals.user.userId;
@@ -162,7 +161,9 @@ module.exports.updateUserProfile = catchAsync(async (req, res, next) => {
 
   // Validate input
   if (!username || !firstName || !lastName) {
-    return next(new AppError('Username, first name, and last name are required', 400));
+    return next(
+      new AppError('Username, first name, and last name are required', 400),
+    );
   }
 
   // Update user profile with status set to ACTIVE

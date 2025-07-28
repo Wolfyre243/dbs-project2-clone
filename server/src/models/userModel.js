@@ -301,7 +301,7 @@ module.exports.getAllUsers = async ({
   search,
   filter = {},
 }) => {
-  let where = { ...filter };
+  let where = { ...filter, statusId: statusCodes.ACTIVE };
 
   // Conditional search terms
   if (search && search.trim() !== '') {
