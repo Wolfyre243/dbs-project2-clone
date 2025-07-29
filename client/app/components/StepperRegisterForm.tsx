@@ -7,7 +7,7 @@ import { RegistrationGenderSelect } from './register-form';
 import { LanguageSelect } from './language-select';
 import { DatePicker } from './date-picker';
 import { cn } from '~/lib/utils';
-import { Eye, EyeClosed } from 'lucide-react';
+import { Eye, EyeClosed, LoaderCircle } from 'lucide-react';
 
 type FormState = {
   username: string;
@@ -238,10 +238,12 @@ function Step3Review({
   form,
   back,
   submit,
+  isLoading,
 }: {
   form: FormState;
   back: () => void;
   submit: (e: React.FormEvent) => Promise<void>;
+  isLoading: boolean;
 }) {
   return (
     <div className='flex flex-col gap-6'>
@@ -273,8 +275,18 @@ function Step3Review({
         <Button className='w-1/2' variant='outline' onClick={back}>
           Back
         </Button>
-        <Button className='w-1/2 btn btn-primary' type='submit'>
-          Register
+        <Button
+          className='w-1/2 btn btn-primary'
+          type='submit'
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <>
+              <LoaderCircle className='animate-spin' /> Registering...
+            </>
+          ) : (
+            'Register'
+          )}
         </Button>
       </div>
     </div>
@@ -287,6 +299,7 @@ export function StepperRegisterForm({
   ref,
   form,
   setForm,
+  isLoading,
   ...props
 }: {
   className?: string;
@@ -294,6 +307,7 @@ export function StepperRegisterForm({
   ref: React.RefObject<HTMLFormElement | null>;
   form: FormState;
   setForm: (fields: Partial<FormState>) => void;
+  isLoading: boolean;
 }) {
   const [step, setStep] = useState(0);
 
@@ -324,7 +338,12 @@ export function StepperRegisterForm({
           />
         )}
         {step === 2 && (
-          <Step3Review form={form} back={back} submit={submitCb} />
+          <Step3Review
+            form={form}
+            back={back}
+            submit={submitCb}
+            isLoading={isLoading}
+          />
         )}
         <div className='mt-6 text-center text-sm'>
           Already have an account?{' '}

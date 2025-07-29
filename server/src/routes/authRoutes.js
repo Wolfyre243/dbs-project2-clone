@@ -96,6 +96,15 @@ authRouter.post(
   jwtMiddleware.setTokens,
 );
 
+authRouter.post(
+  '/register-admin',
+  rateLimiter.registerLimiter,
+  userValidationRules(),
+  validate,
+  authController.registerAdmin,
+  mailMiddleware.sendMail,
+);
+
 /**
  * POST
  * Refreshes access token

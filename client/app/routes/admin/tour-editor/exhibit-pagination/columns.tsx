@@ -4,6 +4,15 @@ import { isAxiosError } from 'axios';
 import { toast } from 'sonner';
 
 import { Button } from '~/components/ui/button';
+import { useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from '~/components/ui/dialog';
 import { Checkbox } from '~/components/ui/checkbox';
 import { DataTableColumnHeader } from '~/components/ui/data-table-column-header';
 import { Badge } from '~/components/ui/badge';
@@ -15,6 +24,7 @@ import {
 } from '~/components/ui/dropdown-menu';
 import { Link } from 'react-router';
 import useApiPrivate from '~/hooks/useApiPrivate';
+import { DialogClose, DialogTrigger } from '@radix-ui/react-dialog';
 
 // Define meta type for TanStack Table
 interface TableMeta {
@@ -155,9 +165,13 @@ export const columns: ColumnDef<Exhibit, any>[] = [
       const exhibit = row.original;
       const apiPrivate = useApiPrivate();
 
+      const [showConfirm, setShowConfirm] = useState(false);
+
       const handleDelete = async () => {
         try {
-          const response = await apiPrivate.delete(`/exhibit/${exhibit.exhibitId}`);
+          const response = await apiPrivate.delete(
+            `/exhibit/${exhibit.exhibitId}`,
+          );
           if (response.status === 200) {
             toast.success('Exhibit deleted successfully!', {
               duration: 2000,
@@ -167,48 +181,73 @@ export const columns: ColumnDef<Exhibit, any>[] = [
           }
         } catch (error) {
           if (isAxiosError(error)) {
-            toast.error(error.response?.data.message || 'Failed to delete exhibit', {
-              duration: 2000,
-            });
+            toast.error(
+              error.response?.data.message || 'Failed to delete exhibit',
+              {
+                duration: 2000,
+              },
+            );
           } else {
             toast.error('An unexpected error occurred', {
               duration: 2000,
             });
           }
         }
+        setShowConfirm(false);
       };
 
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant='ghost' className='h-8 w-8 p-0'>
-              <span className='sr-only'>Open menu</span>
-              <MoreHorizontal className='h-4 w-4' />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align='end'>
-            <DropdownMenuItem
-              onClick={() => {
-                toast.success('Copied to clipboard', {
-                  duration: 2000,
-                });
-                navigator.clipboard.writeText(exhibit.exhibitId.toString());
-              }}
-            >
-              Copy Exhibit ID
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Link to={`/admin/tour-editor/view-exhibit/${exhibit.exhibitId}`}>
-                View Exhibit
-              </Link>
-            </DropdownMenuItem>
-            {exhibit.status !== 'Deleted' && (
-              <DropdownMenuItem onClick={handleDelete}>
-                Delete Exhibit
+        <Dialog>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant='ghost' className='h-8 w-8 p-0'>
+                <span className='sr-only'>Open menu</span>
+                <MoreHorizontal className='h-4 w-4' />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align='end'>
+              <DropdownMenuItem
+                onClick={() => {
+                  toast.success('Copied to clipboard', {
+                    duration: 2000,
+                  });
+                  navigator.clipboard.writeText(exhibit.exhibitId.toString());
+                }}
+              >
+                Copy Exhibit ID
               </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <DropdownMenuItem>
+                <Link
+                  to={`/admin/tour-editor/view-exhibit/${exhibit.exhibitId}`}
+                >
+                  View Exhibit
+                </Link>
+              </DropdownMenuItem>
+              <DialogTrigger asChild>
+                <DropdownMenuItem>
+                  <span className='text-red-400'>Delete Exhibit</span>
+                </DropdownMenuItem>
+              </DialogTrigger>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Hold Up!</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete this exhibit? This action cannot
+                be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className='flex gap-2 justify-end'>
+              <DialogClose asChild>
+                <Button variant='outline'>Cancel</Button>
+              </DialogClose>
+              <Button variant='destructive' onClick={handleDelete}>
+                Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       );
     },
   },

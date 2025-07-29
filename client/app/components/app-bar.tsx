@@ -32,6 +32,11 @@ const links = [
     name: 'Exhibits',
     auth: false,
   },
+  {
+    to: '/membership-plans',
+    name: 'Membership',
+    auth: false,
+  },
 ];
 
 export function LoginButton() {

@@ -12,6 +12,7 @@ export default [
   route('/verify', 'routes/verify.tsx'),
   route('/unauthorized', 'routes/unauthorized.tsx'),
   route('/exhibits', 'routes/home/exhibits/page.tsx'),
+  route('/membership-plans', 'routes/membership.tsx'),
 
   ...prefix('home', [
     layout('routes/home/layout.tsx', [

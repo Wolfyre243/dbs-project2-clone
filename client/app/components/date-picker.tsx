@@ -53,7 +53,7 @@ export function DatePicker({
   };
 
   return (
-    <div className='flex flex-col gap-3'>
+    <div className='flex flex-col gap-2'>
       <Label htmlFor={fieldName} className='px-1'>
         {label ?? 'Date'}
       </Label>

@@ -41,6 +41,8 @@ export default function MemberRegisterPage() {
 
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(initialState);
+  const [isLoading, setIsLoading] = useState(false);
+
   const updateForm = (fields: Partial<FormState>) =>
     setForm((prev) => ({ ...prev, ...fields }));
 
@@ -57,8 +59,7 @@ export default function MemberRegisterPage() {
       }
     });
 
-    console.log(body);
-
+    setIsLoading(true);
     try {
       const { data: responseData } = await api.post('/auth/register', body, {
         withCredentials: true,
@@ -76,6 +77,8 @@ export default function MemberRegisterPage() {
           'Something went wrong. Please try again later.';
       }
       setError(message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -96,6 +99,7 @@ export default function MemberRegisterPage() {
           submitCb={handleSubmit}
           form={form}
           setForm={updateForm}
+          isLoading={isLoading}
         />
         {error ? (
           <div className='bg-red-500 px-2 py-1 rounded-md'>{error}</div>

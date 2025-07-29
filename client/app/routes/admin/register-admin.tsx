@@ -10,13 +10,70 @@ import {
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
-import { UserPlus, Shield } from 'lucide-react';
+import { UserPlus, Shield, Loader2 } from 'lucide-react';
+import { RegistrationGenderSelect } from '~/components/register-form';
+import { LanguageSelect } from '~/components/language-select';
+import { DatePicker } from '~/components/date-picker';
+import { useState } from 'react';
+import { useNavigate } from 'react-router';
+import api from '~/services/api';
+import useApiPrivate from '~/hooks/useApiPrivate';
 
 export default function AdminRegisterPage() {
+  const navigate = useNavigate();
+  const apiPrivate = useApiPrivate();
+  const [form, setForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    username: '',
+    password: '',
+    confirmPassword: '',
+    gender: '',
+    languageCode: '',
+    dob: '',
+  });
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const updateForm = (fields: Partial<typeof form>) =>
+    setForm((prev) => ({ ...prev, ...fields }));
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+    setIsLoading(true);
+
+    // Prepare body
+    const body: { [key: string]: string } = { ...form };
+    // Format dob as ISO string if present
+    if (body.dob) {
+      body.dob = new Date(body.dob).toISOString();
+    }
+
+    try {
+      const { data: responseData } = await apiPrivate.post(
+        '/auth/register-admin',
+        body,
+      );
+      setSuccess('Admin account created successfully!');
+      setTimeout(() => navigate('/admin'), 1500);
+    } catch (error: any) {
+      let message = 'Something went wrong. Please try again later.';
+      if (error.response?.data?.message) {
+        message = error.response.data.message;
+      }
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <RequireAuth allowedRoles={[Roles.SUPERADMIN]}>
       <div className='h-full w-full bg-background text-foreground p-6'>
-        <div className='max-w-2xl mx-auto space-y-6'>
+        <div className='max-w-4xl mx-auto space-y-6'>
           {/* Page Header */}
           <div className='space-y-2'>
             <div className='flex items-center gap-3'>
@@ -32,87 +89,181 @@ export default function AdminRegisterPage() {
           </div>
 
           {/* Registration Form */}
-          <Card className='w-full'>
-            <CardHeader>
-              <CardTitle className='flex items-center gap-2'>
-                <UserPlus className='h-5 w-5' />
-                Create New Admin Account
-              </CardTitle>
-              <CardDescription>
-                Fill in the details below to create a new administrator account.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className='space-y-6'>
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                <div className='space-y-2'>
-                  <Label htmlFor='firstName'>First Name</Label>
-                  <Input
-                    id='firstName'
-                    placeholder='Enter first name'
-                    className='bg-background border-border'
-                  />
+          <form onSubmit={handleSubmit}>
+            <Card className='w-full'>
+              <CardHeader>
+                <CardTitle className='flex items-center gap-2'>
+                  <UserPlus className='h-5 w-5' />
+                  Create New Admin Account
+                </CardTitle>
+                <CardDescription>
+                  Fill in the details below to create a new administrator
+                  account.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className='space-y-6'>
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                  <div className='space-y-2'>
+                    <Label htmlFor='firstName'>First Name</Label>
+                    <Input
+                      id='firstName'
+                      name='firstName'
+                      placeholder='Enter first name'
+                      className='bg-background border-border'
+                      value={form.firstName}
+                      onChange={(e) =>
+                        updateForm({ firstName: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+                  <div className='space-y-2'>
+                    <Label htmlFor='lastName'>Last Name</Label>
+                    <Input
+                      id='lastName'
+                      name='lastName'
+                      placeholder='Enter last name'
+                      className='bg-background border-border'
+                      value={form.lastName}
+                      onChange={(e) => updateForm({ lastName: e.target.value })}
+                      required
+                    />
+                  </div>
                 </div>
-                <div className='space-y-2'>
-                  <Label htmlFor='lastName'>Last Name</Label>
-                  <Input
-                    id='lastName'
-                    placeholder='Enter last name'
-                    className='bg-background border-border'
-                  />
+
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                  <div className='space-y-2'>
+                    <Label htmlFor='username'>Username</Label>
+                    <Input
+                      id='username'
+                      name='username'
+                      placeholder='Enter username'
+                      className='bg-background border-border'
+                      value={form.username}
+                      onChange={(e) => updateForm({ username: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className='space-y-2'>
+                    <Label htmlFor='email'>Email Address</Label>
+                    <Input
+                      id='email'
+                      name='email'
+                      type='email'
+                      placeholder='admin@example.com'
+                      className='bg-background border-border'
+                      value={form.email}
+                      onChange={(e) => updateForm({ email: e.target.value })}
+                      required
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <div className='space-y-2'>
-                <Label htmlFor='email'>Email Address</Label>
-                <Input
-                  id='email'
-                  type='email'
-                  placeholder='admin@example.com'
-                  className='bg-background border-border'
-                />
-              </div>
-
-              <div className='space-y-2'>
-                <Label htmlFor='username'>Username</Label>
-                <Input
-                  id='username'
-                  placeholder='Enter username'
-                  className='bg-background border-border'
-                />
-              </div>
-
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                <div className='space-y-2'>
-                  <Label htmlFor='password'>Password</Label>
-                  <Input
-                    id='password'
-                    type='password'
-                    placeholder='Enter secure password'
-                    className='bg-background border-border'
-                  />
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                  <div className='space-y-2'>
+                    <Label htmlFor='password'>Password</Label>
+                    <Input
+                      id='password'
+                      name='password'
+                      type='password'
+                      placeholder='Enter secure password'
+                      className='bg-background border-border'
+                      value={form.password}
+                      onChange={(e) => updateForm({ password: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className='space-y-2'>
+                    <Label htmlFor='confirmPassword'>Confirm Password</Label>
+                    <Input
+                      id='confirmPassword'
+                      name='confirmPassword'
+                      type='password'
+                      placeholder='Confirm password'
+                      className='bg-background border-border'
+                      value={form.confirmPassword}
+                      onChange={(e) =>
+                        updateForm({ confirmPassword: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
                 </div>
-                <div className='space-y-2'>
-                  <Label htmlFor='confirmPassword'>Confirm Password</Label>
-                  <Input
-                    id='confirmPassword'
-                    type='password'
-                    placeholder='Confirm password'
-                    className='bg-background border-border'
-                  />
+                <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+                  <div className='space-y-2'>
+                    <Label htmlFor='gender'>Gender</Label>
+                    <RegistrationGenderSelect
+                      fieldName='gender'
+                      required={true}
+                      onChange={(e: any) =>
+                        updateForm({ gender: e.target.value })
+                      }
+                      placeholder='Select gender'
+                      label='Gender'
+                      className='w-full'
+                    />
+                  </div>
+                  <div className='space-y-2'>
+                    <Label htmlFor='languageCode'>Language</Label>
+                    <LanguageSelect
+                      fieldName='languageCode'
+                      required={true}
+                      value={form.languageCode}
+                      onValueChange={(val: string) =>
+                        updateForm({ languageCode: val })
+                      }
+                      placeholder='Select language'
+                      className='w-full'
+                    />
+                  </div>
+                  <div className='space-y-2'>
+                    <DatePicker
+                      label='Date of Birth'
+                      fieldName='dob'
+                      required={true}
+                      onChange={(val: string) => updateForm({ dob: val })}
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <div className='flex flex-col sm:flex-row gap-3 pt-4'>
-                <Button className='flex-1'>
-                  <UserPlus className='mr-2 h-4 w-4' />
-                  Create Admin Account
-                </Button>
-                <Button variant='outline' className='flex-1'>
-                  Cancel
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+                {error && (
+                  <div className='bg-red-500 px-2 py-1 rounded-md text-white'>
+                    {error}
+                  </div>
+                )}
+                {success && (
+                  <div className='bg-green-500 px-2 py-1 rounded-md text-white'>
+                    {success}
+                  </div>
+                )}
+
+                <div className='flex flex-col sm:flex-row gap-3 pt-4'>
+                  <Button className='flex-1' type='submit' disabled={isLoading}>
+                    {isLoading ? (
+                      <>
+                        <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                        Creating...
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus className='mr-2 h-4 w-4' />
+                        Create Admin Account
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant='outline'
+                    className='flex-1'
+                    type='button'
+                    onClick={() => navigate('/admin')}
+                    disabled={isLoading}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </form>
 
           {/* Additional Info Card */}
           <Card className='bg-muted/50 border-muted'>

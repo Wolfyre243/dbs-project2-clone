@@ -108,7 +108,7 @@ export const columns: ColumnDef<User>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title='Age' />
     ),
-    cell: ({ row }) => row.original.age || '',
+    cell: ({ row }) => row.original.age,
   },
   {
     accessorKey: 'gender',

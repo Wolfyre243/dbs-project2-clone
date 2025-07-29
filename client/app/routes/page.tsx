@@ -35,7 +35,7 @@ export default function LandingPage() {
 
       setAccessToken(responseData.accessToken);
       await JWTDecode(responseData.accessToken);
-      // TOFIX: How come user is taken to /admin
+
       navigate('/');
     } catch (error: any) {
       let message;

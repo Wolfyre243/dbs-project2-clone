@@ -160,6 +160,92 @@ module.exports.register = catchAsync(async (req, res, next) => {
   return next();
 });
 
+// Register Admin (clone of register, but with roleId = Roles.ADMIN)
+module.exports.registerAdmin = catchAsync(async (req, res, next) => {
+  const {
+    username,
+    password,
+    confirmPassword,
+    firstName,
+    lastName,
+    dob,
+    gender,
+    languageCode,
+    email,
+  } = req.body;
+
+  const jwtConfig = {
+    algorithm: tokenAlgorithm,
+    expiresIn: verifyTokenDuration,
+  };
+
+  // Check if passwords match
+  if (password !== confirmPassword) {
+    throw new AppError('Passwords do not match.', 400);
+  }
+
+  // Hash/Encrypt data for privacy and security
+  const passwordHash = bcrypt.hashSync(
+    password,
+    parseInt(process.env.BCRYPT_SALTROUNDS),
+  );
+  const encryptedEmail = encryptData(email);
+
+  const roleId = Roles.ADMIN;
+
+  const { user, email: registeredEmail } = await userModel.create({
+    username,
+    passwordHash,
+    firstName,
+    lastName,
+    dob,
+    gender,
+    languageCode,
+    encryptedEmail,
+    roleId,
+  });
+
+  // Create session for user
+  const deviceInfo = req.headers['user-agent'] || 'Unknown Device';
+  const session = await sessionModel.create({
+    userId: user.userId,
+    deviceInfo,
+  });
+
+  logger.info(
+    `🖊️ Successfully registered admin with username: ${user.username}`,
+  );
+
+  // Craft & Send Email
+  const payload = {
+    userId: registeredEmail.userId,
+    emailId: registeredEmail.emailId,
+    createdAt: new Date(Date.now()),
+  };
+
+  const verificationToken = jwt.sign(payload, verifySK, jwtConfig);
+  const verifyUrl = `${process.env.FRONTEND_URL}/verify?token=${verificationToken}`;
+
+  res.locals.email = decryptData(registeredEmail.email);
+  res.locals.mailContent = {
+    subject: 'Verify your email',
+    html: `
+      <p>Hi ${user.username},<br/><br/>
+      Please verify your email by clicking the link below:<br/><a href="${verifyUrl}">Verify Email</a><br/><br/>
+      The link will expire in ${verifyTokenDuration}.<br/><br/>
+      Regards,<br/>
+      The SDC Team</p>
+    `,
+  };
+
+  res.locals.userId = user.userId;
+  res.locals.roleId = roleId;
+  res.locals.sessionId = session.sessionId;
+  res.locals.statusCode = 200;
+
+  return next();
+});
+
 module.exports.logout = catchAsync(async (req, res, next) => {
   const { sessionId } = res.locals;
 
