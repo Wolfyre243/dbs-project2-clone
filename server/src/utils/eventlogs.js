@@ -1,6 +1,7 @@
 // This for user logs
 const Roles = require('../configs/roleConfig');
 const { PrismaClient } = require('../generated/prisma');
+const logger = require('./logger');
 const prisma = new PrismaClient();
 
 /**
@@ -18,23 +19,29 @@ module.exports.logUserEvent = async function ({
   entityName,
   eventTypeId,
   details,
+  metadata = null,
   role,
 }) {
   // Exclude admin and superadmin
   if (role === Roles.ADMIN || role === Roles.SUPERADMIN) return;
 
   try {
-    await prisma.event.create({
+    const log = await prisma.event.create({
       data: {
         userId,
         entityId,
         entityName,
         eventTypeId,
         details,
-        timestamp: new Date(),
+        metadata,
+        // timestamp: new Date(),
       },
     });
+
+    logger.info(details);
+    return log;
   } catch (error) {
     console.error('Error logging user event:', error);
+    throw error;
   }
 };

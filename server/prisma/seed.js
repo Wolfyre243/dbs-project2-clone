@@ -178,6 +178,38 @@ async function main() {
           eventType: 'QR_SCANNED',
           description: 'Event triggered when a QR code is scanned',
         },
+        {
+          eventType: 'AUDIO_STARTED',
+          description: 'Audio playback started by user',
+        },
+        {
+          eventType: 'AUDIO_PAUSED',
+          description: 'Audio playback paused by user',
+        },
+        {
+          eventType: 'AUDIO_STOPPED',
+          description: 'Audio playback stopped by user',
+        },
+        {
+          eventType: 'AUDIO_SEEKED',
+          description: 'User jumped to a different position in the audio',
+        },
+        {
+          eventType: 'AUDIO_COMPLETED',
+          description: 'Audio playback completed (reached end)',
+        },
+        {
+          eventType: 'AUDIO_VOLUME_CHANGED',
+          description: 'User changed the audio volume',
+        },
+        {
+          eventType: 'AUDIO_MUTED',
+          description: 'User muted the audio',
+        },
+        {
+          eventType: 'AUDIO_UNMUTED',
+          description: 'User unmuted the audio',
+        },
       ];
 
       if (eventTypeData.length > 0) {

@@ -208,9 +208,10 @@ model event {
   entityId    String    @map("entity_id")
   entityName  String    @map("entity_name") @db.VarChar(100)
   eventTypeId Int       @map("event_type_id") @db.Integer
-  timestamp   DateTime  @db.Timestamptz(6)
+  timestamp   DateTime  @default(now()) @db.Timestamptz(6)
   details     String
   userId      String    @map("user_id") @db.Uuid
+  metadata    Json?     @db.JsonB
   users       users     @relation(fields: [userId], references: [userId])
   eventType   eventType @relation(fields: [eventTypeId], references: [eventTypeId])
 

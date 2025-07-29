@@ -3,20 +3,25 @@
 const express = require('express');
 
 // Import controllers
-const adminAuditController = require('../controllers/adminAuditController');
+const eventLogController = require('../controllers/eventLogController');
 const jwtMiddleware = require('../middlewares/jwtMiddleware');
 const authMiddleware = require('../middlewares/authMiddleware');
 
 // -----------------------------------SET UP ROUTES-----------------------------------
 // Create the router
-const adminAuditRouter = express.Router();
+const eventLogRouter = express.Router();
 
-adminAuditRouter.use(jwtMiddleware.verifyToken, authMiddleware.verifyIsAdmin);
+eventLogRouter.use(jwtMiddleware.verifyToken);
 
 // Paginated audit logs with filter
-adminAuditRouter.get('/', adminAuditController.getPaginatedAuditLogs);
+// eventLogRouter.get('/', eventLogController.getPaginatedEventLogs);
 
 // List all audit log types
-adminAuditRouter.get('/log-types', adminAuditController.getAllAuditLogTypes);
+eventLogRouter.get('/log-types', eventLogController.getAllEventLogTypes);
 
-module.exports = adminAuditRouter;
+eventLogRouter.post(
+  '/audio/:eventTypeId',
+  eventLogController.createAudioEventLog,
+);
+
+module.exports = eventLogRouter;

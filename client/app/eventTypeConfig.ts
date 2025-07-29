@@ -10,4 +10,4 @@ const EventTypes = {
   AUDIO_UNMUTED: 9,
 };
 
-module.exports = EventTypes;
+export default EventTypes;

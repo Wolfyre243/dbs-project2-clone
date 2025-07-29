@@ -16,6 +16,9 @@ import {
 } from '~/components/ui/select';
 import { motion } from 'framer-motion';
 import { useParams, useSearchParams } from 'react-router';
+import EventTypes from '~/eventTypeConfig';
+import useAuth from '~/hooks/useAuth';
+import Roles from '~/rolesConfig';
 
 type ExhibitAudio = {
   audioId: string;
@@ -74,6 +77,7 @@ function Subtitle({
   audioRefs,
   handleTimeUpdate,
   handleAudioEnded,
+  exhibitId,
 }: {
   subtitle: ExhibitSubtitle;
   selectedLanguage: string;
@@ -81,7 +85,72 @@ function Subtitle({
   audioRefs: React.MutableRefObject<Record<string, HTMLAudioElement | null>>;
   handleTimeUpdate: (subtitleId: string) => void;
   handleAudioEnded: (subtitleId: string) => void;
+  exhibitId: string;
 }) {
+  const apiPrivate = useApiPrivate();
+  const { role } = useAuth();
+
+  // Audio event logging
+  const logAudioEvent = async (
+    eventTypeId: number,
+    audioElement: HTMLAudioElement,
+    extraDetails = {},
+  ) => {
+    try {
+      if (role === Roles.ADMIN || role === Roles.SUPERADMIN) return;
+
+      await apiPrivate.post(`/event-log/audio/${eventTypeId}`, {
+        entityId: subtitle.audio.audioId,
+        details: `Exhibit ${exhibitId}, Subtitle ${subtitle.subtitleId}, Audio ${subtitle.audio.audioId} (${subtitle.languageCode}) at ${audioElement.currentTime.toFixed(1)}s/${audioElement.duration.toFixed(1)}s, volume ${audioElement.volume}, muted: ${audioElement.muted}`,
+        metadata: {
+          exhibitId,
+          subtitleId: subtitle.subtitleId,
+          audioId: subtitle.audio.audioId,
+          languageCode: subtitle.languageCode,
+          currentTime: audioElement.currentTime,
+          duration: audioElement.duration,
+          volume: audioElement.volume,
+          muted: audioElement.muted,
+          ...extraDetails,
+        },
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // Attach event listeners
+  const audioRefCallback = (audioElement: HTMLAudioElement | null) => {
+    if (audioElement) {
+      audioRefs.current[subtitle.subtitleId] = audioElement;
+
+      // Remove previous listeners to avoid duplicates
+      audioElement.onplay = null;
+      audioElement.onpause = null;
+      audioElement.onended = null;
+      audioElement.onseeked = null;
+      audioElement.onvolumechange = null;
+
+      audioElement.onplay = () =>
+        logAudioEvent(EventTypes.AUDIO_STARTED, audioElement);
+      audioElement.onpause = () =>
+        logAudioEvent(EventTypes.AUDIO_PAUSED, audioElement);
+      audioElement.onended = () =>
+        logAudioEvent(EventTypes.AUDIO_COMPLETED, audioElement);
+      audioElement.onseeked = () =>
+        logAudioEvent(EventTypes.AUDIO_SEEKED, audioElement, {
+          seekedTo: audioElement.currentTime,
+        });
+      audioElement.onvolumechange = () =>
+        logAudioEvent(
+          audioElement.muted
+            ? EventTypes.AUDIO_MUTED
+            : EventTypes.AUDIO_VOLUME_CHANGED,
+          audioElement,
+        );
+    }
+  };
+
   const isSpaceSeparated = [
     'en-GB',
     'es-ES',
@@ -204,10 +273,7 @@ function Subtitle({
       className='w-full'
     >
       <audio
-        ref={(audioElement) => {
-          if (audioElement)
-            audioRefs.current[subtitle.subtitleId] = audioElement;
-        }}
+        ref={audioRefCallback}
         controls
         src={subtitle.audio.fileLink}
         className='w-full mb-4 sm:mb-5'
@@ -473,6 +539,7 @@ export default function SingleExhibit() {
               audioRefs={audioRefs}
               handleTimeUpdate={handleTimeUpdate}
               handleAudioEnded={handleAudioEnded}
+              exhibitId={exhibit.exhibitId}
             />
           ))}
       </div>
