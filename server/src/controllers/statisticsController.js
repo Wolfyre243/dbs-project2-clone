@@ -123,37 +123,19 @@ module.exports.getDisplayCommonLanguagesUsed = catchAsync(
   },
 );
 
-// Get QR code scan trends and statistics
-module.exports.getQRCodeScanTrends = catchAsync(async (req, res, next) => {
+module.exports.getScansPerExhibit = catchAsync(async (req, res, next) => {
   const {
     startDate = null,
     endDate = null,
-    exhibitId = null, // Filter by specific exhibit
-    granularity = 'day', // 'day', 'month', 'year'
-    limit = 10, // Top N exhibits
+    granularity = 'day', // optional, not used in logic here
+    limit = null,
   } = req.query;
 
-  // Validate granularity
-  const validGranularities = ['day', 'month', 'year'];
-  if (!validGranularities.includes(granularity)) {
-    throw new AppError(
-      'Invalid granularity. Must be: day, month, or year',
-      400,
-    );
-  }
-
-  // Validate limit
-  const limitNum = parseInt(limit);
-  if (isNaN(limitNum) || limitNum < 1 || limitNum > 50) {
-    throw new AppError('Invalid limit. Must be between 1 and 50', 400);
-  }
-
-  const result = await statisticsModel.getQRCodeScanTrends({
+  const result = await statisticsModel.getScansPerExhibitStats({
     startDate,
     endDate,
-    exhibitId,
     granularity,
-    limit: limitNum,
+    limit: limit ? parseInt(limit) : null,
   });
 
   res.status(200).json({

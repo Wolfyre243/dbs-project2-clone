@@ -32,8 +32,6 @@ statisticsRouter.get(
   statisticsController.getDisplayMemberSignUps,
 );
 
-// Not Tested
-
 // Statistics for getting the most common languages used by users
 statisticsRouter.get(
   '/display-common-languages-used',
@@ -41,11 +39,10 @@ statisticsRouter.get(
   statisticsController.getDisplayCommonLanguagesUsed,
 );
 
-// Todo:  Display trend of QR code being scanned
+// Display trend of QR code being scanned
 statisticsRouter.get(
-  '/qr-scan-trends',
-  authMiddleware.verifyIsAdmin,
-  statisticsController.getQRCodeScanTrends,
+  '/scans-per-exhibit',
+  statisticsController.getScansPerExhibit,
 );
 
 module.exports = statisticsRouter;

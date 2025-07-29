@@ -1,5 +1,6 @@
 import { SectionCards, ChartAreaInteractive } from './statistics/users';
 import { LanguageStatistics } from './statistics/language';
+import { QRScanDashboard } from './statistics/qr-code';
 import { useNavigate } from 'react-router';
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs';
@@ -46,12 +47,7 @@ export default function AdminHomePage() {
         </TabsContent>
 
         <TabsContent value='qr-codes' className='space-y-6'>
-          <div className='text-center py-12'>
-            <h2 className='text-2xl font-semibold mb-4'>QR Code Statistics</h2>
-            <p className='text-muted-foreground'>
-              QR code scan analytics will be displayed here
-            </p>
-          </div>
+          <QRScanDashboard />
         </TabsContent>
       </Tabs>
     </div>

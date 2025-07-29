@@ -445,200 +445,104 @@ module.exports.getDisplayCommonLanguagesUsed = async ({ limit } = {}) => {
   }
 };
 
-// Get QR code scan trends and statistics
-module.exports.getQRCodeScanTrends = async ({
+// Get scan counts grouped by exhibit and date
+module.exports.getScansPerExhibitStats = async ({
   startDate = null,
   endDate = null,
-  exhibitId = null,
   granularity = 'day',
-  limit = 10,
+  limit = null,
 }) => {
   try {
-    // Build where clause for event logs
-    let where = {
-      eventTypeId: EventTypes.QR_SCANNED, // Only QR scan events
-      entityName: 'qr_code', // Only QR code related events
+    const where = {
+      entityName: 'exhibit',
+      eventTypeId: EventTypes.QR_SCANNED,
     };
 
-    // Add date filtering
+    // Add date filters
     if (startDate || endDate) {
-      const dateFilter = {};
-      if (startDate) {
-        dateFilter.gte = new Date(startDate);
-      }
+      const timestampFilter = {};
+      if (startDate) timestampFilter.gte = new Date(startDate);
       if (endDate) {
-        const endDateObj = new Date(endDate);
-        endDateObj.setHours(23, 59, 59, 999);
-        dateFilter.lte = endDateObj;
+        const endObj = new Date(endDate);
+        endObj.setHours(23, 59, 59, 999);
+        timestampFilter.lte = endObj;
       }
-      where.timestamp = dateFilter;
+      where.timestamp = timestampFilter;
     }
 
-    // Get all QR scan events
-    const scanEvents = await prisma.event.findMany({
+    // Get scan events with timestamps
+    const scans = await prisma.event.findMany({
       where,
-      select: {
-        eventId: true,
-        timestamp: true,
-        entityId: true,
-        entityName: true,
-        userId: true,
-      },
-      orderBy: {
-        timestamp: 'desc',
-      },
+      select: { details: true, timestamp: true },
     });
 
-    // Get QR codes to map to exhibits
-    const qrCodeIds = [...new Set(scanEvents.map((event) => event.entityId))];
-    const qrCodes = await prisma.qrCode.findMany({
-      where: {
-        qrCodeId: {
-          in: qrCodeIds,
-        },
-      },
-      select: {
-        qrCodeId: true,
-        exhibitId: true,
-        exhibit: {
-          select: {
-            exhibitId: true,
-            title: true,
-          },
-        },
-      },
+    const exhibitScanMap = {};
+
+    scans.forEach((scan) => {
+      let exhibitId = null;
+      try {
+        const parsed = JSON.parse(scan.details);
+        exhibitId = parsed.exhibitId;
+      } catch {
+        const match = scan.details.match(
+          /exhibit (\w{8}-\w{4}-\w{4}-\w{4}-\w{12})/,
+        );
+        if (match) exhibitId = match[1];
+      }
+
+      if (!exhibitId) return;
+
+      // Determine time key
+      const ts = new Date(scan.timestamp);
+      let timeKey;
+      switch (granularity) {
+        case 'month':
+          timeKey = `${ts.getFullYear()}-${String(ts.getMonth() + 1).padStart(2, '0')}`;
+          break;
+        case 'year':
+          timeKey = `${ts.getFullYear()}`;
+          break;
+        default:
+          timeKey = ts.toISOString().split('T')[0]; // YYYY-MM-DD
+      }
+
+      if (!exhibitScanMap[exhibitId]) {
+        exhibitScanMap[exhibitId] = {
+          scanCount: 0,
+          scanDates: {}, // { 'YYYY-MM-DD': count }
+        };
+      }
+
+      exhibitScanMap[exhibitId].scanCount += 1;
+      exhibitScanMap[exhibitId].scanDates[timeKey] =
+        (exhibitScanMap[exhibitId].scanDates[timeKey] || 0) + 1;
     });
 
-    // Create QR code to exhibit mapping
-    const qrToExhibitMap = {};
-    qrCodes.forEach((qr) => {
-      qrToExhibitMap[qr.qrCodeId] = {
-        exhibitId: qr.exhibitId,
-        exhibitTitle: qr.exhibit?.title || 'Unknown Exhibit',
+    const exhibitIds = Object.keys(exhibitScanMap);
+    const exhibits = await prisma.exhibit.findMany({
+      where: { exhibitId: { in: exhibitIds } },
+      select: { exhibitId: true, title: true, description: true },
+    });
+
+    let result = exhibits.map((exhibit) => {
+      const { scanCount, scanDates } = exhibitScanMap[exhibit.exhibitId];
+      return {
+        exhibitId: exhibit.exhibitId,
+        title: exhibit.title,
+        description: exhibit.description,
+        scanCount,
+        scanDates: Object.entries(scanDates).map(([date, count]) => ({
+          date,
+          count,
+        })),
       };
     });
 
-    // Filter by specific exhibit if requested
-    let filteredEvents = scanEvents;
-    if (exhibitId) {
-      filteredEvents = scanEvents.filter((event) => {
-        const exhibit = qrToExhibitMap[event.entityId];
-        return exhibit && exhibit.exhibitId === exhibitId;
-      });
-    }
+    result.sort((a, b) => b.scanCount - a.scanCount);
+    if (limit && limit > 0) result = result.slice(0, limit);
 
-    // Process events for statistics
-    const exhibitScans = {};
-    const timeSeriesData = {};
-    const userScans = {};
-
-    filteredEvents.forEach((event) => {
-      const exhibit = qrToExhibitMap[event.entityId];
-      if (!exhibit) return;
-
-      const exhibitKey = exhibit.exhibitId;
-      const userId = event.userId || 'guest';
-
-      // Count by exhibit
-      if (!exhibitScans[exhibitKey]) {
-        exhibitScans[exhibitKey] = {
-          exhibitId: exhibitKey,
-          exhibitTitle: exhibit.exhibitTitle,
-          scanCount: 0,
-          uniqueUsers: new Set(),
-        };
-      }
-      exhibitScans[exhibitKey].scanCount++;
-      exhibitScans[exhibitKey].uniqueUsers.add(userId);
-
-      // Count by user
-      if (!userScans[userId]) {
-        userScans[userId] = 0;
-      }
-      userScans[userId]++;
-
-      // Time series data
-      let timeKey;
-      const eventDate = new Date(event.timestamp);
-
-      switch (granularity) {
-        case 'day':
-          timeKey = eventDate.toISOString().split('T')[0]; // YYYY-MM-DD
-          break;
-        case 'month':
-          timeKey = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}`; // YYYY-MM
-          break;
-        case 'year':
-          timeKey = eventDate.getFullYear().toString(); // YYYY
-          break;
-      }
-
-      if (!timeSeriesData[timeKey]) {
-        timeSeriesData[timeKey] = {
-          [granularity]: timeKey,
-          totalScans: 0,
-          uniqueExhibits: new Set(),
-          uniqueUsers: new Set(),
-        };
-      }
-      timeSeriesData[timeKey].totalScans++;
-      timeSeriesData[timeKey].uniqueExhibits.add(exhibitKey);
-      timeSeriesData[timeKey].uniqueUsers.add(userId);
-    });
-
-    // Convert exhibit scans to array and sort by scan count
-    const topExhibits = Object.values(exhibitScans)
-      .map((exhibit) => ({
-        ...exhibit,
-        uniqueUsers: exhibit.uniqueUsers.size,
-      }))
-      .sort((a, b) => b.scanCount - a.scanCount)
-      .slice(0, limit);
-
-    // Convert time series to array and sort
-    const timeSeriesArray = Object.values(timeSeriesData)
-      .map((item) => ({
-        [granularity]: item[granularity],
-        totalScans: item.totalScans,
-        uniqueExhibits: item.uniqueExhibits.size,
-        uniqueUsers: item.uniqueUsers.size,
-      }))
-      .sort((a, b) => a[granularity].localeCompare(b[granularity]));
-
-    // Calculate summary statistics
-    const totalScans = filteredEvents.length;
-    const uniqueUsers = new Set(filteredEvents.map((e) => e.userId || 'guest'))
-      .size;
-    const uniqueExhibits = new Set(Object.keys(exhibitScans)).size;
-    const mostPopularExhibit = topExhibits[0] || null;
-
-    return {
-      summary: {
-        totalScans,
-        uniqueUsers,
-        uniqueExhibits,
-        dateRange:
-          startDate && endDate ? `${startDate} to ${endDate}` : 'All time',
-        granularity,
-        mostPopularExhibit: mostPopularExhibit
-          ? {
-              exhibitId: mostPopularExhibit.exhibitId,
-              title: mostPopularExhibit.exhibitTitle,
-              scanCount: mostPopularExhibit.scanCount,
-            }
-          : null,
-      },
-      topExhibits,
-      timeSeries: {
-        granularity,
-        data: timeSeriesArray,
-      },
-      scanDistribution: {
-        byExhibit: topExhibits,
-        byTime: timeSeriesArray,
-      },
-    };
+    return result;
   } catch (error) {
-    throw new AppError('Failed to get QR scan statistics', 500);
+    throw new AppError('Failed to get scans per exhibit', 500);
   }
 };
