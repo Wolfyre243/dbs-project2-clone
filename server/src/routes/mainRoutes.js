@@ -12,6 +12,7 @@ const imageRouter = require('./imageRoutes');
 const QRcodeRouter = require('./QRcodeRoutes');
 const statisticsRouter = require('./statisticsRoutes');
 const survey = require('./surveyRoutes');
+const adminAuditRouter = require('./adminAuditRoute');
 
 // Create the main router and register routers
 const mainRouter = express.Router();
@@ -25,6 +26,8 @@ mainRouter.use('/language', languageRouter);
 mainRouter.use('/image', imageRouter);
 mainRouter.use('/qrcode', QRcodeRouter);
 mainRouter.use('/statistics', statisticsRouter);
+mainRouter.use('/admin-audit', adminAuditRouter);
+
 //mainRouter.use('/survey', survey);
 mainRouter.get('/', (req, res) => {
   res.redirect('/docs');
