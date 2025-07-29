@@ -38,6 +38,8 @@ import {
 
 import { Button } from '~/components/ui/button';
 import useApiPrivate from '~/hooks/useApiPrivate';
+import { utils as XLSXUtils, writeFile as XLSXWriteFile } from 'xlsx';
+import { DownloadIcon } from 'lucide-react';
 
 export function QRScanDashboard() {
   const apiPrivate = useApiPrivate();
@@ -52,9 +54,7 @@ export function QRScanDashboard() {
   const fetchData = async () => {
     try {
       const res = await apiPrivate.get('/statistics/scans-per-exhibit', {
-        params: {
-          granularity,
-        },
+        params: { granularity },
       });
 
       const data = res.data.data;
@@ -113,11 +113,49 @@ export function QRScanDashboard() {
     },
   };
 
+  const handleDownloadAllCSV = () => {
+    const exhibitSheet = barData.map((item, index) => ({
+      Ranking: index + 1,
+      Exhibit: item.exhibit,
+      Scans: item.scans,
+    }));
+
+    const trendSheet = lineData.map((item) => ({
+      Date: item.label,
+      'Total Scans': item.totalScans,
+    }));
+
+    const wb = XLSXUtils.book_new();
+    XLSXUtils.book_append_sheet(
+      wb,
+      XLSXUtils.json_to_sheet(exhibitSheet),
+      'Exhibit Breakdown',
+    );
+    XLSXUtils.book_append_sheet(
+      wb,
+      XLSXUtils.json_to_sheet(trendSheet),
+      'Scan Trends',
+    );
+
+    XLSXWriteFile(wb, `QR-Scan-Statistics-${granularity}.xlsx`);
+  };
+
   return (
     <div className='grid grid-cols-1 gap-6'>
+      <div className='flex justify-start sm:justify-end'>
+        <Button
+          className='mb-2'
+          size='sm'
+          variant='secondary'
+          onClick={handleDownloadAllCSV}
+        >
+          {' '}
+          <DownloadIcon />
+          Download
+        </Button>
+      </div>
       {/* TOP ROW: Bar Chart + Table */}
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
-        {/* Bar Chart */}
         <Card className='flex flex-col '>
           <CardHeader>
             <CardTitle>QR Scans by Exhibit</CardTitle>
@@ -162,7 +200,6 @@ export function QRScanDashboard() {
           </CardContent>
         </Card>
 
-        {/* Table with Ranking */}
         <Card>
           <CardHeader>
             <CardTitle>Exhibit Breakdown</CardTitle>
@@ -192,16 +229,16 @@ export function QRScanDashboard() {
         </Card>
       </div>
 
-      {/* BOTTOM ROW: Line Chart */}
+      {/* BOTTOM ROW: Area Chart */}
       <Card>
-        <CardHeader className='flex justify-between items-start'>
+        <CardHeader className='flex flex-wrap justify-between items-start gap-2'>
           <div>
             <CardTitle>QR Scans Over Time</CardTitle>
             <CardDescription>
               Viewing by <span className='capitalize'>{granularity}</span>
             </CardDescription>
           </div>
-          <div className='flex gap-2'>
+          <div className='flex flex-wrap gap-2'>
             {['day', 'month', 'year'].map((g) => (
               <Button
                 key={g}
