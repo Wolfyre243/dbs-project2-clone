@@ -60,4 +60,15 @@ statisticsRouter.get(
   statisticsController.getAverageListenDuration,
 );
 
+// Time series endpoints for line charts
+statisticsRouter.get(
+  '/audio-completion-rates-time-series',
+  statisticsController.getAudioCompletionRatesTimeSeries,
+);
+
+statisticsRouter.get(
+  '/average-listen-duration-time-series',
+  statisticsController.getAverageListenDurationTimeSeries,
+);
+
 module.exports = statisticsRouter;

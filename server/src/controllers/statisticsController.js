@@ -147,6 +147,28 @@ module.exports.getAverageListenDuration = catchAsync(async (req, res, next) => {
   });
 });
 
+// Get audio completion rates time series data for line charts
+module.exports.getAudioCompletionRatesTimeSeries = catchAsync(
+  async (req, res, next) => {
+    const result = await statisticsModel.getAudioCompletionRatesTimeSeries();
+    res.status(200).json({
+      status: 'success',
+      data: result,
+    });
+  },
+);
+
+// Get average listen duration time series data for line charts
+module.exports.getAverageListenDurationTimeSeries = catchAsync(
+  async (req, res, next) => {
+    const result = await statisticsModel.getAverageListenDurationTimeSeries();
+    res.status(200).json({
+      status: 'success',
+      data: result,
+    });
+  },
+);
+
 module.exports.getScansPerExhibit = catchAsync(async (req, res, next) => {
   const {
     startDate = null,

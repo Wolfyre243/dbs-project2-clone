@@ -8,8 +8,8 @@ import {
 } from '~/components/ui/card';
 import { ChartContainer } from '~/components/ui/chart';
 import {
-  BarChart,
-  Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -23,7 +23,7 @@ import useApiPrivate from '~/hooks/useApiPrivate';
 import { utils as XLSXUtils, writeFile as XLSXWriteFile } from 'xlsx';
 import deepEqualArray from '~/lib/equality';
 
-export default function AudioPlaysByExhibitChart() {
+export default function AudioCompletionRateLineChart() {
   const apiPrivate = useApiPrivate();
   const [data, setData] = useState([]);
   const [dateRange, setDateRange] = useState<{
@@ -48,15 +48,17 @@ export default function AudioPlaysByExhibitChart() {
           params.startDate = dateRange.startDate.toISOString();
         if (dateRange.endDate) params.endDate = dateRange.endDate.toISOString();
         const res = await apiPrivate.get(
-          '/statistics/audio-plays-per-exhibit',
-          { params },
+          '/statistics/audio-completion-rates-time-series',
+          {
+            params,
+          },
         );
         // Only update if data is different
         if (!deepEqualArray(res.data.data, data)) {
           setData(res.data.data);
         }
       } catch (e) {
-        setError('Failed to load audio plays data');
+        setError('Failed to load completion rate data');
         setData([]);
       } finally {
         // setLoading(false);
@@ -75,25 +77,25 @@ export default function AudioPlaysByExhibitChart() {
     if (data.length === 0) return;
 
     const sheet = data.map((item: any) => ({
-      Exhibit: item.title,
-      'Play Count': item.playCount,
+      Date: item.date,
+      Started: item.started,
+      Completed: item.completed,
+      'Completion Rate (%)': item.completionRate,
     }));
     const wb = XLSXUtils.book_new();
     XLSXUtils.book_append_sheet(
       wb,
       XLSXUtils.json_to_sheet(sheet),
-      'Audio Plays',
+      'Audio Completion Rate Time Series',
     );
-    XLSXWriteFile(wb, 'audio-plays-by-exhibit.csv');
+    XLSXWriteFile(wb, 'audio-completion-rate-time-series.csv');
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Audio Plays by Exhibit</CardTitle>
-        <CardDescription>
-          Number of times audio was played per exhibit
-        </CardDescription>
+        <CardTitle>Audio Completion Rate Trends</CardTitle>
+        <CardDescription>Cumulative completion rate over time</CardDescription>
       </CardHeader>
       <CardContent>
         <div className='flex flex-wrap gap-4 mb-4 items-center'>
@@ -135,12 +137,12 @@ export default function AudioPlaysByExhibitChart() {
           <div className='h-[300px] flex items-center justify-center'>
             <div className='flex items-center gap-2'>
               <Loader2 className='h-4 w-4 animate-spin' />
-              <span>Loading audio plays data...</span>
+              <span>Loading completion rate data...</span>
             </div>
           </div>
-        )} */}
-
-        {/* {error && (
+        )}
+        
+        {error && (
           <div className='h-[300px] flex items-center justify-center'>
             <div className='text-center text-muted-foreground'>
               <p className='text-red-500 mb-2'>{error}</p>
@@ -148,11 +150,11 @@ export default function AudioPlaysByExhibitChart() {
             </div>
           </div>
         )}
-
+        
         {!loading && !error && data.length === 0 && (
           <div className='h-[300px] flex items-center justify-center'>
             <div className='text-center text-muted-foreground'>
-              <p className='mb-2'>No audio plays data available</p>
+              <p className='mb-2'>No completion rate data available</p>
               <p className='text-sm'>Try adjusting your date range</p>
             </div>
           </div>
@@ -160,15 +162,50 @@ export default function AudioPlaysByExhibitChart() {
 
         {/* !loading && !error &&  */}
         {data.length > 0 && (
-          <ChartContainer config={{ playCount: { label: 'Play Count' } }}>
+          <ChartContainer
+            config={{ completionRate: { label: 'Completion Rate (%)' } }}
+          >
             <ResponsiveContainer width='100%' height={300}>
-              <BarChart data={data}>
+              <LineChart data={data}>
                 <CartesianGrid strokeDasharray='3 3' />
-                <XAxis dataKey='title' />
+                <XAxis
+                  dataKey='date'
+                  tickFormatter={(value) => {
+                    const date = new Date(value);
+                    return date.toLocaleDateString('en-SG', {
+                      month: 'short',
+                      day: 'numeric',
+                    });
+                  }}
+                />
                 <YAxis allowDecimals={false} />
-                <Tooltip />
-                <Bar dataKey='playCount' fill='var(--chart-1)' />
-              </BarChart>
+                <Tooltip
+                  labelFormatter={(value) => {
+                    const date = new Date(value);
+                    return date.toLocaleDateString('en-SG', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    });
+                  }}
+                />
+                <Line
+                  type='monotone'
+                  dataKey='completionRate'
+                  stroke='var(--chart-2)'
+                  strokeWidth={2}
+                  dot={{
+                    fill: 'var(--chart-2)',
+                    strokeWidth: 2,
+                    r: 4,
+                  }}
+                  activeDot={{
+                    r: 6,
+                    stroke: 'var(--chart-2)',
+                    strokeWidth: 2,
+                  }}
+                />
+              </LineChart>
             </ResponsiveContainer>
           </ChartContainer>
         )}

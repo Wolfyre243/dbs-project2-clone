@@ -18,9 +18,10 @@ import {
 } from 'recharts';
 import { DatePicker } from '~/components/date-picker';
 import { Button } from '~/components/ui/button';
-import { DownloadIcon } from 'lucide-react';
+import { DownloadIcon, Loader2 } from 'lucide-react';
 import useApiPrivate from '~/hooks/useApiPrivate';
 import { utils as XLSXUtils, writeFile as XLSXWriteFile } from 'xlsx';
+import deepEqualArray from '~/lib/equality';
 
 export default function AverageListenDurationChart() {
   const apiPrivate = useApiPrivate();
@@ -33,12 +34,14 @@ export default function AverageListenDurationChart() {
     endDate: null,
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
 
     const fetchData = async () => {
-      setLoading(true);
+      // setLoading(true);
+      setError(null);
       try {
         const params: any = {};
         if (dateRange.startDate)
@@ -48,11 +51,15 @@ export default function AverageListenDurationChart() {
           '/statistics/average-listen-duration',
           { params },
         );
-        setData(res.data.data);
+        // Only update if data is different
+        if (!deepEqualArray(res.data.data, data)) {
+          setData(res.data.data);
+        }
       } catch (e) {
+        setError('Failed to load listen duration data');
         setData([]);
       } finally {
-        setLoading(false);
+        // setLoading(false);
       }
     };
 
@@ -62,9 +69,11 @@ export default function AverageListenDurationChart() {
     return () => {
       clearInterval(intervalId);
     };
-  }, [dateRange, apiPrivate]);
+  }, [dateRange, apiPrivate, data]);
 
   const handleExportCSV = () => {
+    if (data.length === 0) return;
+
     const sheet = data.map((item: any) => ({
       Audio: item.fileName,
       Exhibit: item.title,
@@ -114,23 +123,59 @@ export default function AverageListenDurationChart() {
               }
             />
           </div>
-          <Button size='sm' variant='secondary' onClick={handleExportCSV}>
+          <Button
+            size='sm'
+            variant='secondary'
+            onClick={handleExportCSV}
+            disabled={data.length === 0}
+          >
             <DownloadIcon className='mr-1' /> Export CSV
           </Button>
         </div>
-        <ChartContainer
-          config={{ avgDuration: { label: 'Average Duration (s)' } }}
-        >
-          <ResponsiveContainer width='100%' height={300}>
-            <BarChart data={data}>
-              <CartesianGrid strokeDasharray='3 3' />
-              <XAxis dataKey='fileName' />
-              <YAxis allowDecimals={false} />
-              <Tooltip />
-              <Bar dataKey='avgDuration' fill='var(--chart-3)' />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartContainer>
+
+        {/* {loading && (
+          <div className='h-[300px] flex items-center justify-center'>
+            <div className='flex items-center gap-2'>
+              <Loader2 className='h-4 w-4 animate-spin' />
+              <span>Loading listen duration data...</span>
+            </div>
+          </div>
+        )}
+        
+        {error && (
+          <div className='h-[300px] flex items-center justify-center'>
+            <div className='text-center text-muted-foreground'>
+              <p className='text-red-500 mb-2'>{error}</p>
+              <p className='text-sm'>Please try again later</p>
+            </div>
+          </div>
+        )}
+        
+        {!loading && !error && data.length === 0 && (
+          <div className='h-[300px] flex items-center justify-center'>
+            <div className='text-center text-muted-foreground'>
+              <p className='mb-2'>No listen duration data available</p>
+              <p className='text-sm'>Try adjusting your date range</p>
+            </div>
+          </div>
+        )} */}
+
+        {/* !loading && !error &&  */}
+        {data.length > 0 && (
+          <ChartContainer
+            config={{ avgDuration: { label: 'Average Duration (s)' } }}
+          >
+            <ResponsiveContainer width='100%' height={300}>
+              <BarChart data={data}>
+                <CartesianGrid strokeDasharray='3 3' />
+                <XAxis dataKey='fileName' />
+                <YAxis allowDecimals={false} />
+                <Tooltip />
+                <Bar dataKey='avgDuration' fill='var(--chart-3)' />
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartContainer>
+        )}
       </CardContent>
     </Card>
   );
