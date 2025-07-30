@@ -6,7 +6,11 @@ import {
   CardDescription,
   CardContent,
 } from '~/components/ui/card';
-import { ChartContainer } from '~/components/ui/chart';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from '~/components/ui/chart';
 import {
   LineChart,
   Line,
@@ -86,16 +90,30 @@ export default function AudioCompletionRateLineChart() {
     XLSXUtils.book_append_sheet(
       wb,
       XLSXUtils.json_to_sheet(sheet),
-      'Audio Completion Rate Time Series',
+      'Audio Completion Rate',
     );
     XLSXWriteFile(wb, 'audio-completion-rate-time-series.csv');
   };
 
   return (
-    <Card>
+    <Card className='h-full'>
       <CardHeader>
-        <CardTitle>Audio Completion Rate Trends</CardTitle>
-        <CardDescription>Cumulative completion rate over time</CardDescription>
+        <div className='flex flex-row justify-between'>
+          <div>
+            <CardTitle>Audio Completion Rate Trends</CardTitle>
+            <CardDescription>
+              Cumulative completion rate over time
+            </CardDescription>
+          </div>
+          <Button
+            size='sm'
+            variant='secondary'
+            onClick={handleExportCSV}
+            disabled={data.length === 0}
+          >
+            <DownloadIcon className='mr-1' /> Export CSV
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className='flex flex-wrap gap-4 mb-4 items-center'>
@@ -123,14 +141,6 @@ export default function AudioCompletionRateLineChart() {
               }
             />
           </div>
-          <Button
-            size='sm'
-            variant='secondary'
-            onClick={handleExportCSV}
-            disabled={data.length === 0}
-          >
-            <DownloadIcon className='mr-1' /> Export CSV
-          </Button>
         </div>
 
         {/* {loading && (
@@ -163,50 +173,54 @@ export default function AudioCompletionRateLineChart() {
         {/* !loading && !error &&  */}
         {data.length > 0 && (
           <ChartContainer
+            className='w-full aspect-auto h-[250px]'
             config={{ completionRate: { label: 'Completion Rate (%)' } }}
           >
-            <ResponsiveContainer width='100%' height={300}>
-              <LineChart data={data}>
-                <CartesianGrid strokeDasharray='3 3' />
-                <XAxis
-                  dataKey='date'
-                  tickFormatter={(value) => {
-                    const date = new Date(value);
-                    return date.toLocaleDateString('en-SG', {
-                      month: 'short',
-                      day: 'numeric',
-                    });
-                  }}
-                />
-                <YAxis allowDecimals={false} />
-                <Tooltip
-                  labelFormatter={(value) => {
-                    const date = new Date(value);
-                    return date.toLocaleDateString('en-SG', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    });
-                  }}
-                />
-                <Line
-                  type='monotone'
-                  dataKey='completionRate'
-                  stroke='var(--chart-2)'
-                  strokeWidth={2}
-                  dot={{
-                    fill: 'var(--chart-2)',
-                    strokeWidth: 2,
-                    r: 4,
-                  }}
-                  activeDot={{
-                    r: 6,
-                    stroke: 'var(--chart-2)',
-                    strokeWidth: 2,
-                  }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            <LineChart data={data}>
+              <CartesianGrid strokeDasharray='3 3' />
+              <XAxis
+                dataKey='date'
+                tickFormatter={(value) => {
+                  const date = new Date(value);
+                  return date.toLocaleDateString('en-SG', {
+                    month: 'short',
+                    day: 'numeric',
+                  });
+                }}
+              />
+              <YAxis allowDecimals={false} />
+              <ChartTooltip
+                cursor={false}
+                content={
+                  <ChartTooltipContent
+                    labelFormatter={(value) => {
+                      const date = new Date(value);
+                      return date.toLocaleDateString('en-SG', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      });
+                    }}
+                  />
+                }
+              />
+              <Line
+                type='monotone'
+                dataKey='completionRate'
+                stroke='var(--chart-2)'
+                strokeWidth={2}
+                dot={{
+                  fill: 'var(--chart-2)',
+                  strokeWidth: 2,
+                  r: 4,
+                }}
+                activeDot={{
+                  r: 6,
+                  stroke: 'var(--chart-2)',
+                  strokeWidth: 2,
+                }}
+              />
+            </LineChart>
           </ChartContainer>
         )}
       </CardContent>

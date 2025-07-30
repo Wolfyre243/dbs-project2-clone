@@ -6,7 +6,12 @@ import {
   CardDescription,
   CardContent,
 } from '~/components/ui/card';
-import { ChartContainer } from '~/components/ui/chart';
+import {
+  ChartContainer,
+  type ChartConfig,
+  ChartTooltip,
+  ChartTooltipContent,
+} from '~/components/ui/chart';
 import {
   BarChart,
   Bar,
@@ -22,6 +27,7 @@ import { DownloadIcon, Loader2 } from 'lucide-react';
 import useApiPrivate from '~/hooks/useApiPrivate';
 import { utils as XLSXUtils, writeFile as XLSXWriteFile } from 'xlsx';
 import deepEqualArray from '~/lib/equality';
+import { useIsMobile } from '~/hooks/use-mobile';
 
 export default function AudioPlaysByExhibitChart() {
   const apiPrivate = useApiPrivate();
@@ -35,6 +41,12 @@ export default function AudioPlaysByExhibitChart() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const isMobile = useIsMobile();
+
+  const chartConfig = {
+    playCount: { label: 'Play Count' },
+  } satisfies ChartConfig;
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
@@ -88,15 +100,27 @@ export default function AudioPlaysByExhibitChart() {
   };
 
   return (
-    <Card>
+    <Card className='h-full'>
       <CardHeader>
-        <CardTitle>Audio Plays by Exhibit</CardTitle>
-        <CardDescription>
-          Number of times audio was played per exhibit
-        </CardDescription>
+        <div className='flex flex-row justify-between'>
+          <div>
+            <CardTitle>Audio Plays by Exhibit</CardTitle>
+            <CardDescription>
+              Number of times audio was played per exhibit
+            </CardDescription>
+          </div>
+          <Button
+            size='sm'
+            variant='secondary'
+            onClick={handleExportCSV}
+            disabled={data.length === 0}
+          >
+            <DownloadIcon className='mr-1' /> Export CSV
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
-        <div className='flex flex-wrap gap-4 mb-4 items-center'>
+        <div className='flex flex-row gap-4 mb-4 items-center justify-between'>
           <div className='flex gap-2 items-center'>
             <span>Start:</span>
             <DatePicker
@@ -121,14 +145,6 @@ export default function AudioPlaysByExhibitChart() {
               }
             />
           </div>
-          <Button
-            size='sm'
-            variant='secondary'
-            onClick={handleExportCSV}
-            disabled={data.length === 0}
-          >
-            <DownloadIcon className='mr-1' /> Export CSV
-          </Button>
         </div>
 
         {/* {loading && (
@@ -160,17 +176,23 @@ export default function AudioPlaysByExhibitChart() {
 
         {/* !loading && !error &&  */}
         {data.length > 0 && (
-          <ChartContainer config={{ playCount: { label: 'Play Count' } }}>
-            <ResponsiveContainer width='100%' height={300}>
+          <div className='flex w-full'>
+            <ChartContainer
+              className='w-full aspect-auto h-[250px]'
+              config={chartConfig}
+            >
               <BarChart data={data}>
                 <CartesianGrid strokeDasharray='3 3' />
                 <XAxis dataKey='title' />
-                <YAxis allowDecimals={false} />
-                <Tooltip />
+                <YAxis allowDecimals={false} hide={isMobile} />
+                <ChartTooltip
+                  cursor={false}
+                  content={<ChartTooltipContent />}
+                />
                 <Bar dataKey='playCount' fill='var(--chart-1)' />
               </BarChart>
-            </ResponsiveContainer>
-          </ChartContainer>
+            </ChartContainer>
+          </div>
         )}
       </CardContent>
     </Card>

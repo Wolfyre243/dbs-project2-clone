@@ -57,160 +57,314 @@ const chartConfig = {
   },
 };
 
-export function SectionCards() {
-  const apiPrivate = useApiPrivate();
-  const [stats, setStats] = useState({
-    totalUsers: 0,
-    todayRegistrations: 0,
-    monthRegistrations: 0,
-    yearRegistrations: 0,
-    loading: true,
-    error: null as string | null,
-  });
+// Individual card components
 
-  const [dateRange, setDateRange] = useState({
-    startDate: null as Date | null,
-    endDate: null as Date | null,
-  });
+export function TotalUsersCard() {
+  const apiPrivate = useApiPrivate();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [monthRegistrations, setMonthRegistrations] = useState(0);
 
   useEffect(() => {
-    const fetchUserStats = async () => {
+    const fetchStats = async () => {
       try {
+        setLoading(true);
+        setError(null);
         const response = await apiPrivate.get('/statistics/count-of-users');
-        console.log('User Count Response:', response.data);
-
-        setStats({
-          totalUsers: response.data.data.totalUsers || 0,
-          todayRegistrations: response.data.data.registrations?.today || 0,
-          monthRegistrations: response.data.data.registrations?.thisMonth || 0,
-          yearRegistrations: response.data.data.registrations?.thisYear || 0,
-          loading: false,
-          error: null,
-        });
-      } catch (error) {
-        console.error('Error fetching user stats:', error);
-        setStats((prev) => ({
-          ...prev,
-          loading: false,
-          error: 'Failed to load statistics',
-        }));
+        setTotalUsers(response.data.data.totalUsers || 0);
+        setMonthRegistrations(response.data.data.registrations?.thisMonth || 0);
+      } catch (err) {
+        setError('Failed to load statistics');
+      } finally {
+        setLoading(false);
       }
     };
-    fetchUserStats();
+    fetchStats();
   }, [apiPrivate]);
 
-  if (stats.loading) {
+  if (loading) {
     return (
-      <div className='*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4'>
-        <Card className='@container/card'>
-          <CardHeader>
-            <CardDescription>Loading...</CardDescription>
-            <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-              ---
-            </CardTitle>
-          </CardHeader>
-        </Card>
-      </div>
+      <Card className='@container/card'>
+        <CardHeader>
+          <CardDescription>Loading...</CardDescription>
+          <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
+            ---
+          </CardTitle>
+        </CardHeader>
+      </Card>
     );
   }
-
-  if (stats.error) {
-    return <div className='text-center py-8 text-red-500'>{stats.error}</div>;
+  if (error) {
+    return (
+      <Card className='@container/card'>
+        <CardHeader>
+          <CardDescription>Error</CardDescription>
+          <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
+            {error}
+          </CardTitle>
+        </CardHeader>
+      </Card>
+    );
   }
-
   return (
-    <div className='*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs @xl/main:grid-cols-2 @5xl/main:grid-cols-4'>
+    <Card className='@container/card'>
+      <CardHeader>
+        <CardDescription>Total Users</CardDescription>
+        <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
+          {totalUsers.toLocaleString()}
+        </CardTitle>
+        <CardAction>
+          <Badge variant='outline'>
+            <IconTrendingUp />+{monthRegistrations}
+          </Badge>
+        </CardAction>
+      </CardHeader>
+      <CardFooter className='flex-col items-start gap-1.5 text-sm'>
+        <div className='line-clamp-1 flex gap-2 font-medium'>
+          New users total <IconTrendingUp className='size-4' />
+        </div>
+        <div className='text-muted-foreground'>Excludes admin users</div>
+      </CardFooter>
+    </Card>
+  );
+}
+
+export function TodayRegistrationsCard() {
+  const apiPrivate = useApiPrivate();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [todayRegistrations, setTodayRegistrations] = useState(0);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await apiPrivate.get('/statistics/count-of-users');
+        setTodayRegistrations(response.data.data.registrations?.today || 0);
+      } catch (err) {
+        setError('Failed to load statistics');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStats();
+  }, [apiPrivate]);
+
+  if (loading) {
+    return (
       <Card className='@container/card'>
         <CardHeader>
-          <CardDescription>Total Users</CardDescription>
+          <CardDescription>Loading...</CardDescription>
           <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-            {stats.totalUsers.toLocaleString()}
+            ---
           </CardTitle>
-          <CardAction>
-            <Badge variant='outline'>
-              <IconTrendingUp />+{stats.monthRegistrations}
-            </Badge>
-          </CardAction>
         </CardHeader>
-        <CardFooter className='flex-col items-start gap-1.5 text-sm'>
-          <div className='line-clamp-1 flex gap-2 font-medium'>
-            New users total <IconTrendingUp className='size-4' />
-          </div>
-          <div className='text-muted-foreground'>Excludes admin users</div>
-        </CardFooter>
       </Card>
+    );
+  }
+  if (error) {
+    return (
       <Card className='@container/card'>
         <CardHeader>
-          <CardDescription>Today's Registrations</CardDescription>
+          <CardDescription>Error</CardDescription>
           <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-            {stats.todayRegistrations}
+            {error}
           </CardTitle>
-          <CardAction>
-            <Badge variant='outline'>
-              <IconTrendingUp />+{stats.todayRegistrations}
-            </Badge>
-          </CardAction>
         </CardHeader>
-        <CardFooter className='flex-col items-start gap-1.5 text-sm'>
-          <div className='line-clamp-1 flex gap-2 font-medium'>
-            New users today <IconTrendingUp className='size-4' />
-          </div>
-          <div className='text-muted-foreground'>Daily sign-ups </div>
-        </CardFooter>
       </Card>
+    );
+  }
+  return (
+    <Card className='@container/card'>
+      <CardHeader>
+        <CardDescription>Today's Registrations</CardDescription>
+        <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
+          {todayRegistrations}
+        </CardTitle>
+        <CardAction>
+          <Badge variant='outline'>
+            <IconTrendingUp />+{todayRegistrations}
+          </Badge>
+        </CardAction>
+      </CardHeader>
+      <CardFooter className='flex-col items-start gap-1.5 text-sm'>
+        <div className='line-clamp-1 flex gap-2 font-medium'>
+          New users today <IconTrendingUp className='size-4' />
+        </div>
+        <div className='text-muted-foreground'>Daily sign-ups </div>
+      </CardFooter>
+    </Card>
+  );
+}
+
+export function MonthRegistrationsCard() {
+  const apiPrivate = useApiPrivate();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [monthRegistrations, setMonthRegistrations] = useState(0);
+  const [totalUsers, setTotalUsers] = useState(0);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await apiPrivate.get('/statistics/count-of-users');
+        setMonthRegistrations(response.data.data.registrations?.thisMonth || 0);
+        setTotalUsers(response.data.data.totalUsers || 0);
+      } catch (err) {
+        setError('Failed to load statistics');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStats();
+  }, [apiPrivate]);
+
+  const percent = ((monthRegistrations / (totalUsers || 1)) * 100).toFixed(1);
+
+  if (loading) {
+    return (
       <Card className='@container/card'>
         <CardHeader>
-          <CardDescription>This Month</CardDescription>
+          <CardDescription>Loading...</CardDescription>
           <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-            {stats.monthRegistrations}
+            ---
           </CardTitle>
-          <CardAction>
-            <Badge variant='outline'>
-              <IconTrendingUp />+
-              {(
-                (stats.monthRegistrations / (stats.totalUsers || 1)) *
-                100
-              ).toFixed(1)}
-              %
-            </Badge>
-          </CardAction>
         </CardHeader>
-        <CardFooter className='flex-col items-start gap-1.5 text-sm'>
-          <div className='line-clamp-1 flex gap-2 font-medium'>
-            Monthly growth <IconTrendingUp className='size-4' />
-          </div>
-          <div className='text-muted-foreground'>Registrations this month</div>
-        </CardFooter>
       </Card>
+    );
+  }
+  if (error) {
+    return (
       <Card className='@container/card'>
         <CardHeader>
-          <CardDescription>This Year</CardDescription>
+          <CardDescription>Error</CardDescription>
           <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-            {stats.yearRegistrations}
+            {error}
           </CardTitle>
-          <CardAction>
-            <Badge variant='outline'>
-              <IconTrendingUp />+
-              {(
-                (stats.yearRegistrations / (stats.totalUsers || 1)) *
-                100
-              ).toFixed(1)}
-              %
-            </Badge>
-          </CardAction>
         </CardHeader>
-        <CardFooter className='flex-col items-start gap-1.5 text-sm'>
-          <div className='line-clamp-1 flex gap-2 font-medium'>
-            Yearly growth <IconTrendingUp className='size-4' />
-          </div>
-          <div className='text-muted-foreground'>Annual registrations</div>
-        </CardFooter>
       </Card>
+    );
+  }
+  return (
+    <Card className='@container/card'>
+      <CardHeader>
+        <CardDescription>This Month</CardDescription>
+        <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
+          {monthRegistrations}
+        </CardTitle>
+        <CardAction>
+          <Badge variant='outline'>
+            <IconTrendingUp />+{percent}%
+          </Badge>
+        </CardAction>
+      </CardHeader>
+      <CardFooter className='flex-col items-start gap-1.5 text-sm'>
+        <div className='line-clamp-1 flex gap-2 font-medium'>
+          Monthly growth <IconTrendingUp className='size-4' />
+        </div>
+        <div className='text-muted-foreground'>Registrations this month</div>
+      </CardFooter>
+    </Card>
+  );
+}
+
+export function YearRegistrationsCard() {
+  const apiPrivate = useApiPrivate();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [yearRegistrations, setYearRegistrations] = useState(0);
+  const [totalUsers, setTotalUsers] = useState(0);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await apiPrivate.get('/statistics/count-of-users');
+        setYearRegistrations(response.data.data.registrations?.thisYear || 0);
+        setTotalUsers(response.data.data.totalUsers || 0);
+      } catch (err) {
+        setError('Failed to load statistics');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStats();
+  }, [apiPrivate]);
+
+  const percent = ((yearRegistrations / (totalUsers || 1)) * 100).toFixed(1);
+
+  if (loading) {
+    return (
+      <Card className='@container/card'>
+        <CardHeader>
+          <CardDescription>Loading...</CardDescription>
+          <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
+            ---
+          </CardTitle>
+        </CardHeader>
+      </Card>
+    );
+  }
+  if (error) {
+    return (
+      <Card className='@container/card'>
+        <CardHeader>
+          <CardDescription>Error</CardDescription>
+          <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
+            {error}
+          </CardTitle>
+        </CardHeader>
+      </Card>
+    );
+  }
+  return (
+    <Card className='@container/card'>
+      <CardHeader>
+        <CardDescription>This Year</CardDescription>
+        <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
+          {yearRegistrations}
+        </CardTitle>
+        <CardAction>
+          <Badge variant='outline'>
+            <IconTrendingUp />+{percent}%
+          </Badge>
+        </CardAction>
+      </CardHeader>
+      <CardFooter className='flex-col items-start gap-1.5 text-sm'>
+        <div className='line-clamp-1 flex gap-2 font-medium'>
+          Yearly growth <IconTrendingUp className='size-4' />
+        </div>
+        <div className='text-muted-foreground'>Annual registrations</div>
+      </CardFooter>
+    </Card>
+  );
+}
+
+export function SectionCards() {
+  return (
+    <div className='flex flex-row w-full gap-4'>
+      <div className='w-full'>
+        <TotalUsersCard />
+      </div>
+      <div className='w-full'>
+        <TodayRegistrationsCard />
+      </div>
+      <div className='w-full'>
+        <MonthRegistrationsCard />
+      </div>
+      <div className='w-full'>
+        <YearRegistrationsCard />
+      </div>
     </div>
   );
 }
 
-export function ChartAreaInteractive() {
+export function UserSignUpChart() {
   const apiPrivate = useApiPrivate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -292,7 +446,7 @@ export function ChartAreaInteractive() {
     );
   }
   return (
-    <Card>
+    <Card className='h-full'>
       <CardHeader className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
         <div>
           <CardTitle>Member Sign-Ups Over Time</CardTitle>
