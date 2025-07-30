@@ -45,7 +45,7 @@ export function QRScanDashboard() {
   const apiPrivate = useApiPrivate();
 
   const [granularity, setGranularity] = useState<'day' | 'month' | 'year'>(
-    'month',
+    'day',
   );
   const [barData, setBarData] = useState<any[]>([]);
   const [lineData, setLineData] = useState<any[]>([]);
@@ -142,7 +142,8 @@ export function QRScanDashboard() {
 
   return (
     <div className='grid grid-cols-1 gap-6'>
-      <div className='flex justify-start sm:justify-end'>
+      <div className='flex justify-start sm:justify-between'>
+        <h1 className='text-2xl font-bold'>QR Scans Analytics</h1>
         <Button
           className='mb-2'
           size='sm'
@@ -253,48 +254,49 @@ export function QRScanDashboard() {
         </CardHeader>
         <CardContent className='pb-4 overflow-x-auto sm:overflow-x-visible'>
           <div className='min-w-[500px] sm:min-w-0'>
-            <ChartContainer config={chartConfig}>
-              <ResponsiveContainer width='100%' height={220}>
-                <AreaChart
-                  data={lineData}
-                  margin={{ top: 10, bottom: 30, left: 40, right: 20 }}
-                >
-                  <CartesianGrid vertical={false} />
-                  <XAxis
-                    dataKey='label'
-                    tickLine={false}
-                    axisLine={true}
-                    tickMargin={8}
-                    label={{
-                      value: 'Date',
-                      position: 'insideBottom',
-                      offset: -20,
-                    }}
-                  />
-                  <YAxis
-                    tickLine={false}
-                    axisLine={true}
-                    tickMargin={10}
-                    label={{
-                      value: 'Total Scans',
-                      angle: -90,
-                      position: 'insideLeft',
-                      offset: 10,
-                    }}
-                  />
-                  <ChartTooltip
-                    cursor={false}
-                    content={<ChartTooltipContent />}
-                  />
-                  <Area
-                    type='monotone'
-                    dataKey='totalScans'
-                    stroke='var(--color-totalScans)'
-                    fill='var(--color-totalScans)'
-                    strokeWidth={2}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+            <ChartContainer
+              className='w-full aspect-auto h-[250px]'
+              config={chartConfig}
+            >
+              <AreaChart
+                data={lineData}
+                margin={{ top: 10, bottom: 30, left: 40, right: 20 }}
+              >
+                <CartesianGrid vertical={false} />
+                <XAxis
+                  dataKey='label'
+                  tickLine={false}
+                  axisLine={true}
+                  tickMargin={8}
+                  label={{
+                    value: 'Date',
+                    position: 'insideBottom',
+                    offset: -20,
+                  }}
+                />
+                <YAxis
+                  tickLine={false}
+                  axisLine={true}
+                  tickMargin={10}
+                  label={{
+                    value: 'Total Scans',
+                    angle: -90,
+                    position: 'insideLeft',
+                    offset: 10,
+                  }}
+                />
+                <ChartTooltip
+                  cursor={false}
+                  content={<ChartTooltipContent />}
+                />
+                <Area
+                  type='natural'
+                  dataKey='totalScans'
+                  stroke='var(--color-totalScans)'
+                  fill='var(--color-totalScans)'
+                  strokeWidth={2}
+                />
+              </AreaChart>
             </ChartContainer>
           </div>
         </CardContent>

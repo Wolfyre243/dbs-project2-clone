@@ -10,6 +10,7 @@ import {
   ChartNoAxesCombined,
   HardDrive,
   SlidersVertical,
+  Logs,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -73,6 +74,11 @@ const data = {
       title: 'User Management',
       url: '/admin/users',
       icon: Users,
+    },
+    {
+      title: 'Logs',
+      url: '/admin/logs',
+      icon: Logs,
     },
   ],
   navSuperadmin: [
