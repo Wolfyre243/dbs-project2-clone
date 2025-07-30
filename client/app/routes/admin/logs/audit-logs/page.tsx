@@ -70,7 +70,7 @@ export default function AdminAuditLogPagination() {
   useEffect(() => {
     (async () => {
       try {
-        const { data: responseData } = await apiPrivate.get('/audit-action');
+        const { data: responseData } = await apiPrivate.get('/admin-audit/log-types');
         setActionTypeData(responseData.data);
       } catch (error: any) {
         setActionTypeData([]);

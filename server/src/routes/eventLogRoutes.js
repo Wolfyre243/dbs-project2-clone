@@ -24,4 +24,6 @@ eventLogRouter.post(
   eventLogController.createAudioEventLog,
 );
 
+eventLogRouter.get('/:eventId', eventLogController.getEventLogById);
+
 module.exports = eventLogRouter;
