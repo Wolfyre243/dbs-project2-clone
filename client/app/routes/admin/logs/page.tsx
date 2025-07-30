@@ -1,6 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs';
 import { Card } from '~/components/ui/card';
 import AdminAuditLogPagination from './audit-logs/page';
+import EventLogPagination from './event-logs/page';
 
 export default function AdminContentPage() {
   return (
@@ -15,7 +16,7 @@ export default function AdminContentPage() {
           <AdminAuditLogPagination />
         </TabsContent>
         <TabsContent value='event'>
-          <h1>Event Log pagination here</h1>
+          <EventLogPagination />
         </TabsContent>
       </Tabs>
     </div>

@@ -1,5 +1,6 @@
 import { type ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 import { Button } from '~/components/ui/button';
 import { Checkbox } from '~/components/ui/checkbox';
@@ -12,6 +13,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '~/components/ui/dialog';
+import useApiPrivate from '~/hooks/useApiPrivate';
+import { toast } from 'sonner';
 
 export type AuditLog = {
   auditLogId: string;
@@ -110,26 +120,76 @@ export const columns: ColumnDef<AuditLog>[] = [
     id: 'actions',
     cell: ({ row }) => {
       const auditLog = row.original;
+      const [auditData, setAuditData] = useState<any>(null);
+      const apiPrivate = useApiPrivate();
+
+      useEffect(() => {
+        const fetchAuditData = async () => {
+          try {
+            const { data: responseData } = await apiPrivate.get(`/admin-audit/${auditLog.auditLogId}`);
+            setAuditData(responseData.data);
+          } catch (error: any) {
+            console.log(error.response?.data?.message);
+            setAuditData(null);
+          }
+        };
+        if (auditData === null) {
+          fetchAuditData();
+        }
+      }, [apiPrivate, auditLog.auditLogId, auditData]);
 
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant='ghost' className='h-8 w-8 p-0'>
-              <span className='sr-only'>Open menu</span>
-              <MoreHorizontal className='h-4 w-4' />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align='end'>
-            <DropdownMenuItem
-              onClick={() =>
-                navigator.clipboard.writeText(auditLog.auditLogId.toString())
-              }
-            >
-              Copy Log ID
-            </DropdownMenuItem>
-            <DropdownMenuItem>View Details</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Dialog>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant='ghost' className='h-8 w-8 p-0'>
+                <span className='sr-only'>Open menu</span>
+                <MoreHorizontal className='h-4 w-4' />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align='end'>
+              <DropdownMenuItem
+                onClick={() =>{
+                    toast.success('Copied to clipboard', {
+                    duration: 2000,
+                  });
+                  navigator.clipboard.writeText(auditLog.auditLogId.toString())
+                }}
+              >
+                Copy Log ID
+              </DropdownMenuItem>
+              <DialogTrigger asChild>
+                <DropdownMenuItem>View Details</DropdownMenuItem>
+              </DialogTrigger>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Audit Log Details</DialogTitle>
+            </DialogHeader>
+            <div className='max-h-72 overflow-y-scroll space-y-4'>
+              {auditData ? (
+                <>
+                  <div className='p-4 border-2 rounded-lg'>
+                    <strong>Action Type:</strong> {auditData.auditAction.actionType}
+                  </div>
+                  <div className='p-4 border-2 rounded-lg'>
+                    <strong>Description:</strong> {auditData.auditAction.description}
+                  </div>
+                  <div className='p-4 border-2 rounded-lg'>
+                    <strong>User:</strong> {auditData.user.username}
+                  </div>
+                  <div className='p-4 border-2 rounded-lg'>
+                    <strong>Log Text:</strong>
+                    <div className='whitespace-pre-wrap'>{auditData.logText}</div>
+                  </div>
+                </>
+              ) : (
+                <div className='p-4 border-2 rounded-lg'>Loading audit log details...</div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       );
     },
   },

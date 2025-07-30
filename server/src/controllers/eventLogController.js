@@ -80,3 +80,12 @@ module.exports.createAudioEventLog = catchAsync(async (req, res, next) => {
     data: { ...eventLog },
   });
 });
+
+module.exports.getEventLogById = catchAsync(async (req, res, next) => {
+  const { eventId } = req.params;
+  const log = await eventLogModel.getEventLogById(eventId);
+  res.status(200).json({
+    status: 'success',
+    data: log,
+  });
+});

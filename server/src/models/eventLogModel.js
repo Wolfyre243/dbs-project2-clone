@@ -60,3 +60,20 @@ module.exports.getAllEventLogTypes = async () => {
     throw new AppError('Failed to fetch audit log types', 500);
   }
 };
+
+module.exports.getEventLogById = async (eventId) => {
+  try {
+    const log = await prisma.event.findUnique({
+      where: { eventId },
+      include: {
+        users: { select: { username: true, userId: true } },
+        eventType: { select: { eventType: true, description: true } },
+      },
+    });
+    if (!log) throw new AppError('Event log not found', 404);
+    // Optionally, convert date fields to strings if needed
+    return log;
+  } catch (error) {
+    throw new AppError('Failed to fetch event log', 500);
+  }
+};
