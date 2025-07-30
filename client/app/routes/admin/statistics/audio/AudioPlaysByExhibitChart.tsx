@@ -100,7 +100,7 @@ export default function AudioPlaysByExhibitChart() {
   };
 
   return (
-    <Card className='h-full'>
+    <Card className='h-full bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
       <CardHeader>
         <div className='flex flex-row justify-between'>
           <div>

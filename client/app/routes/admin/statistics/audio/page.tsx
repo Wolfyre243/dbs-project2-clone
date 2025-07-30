@@ -15,26 +15,26 @@ export default function AudioStatisticsDashboard() {
       </div>
 
       {/* TODO Audio Cards */}
-      <section className='flex flex-row w-full gap-4'>
-        <div className='w-full'>
+      <section className='flex flex-col w-full gap-4 sm:flex-row sm:overflow-visible sm:flex-wrap'>
+        <div className='w-full flex-1'>
           <AudioCompletionRateCard />
         </div>
-        <div className='w-full'>
+        <div className='w-full flex-1'>
           <TotalUsersCard />
         </div>
       </section>
 
-      <section>
-        <div className='w-full min-h-full'>
+      <section className='flex flex-col gap-4 w-full h-full sm:flex-row sm:overflow-visible sm:flex-wrap'>
+        <div className='w-full min-h-full flex-1'>
           <AudioPlaysByExhibitChart />
         </div>
       </section>
 
-      <section className='flex flex-row gap-5 w-full h-full'>
-        <div className='w-full min-h-full'>
+      <section className='flex flex-col gap-4 w-full h-full sm:flex-row sm:overflow-visible sm:flex-wrap'>
+        <div className='w-full min-h-full flex-1'>
           <AverageListenDurationLineChart />
         </div>
-        <div className='w-full min-h-full'>
+        <div className='w-full min-h-full flex-1'>
           <AudioCompletionRateLineChart />
         </div>
       </section>

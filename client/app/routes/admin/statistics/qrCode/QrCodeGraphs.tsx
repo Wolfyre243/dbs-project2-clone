@@ -157,7 +157,7 @@ export function QRScanDashboard() {
       </div>
       {/* TOP ROW: Bar Chart + Table */}
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
-        <Card className='flex flex-col '>
+        <Card className='flex flex-col bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card '>
           <CardHeader>
             <CardTitle>QR Scans by Exhibit</CardTitle>
             <CardDescription>Top scanned exhibits</CardDescription>
@@ -201,7 +201,7 @@ export function QRScanDashboard() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className='flex flex-col bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
           <CardHeader>
             <CardTitle>Exhibit Breakdown</CardTitle>
             <CardDescription>Top scanned exhibits summary</CardDescription>
@@ -231,7 +231,7 @@ export function QRScanDashboard() {
       </div>
 
       {/* BOTTOM ROW: Area Chart */}
-      <Card>
+      <Card className='flex flex-col bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
         <CardHeader className='flex flex-wrap justify-between items-start gap-2'>
           <div>
             <CardTitle>QR Scans Over Time</CardTitle>

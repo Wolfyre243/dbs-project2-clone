@@ -90,7 +90,7 @@ export default function AudioCompletionRateChart() {
   };
 
   return (
-    <Card>
+    <Card className='bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
       <CardHeader>
         <CardTitle>Audio Completion Rate</CardTitle>
         <CardDescription>

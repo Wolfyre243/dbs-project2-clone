@@ -44,7 +44,7 @@ export function TopExhibitCard() {
 
   if (loading) {
     return (
-      <Card>
+      <Card className='bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
         <CardHeader>
           <CardDescription>Loading...</CardDescription>
           <CardTitle className='text-2xl font-semibold'>---</CardTitle>
@@ -54,7 +54,7 @@ export function TopExhibitCard() {
   }
   if (error) {
     return (
-      <Card>
+      <Card className='bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
         <CardHeader>
           <CardDescription>Error</CardDescription>
           <CardTitle className='text-2xl font-semibold'>{error}</CardTitle>
@@ -63,7 +63,7 @@ export function TopExhibitCard() {
     );
   }
   return (
-    <Card>
+    <Card className='bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
       <CardHeader>
         <CardDescription>Best Performing Exhibit</CardDescription>
         <CardTitle className='text-2xl font-semibold'>

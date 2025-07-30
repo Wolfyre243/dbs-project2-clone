@@ -46,7 +46,7 @@ export function QRScanCountCard() {
 
   if (loading) {
     return (
-      <Card>
+      <Card className='bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
         <CardHeader>
           <CardDescription>Loading...</CardDescription>
           <CardTitle className='text-2xl font-semibold'>---</CardTitle>
@@ -56,7 +56,7 @@ export function QRScanCountCard() {
   }
   if (error) {
     return (
-      <Card>
+      <Card className='bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
         <CardHeader>
           <CardDescription>Error</CardDescription>
           <CardTitle className='text-2xl font-semibold'>{error}</CardTitle>
@@ -65,7 +65,7 @@ export function QRScanCountCard() {
     );
   }
   return (
-    <Card>
+    <Card className='bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
       <CardHeader>
         <CardDescription>QR Code Scans</CardDescription>
         <CardTitle className='text-2xl font-semibold'>

@@ -148,7 +148,7 @@ export function LanguageUsageCard() {
   };
 
   return (
-    <Card className='flex flex-col'>
+    <Card className='flex flex-col bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
       <CardHeader className='items-center pb-0 gap-2'>
         <div className='flex items-center justify-between w-full'>
           <div>
@@ -231,7 +231,7 @@ export function LanguageDetailsCard() {
   if (languageData.length === 0) return <p>No language data available.</p>;
 
   return (
-    <Card>
+    <Card className='bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
       <CardHeader>
         <CardTitle>Language Details</CardTitle>
         <CardDescription>Detailed breakdown of language usage</CardDescription>

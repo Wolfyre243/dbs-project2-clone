@@ -85,7 +85,7 @@ export function AudioCompletionRateCard() {
 
   if (loading) {
     return (
-      <Card>
+      <Card className='bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
         <CardHeader>
           <CardDescription>Loading...</CardDescription>
           <CardTitle className='text-2xl font-semibold'>---</CardTitle>
@@ -95,7 +95,7 @@ export function AudioCompletionRateCard() {
   }
   if (error) {
     return (
-      <Card>
+      <Card className='bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
         <CardHeader>
           <CardDescription>Error</CardDescription>
           <CardTitle className='text-2xl font-semibold'>{error}</CardTitle>
@@ -104,7 +104,7 @@ export function AudioCompletionRateCard() {
     );
   }
   return (
-    <Card>
+    <Card className='bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
       <CardHeader>
         <CardDescription>Audio Completion Rate</CardDescription>
         <CardTitle className='text-2xl font-semibold'>

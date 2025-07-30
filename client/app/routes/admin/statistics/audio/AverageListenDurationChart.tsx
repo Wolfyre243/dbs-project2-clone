@@ -90,7 +90,7 @@ export default function AverageListenDurationChart() {
   };
 
   return (
-    <Card>
+    <Card className='h-full bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
       <CardHeader>
         <CardTitle>Average Listen Duration</CardTitle>
         <CardDescription>

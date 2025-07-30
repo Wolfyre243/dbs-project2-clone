@@ -88,7 +88,7 @@ export function TotalUsersCard() {
 
   if (loading) {
     return (
-      <Card className='@container/card'>
+      <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
         <CardHeader>
           <CardDescription>Loading...</CardDescription>
           <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
@@ -100,7 +100,7 @@ export function TotalUsersCard() {
   }
   if (error) {
     return (
-      <Card className='@container/card'>
+      <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
         <CardHeader>
           <CardDescription>Error</CardDescription>
           <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
@@ -111,7 +111,7 @@ export function TotalUsersCard() {
     );
   }
   return (
-    <Card className='@container/card'>
+    <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
       <CardHeader>
         <CardDescription>Total Users</CardDescription>
         <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
@@ -157,7 +157,7 @@ export function TodayRegistrationsCard() {
 
   if (loading) {
     return (
-      <Card className='@container/card'>
+      <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
         <CardHeader>
           <CardDescription>Loading...</CardDescription>
           <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
@@ -169,7 +169,7 @@ export function TodayRegistrationsCard() {
   }
   if (error) {
     return (
-      <Card className='@container/card'>
+      <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
         <CardHeader>
           <CardDescription>Error</CardDescription>
           <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
@@ -180,7 +180,7 @@ export function TodayRegistrationsCard() {
     );
   }
   return (
-    <Card className='@container/card'>
+    <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
       <CardHeader>
         <CardDescription>Today's Registrations</CardDescription>
         <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
@@ -230,7 +230,7 @@ export function MonthRegistrationsCard() {
 
   if (loading) {
     return (
-      <Card className='@container/card'>
+      <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
         <CardHeader>
           <CardDescription>Loading...</CardDescription>
           <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
@@ -242,7 +242,7 @@ export function MonthRegistrationsCard() {
   }
   if (error) {
     return (
-      <Card className='@container/card'>
+      <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
         <CardHeader>
           <CardDescription>Error</CardDescription>
           <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
@@ -253,7 +253,7 @@ export function MonthRegistrationsCard() {
     );
   }
   return (
-    <Card className='@container/card'>
+    <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
       <CardHeader>
         <CardDescription>This Month</CardDescription>
         <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
@@ -303,7 +303,7 @@ export function YearRegistrationsCard() {
 
   if (loading) {
     return (
-      <Card className='@container/card'>
+      <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
         <CardHeader>
           <CardDescription>Loading...</CardDescription>
           <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
@@ -315,7 +315,7 @@ export function YearRegistrationsCard() {
   }
   if (error) {
     return (
-      <Card className='@container/card'>
+      <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
         <CardHeader>
           <CardDescription>Error</CardDescription>
           <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
@@ -326,7 +326,7 @@ export function YearRegistrationsCard() {
     );
   }
   return (
-    <Card className='@container/card'>
+    <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
       <CardHeader>
         <CardDescription>This Year</CardDescription>
         <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
@@ -350,17 +350,17 @@ export function YearRegistrationsCard() {
 
 export function SectionCards() {
   return (
-    <div className='flex flex-row w-full gap-4'>
-      <div className='w-full'>
+    <div className='flex flex-col gap-4 sm:flex-row sm:overflow-visible sm:flex-wrap'>
+      <div className='min-w-[250px] flex-1'>
         <TotalUsersCard />
       </div>
-      <div className='w-full'>
+      <div className='min-w-[250px] flex-1'>
         <TodayRegistrationsCard />
       </div>
-      <div className='w-full'>
+      <div className='min-w-[250px] flex-1'>
         <MonthRegistrationsCard />
       </div>
-      <div className='w-full'>
+      <div className='min-w-[250px] flex-1'>
         <YearRegistrationsCard />
       </div>
     </div>
@@ -449,7 +449,7 @@ export function UserSignUpChart() {
     );
   }
   return (
-    <Card className='h-full'>
+    <Card className='h-full bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
       <CardHeader className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
         <div>
           <CardTitle>Member Sign-Ups Over Time</CardTitle>
