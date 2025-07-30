@@ -45,3 +45,12 @@ module.exports.getAllAuditLogTypes = catchAsync(async (req, res, next) => {
     data: types,
   });
 });
+
+module.exports.getAuditLogById = catchAsync(async (req, res, next) => {
+  const { auditLogId } = req.params;
+  const log = await adminAuditModel.getAuditLogById(auditLogId);
+  res.status(200).json({
+    status: 'success',
+    data: log,
+  });
+});

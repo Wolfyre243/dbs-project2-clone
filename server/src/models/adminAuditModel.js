@@ -60,3 +60,20 @@ module.exports.getAllAuditLogTypes = async () => {
     throw new AppError('Failed to fetch audit log types', 500);
   }
 };
+
+// Get a single audit log by ID
+module.exports.getAuditLogById = async (auditLogId) => {
+  try {
+    const log = await prisma.auditLog.findUnique({
+      where: { auditLogId },
+      include: {
+        user: { select: { username: true, userId: true } },
+        auditAction: { select: { actionType: true, description: true } },
+      },
+    });
+    if (!log) throw new AppError('Audit log not found', 404);
+    return convertDatesToStrings(log);
+  } catch (error) {
+    throw new AppError('Failed to fetch audit log', 500);
+  }
+};

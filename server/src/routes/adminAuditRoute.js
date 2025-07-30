@@ -19,4 +19,7 @@ adminAuditRouter.get('/', adminAuditController.getPaginatedAuditLogs);
 // List all audit log types
 adminAuditRouter.get('/log-types', adminAuditController.getAllAuditLogTypes);
 
+// Get audit log by ID
+adminAuditRouter.get('/:auditLogId', adminAuditController.getAuditLogById);
+
 module.exports = adminAuditRouter;
