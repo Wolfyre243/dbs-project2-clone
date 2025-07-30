@@ -8,7 +8,14 @@ import {
   CardDescription,
   CardFooter,
 } from '~/components/ui/card';
+import AnimatedCard from '~/components/animations/AnimatedCard';
 import { Badge } from '~/components/ui/badge';
+import CountUp from '~/components/animations/CountUp';
+
+function truncateDecimal(num: number, decimalPlaces: number) {
+  const multiplier = Math.pow(10, decimalPlaces);
+  return Math.trunc(num * multiplier) / multiplier;
+}
 
 export function AudioCompletionRateCard() {
   const apiPrivate = useApiPrivate();
@@ -85,45 +92,64 @@ export function AudioCompletionRateCard() {
 
   if (loading) {
     return (
-      <Card className='bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
-        <CardHeader>
-          <CardDescription>Loading...</CardDescription>
-          <CardTitle className='text-2xl font-semibold'>---</CardTitle>
-        </CardHeader>
-      </Card>
+      <AnimatedCard>
+        <Card className='bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
+          <CardHeader>
+            <CardDescription>Loading...</CardDescription>
+            <CardTitle className='text-2xl font-semibold'>---</CardTitle>
+          </CardHeader>
+        </Card>
+      </AnimatedCard>
     );
   }
   if (error) {
     return (
-      <Card className='bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
-        <CardHeader>
-          <CardDescription>Error</CardDescription>
-          <CardTitle className='text-2xl font-semibold'>{error}</CardTitle>
-        </CardHeader>
-      </Card>
+      <AnimatedCard>
+        <Card className='bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
+          <CardHeader>
+            <CardDescription>Error</CardDescription>
+            <CardTitle className='text-2xl font-semibold'>{error}</CardTitle>
+          </CardHeader>
+        </Card>
+      </AnimatedCard>
     );
   }
   return (
-    <Card className='bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
-      <CardHeader>
-        <CardDescription>Audio Completion Rate</CardDescription>
-        <CardTitle className='text-2xl font-semibold'>
-          {overallRate !== null ? `${overallRate}%` : 'N/A'}
-        </CardTitle>
-      </CardHeader>
-      <CardFooter className='flex-col items-start gap-1.5 text-sm'>
-        {topExhibit && (
-          <div>
-            <Badge variant='outline'>
-              Top Exhibit: {topExhibit.title} ({topExhibit.rate}%)
-            </Badge>
+    <AnimatedCard>
+      <Card className='bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
+        <CardHeader>
+          <CardDescription>Audio Completion Rate</CardDescription>
+          <CardTitle className='text-2xl font-semibold'>
+            {overallRate !== null ? (
+              <>
+                <CountUp
+                  from={0}
+                  to={truncateDecimal(overallRate, 1)}
+                  separator=','
+                  direction='up'
+                  duration={1}
+                />
+                %
+              </>
+            ) : (
+              <p>N/A</p>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardFooter className='flex-col items-start gap-1.5 text-sm'>
+          {topExhibit && (
+            <div>
+              <Badge variant='outline'>
+                Top Exhibit: {topExhibit.title} ({topExhibit.rate}%)
+              </Badge>
+            </div>
+          )}
+          <div className='text-muted-foreground'>
+            % of users who completed audio
           </div>
-        )}
-        <div className='text-muted-foreground'>
-          % of users who completed audio
-        </div>
-      </CardFooter>
-    </Card>
+        </CardFooter>
+      </Card>
+    </AnimatedCard>
   );
 }
 

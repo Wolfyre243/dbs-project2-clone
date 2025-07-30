@@ -9,6 +9,8 @@ import {
   CardFooter,
 } from '~/components/ui/card';
 import { Badge } from '~/components/ui/badge';
+import CountUp from '~/components/animations/CountUp';
+import AnimatedCard from '~/components/animations/AnimatedCard';
 
 export function QRScanCountCard() {
   const apiPrivate = useApiPrivate();
@@ -65,24 +67,40 @@ export function QRScanCountCard() {
     );
   }
   return (
-    <Card className='bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
-      <CardHeader>
-        <CardDescription>QR Code Scans</CardDescription>
-        <CardTitle className='text-2xl font-semibold'>
-          {totalScans !== null ? totalScans.toLocaleString() : 'N/A'}
-        </CardTitle>
-      </CardHeader>
-      <CardFooter className='flex-col items-start gap-1.5 text-sm'>
-        {uniqueExhibits !== null && (
-          <div>
-            <Badge variant='outline'>Exhibits Scanned: {uniqueExhibits}</Badge>
+    <AnimatedCard>
+      <Card className='bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
+        <CardHeader>
+          <CardDescription>QR Code Scans</CardDescription>
+          <CardTitle className='text-2xl font-semibold'>
+            {totalScans !== null ? (
+              <>
+                <CountUp
+                  from={0}
+                  to={totalScans}
+                  separator=','
+                  direction='up'
+                  duration={1}
+                />
+              </>
+            ) : (
+              'N/A'
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardFooter className='flex-col items-start gap-1.5 text-sm'>
+          {uniqueExhibits !== null && (
+            <div>
+              <Badge variant='outline'>
+                Exhibits Scanned: {uniqueExhibits}
+              </Badge>
+            </div>
+          )}
+          <div className='text-muted-foreground'>
+            Total QR code scans across all exhibits
           </div>
-        )}
-        <div className='text-muted-foreground'>
-          Total QR code scans across all exhibits
-        </div>
-      </CardFooter>
-    </Card>
+        </CardFooter>
+      </Card>
+    </AnimatedCard>
   );
 }
 

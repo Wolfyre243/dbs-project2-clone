@@ -16,6 +16,7 @@ import {
   CardTitle,
   CardContent,
 } from '~/components/ui/card';
+import AnimatedCard from '~/components/animations/AnimatedCard';
 
 import {
   CartesianGrid,
@@ -41,6 +42,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/ui/select';
+import CountUp from '~/components/animations/CountUp';
 
 // TypeScript interface for chart data
 interface ChartDataItem {
@@ -88,48 +90,60 @@ export function TotalUsersCard() {
 
   if (loading) {
     return (
-      <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
-        <CardHeader>
-          <CardDescription>Loading...</CardDescription>
-          <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-            ---
-          </CardTitle>
-        </CardHeader>
-      </Card>
+      <AnimatedCard>
+        <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
+          <CardHeader>
+            <CardDescription>Loading...</CardDescription>
+            <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
+              ---
+            </CardTitle>
+          </CardHeader>
+        </Card>
+      </AnimatedCard>
     );
   }
   if (error) {
     return (
-      <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
-        <CardHeader>
-          <CardDescription>Error</CardDescription>
-          <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-            {error}
-          </CardTitle>
-        </CardHeader>
-      </Card>
+      <AnimatedCard>
+        <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
+          <CardHeader>
+            <CardDescription>Error</CardDescription>
+            <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
+              {error}
+            </CardTitle>
+          </CardHeader>
+        </Card>
+      </AnimatedCard>
     );
   }
   return (
-    <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
-      <CardHeader>
-        <CardDescription>Total Users</CardDescription>
-        <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-          {totalUsers.toLocaleString()}
-        </CardTitle>
-        <CardAction>
-          <Badge variant='outline'>
-            <IconTrendingUp />+{monthRegistrations}
-          </Badge>
-        </CardAction>
-      </CardHeader>
-      <CardFooter className='flex-col items-start gap-1.5 text-sm'>
-        <div className='line-clamp-1 flex gap-2 font-medium'>
-          New users total <IconTrendingUp className='size-4' />
-        </div>
-        <div className='text-muted-foreground'>Excludes admin users</div>
-      </CardFooter>
-    </Card>
+    <AnimatedCard>
+      <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
+        <CardHeader>
+          <CardDescription>Total Users</CardDescription>
+          <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
+            <CountUp
+              from={0}
+              to={totalUsers}
+              separator=','
+              direction='up'
+              duration={1}
+            />
+          </CardTitle>
+          <CardAction>
+            <Badge variant='outline'>
+              <IconTrendingUp />+{monthRegistrations}
+            </Badge>
+          </CardAction>
+        </CardHeader>
+        <CardFooter className='flex-col items-start gap-1.5 text-sm'>
+          <div className='line-clamp-1 flex gap-2 font-medium'>
+            New users total <IconTrendingUp className='size-4' />
+          </div>
+          <div className='text-muted-foreground'>Excludes admin users</div>
+        </CardFooter>
+      </Card>
+    </AnimatedCard>
   );
 }
 
@@ -157,48 +171,60 @@ export function TodayRegistrationsCard() {
 
   if (loading) {
     return (
-      <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
-        <CardHeader>
-          <CardDescription>Loading...</CardDescription>
-          <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-            ---
-          </CardTitle>
-        </CardHeader>
-      </Card>
+      <AnimatedCard>
+        <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
+          <CardHeader>
+            <CardDescription>Loading...</CardDescription>
+            <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
+              ---
+            </CardTitle>
+          </CardHeader>
+        </Card>
+      </AnimatedCard>
     );
   }
   if (error) {
     return (
-      <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
-        <CardHeader>
-          <CardDescription>Error</CardDescription>
-          <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-            {error}
-          </CardTitle>
-        </CardHeader>
-      </Card>
+      <AnimatedCard>
+        <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
+          <CardHeader>
+            <CardDescription>Error</CardDescription>
+            <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
+              {error}
+            </CardTitle>
+          </CardHeader>
+        </Card>
+      </AnimatedCard>
     );
   }
   return (
-    <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
-      <CardHeader>
-        <CardDescription>Today's Registrations</CardDescription>
-        <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-          {todayRegistrations}
-        </CardTitle>
-        <CardAction>
-          <Badge variant='outline'>
-            <IconTrendingUp />+{todayRegistrations}
-          </Badge>
-        </CardAction>
-      </CardHeader>
-      <CardFooter className='flex-col items-start gap-1.5 text-sm'>
-        <div className='line-clamp-1 flex gap-2 font-medium'>
-          New users today <IconTrendingUp className='size-4' />
-        </div>
-        <div className='text-muted-foreground'>Daily sign-ups </div>
-      </CardFooter>
-    </Card>
+    <AnimatedCard>
+      <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
+        <CardHeader>
+          <CardDescription>Today's Registrations</CardDescription>
+          <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
+            <CountUp
+              from={0}
+              to={todayRegistrations}
+              separator=','
+              direction='up'
+              duration={1}
+            />
+          </CardTitle>
+          <CardAction>
+            <Badge variant='outline'>
+              <IconTrendingUp />+{todayRegistrations}
+            </Badge>
+          </CardAction>
+        </CardHeader>
+        <CardFooter className='flex-col items-start gap-1.5 text-sm'>
+          <div className='line-clamp-1 flex gap-2 font-medium'>
+            New users today <IconTrendingUp className='size-4' />
+          </div>
+          <div className='text-muted-foreground'>Daily sign-ups </div>
+        </CardFooter>
+      </Card>
+    </AnimatedCard>
   );
 }
 
@@ -230,48 +256,60 @@ export function MonthRegistrationsCard() {
 
   if (loading) {
     return (
-      <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
-        <CardHeader>
-          <CardDescription>Loading...</CardDescription>
-          <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-            ---
-          </CardTitle>
-        </CardHeader>
-      </Card>
+      <AnimatedCard>
+        <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
+          <CardHeader>
+            <CardDescription>Loading...</CardDescription>
+            <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
+              ---
+            </CardTitle>
+          </CardHeader>
+        </Card>
+      </AnimatedCard>
     );
   }
   if (error) {
     return (
-      <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
-        <CardHeader>
-          <CardDescription>Error</CardDescription>
-          <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-            {error}
-          </CardTitle>
-        </CardHeader>
-      </Card>
+      <AnimatedCard>
+        <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
+          <CardHeader>
+            <CardDescription>Error</CardDescription>
+            <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
+              {error}
+            </CardTitle>
+          </CardHeader>
+        </Card>
+      </AnimatedCard>
     );
   }
   return (
-    <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
-      <CardHeader>
-        <CardDescription>This Month</CardDescription>
-        <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-          {monthRegistrations}
-        </CardTitle>
-        <CardAction>
-          <Badge variant='outline'>
-            <IconTrendingUp />+{percent}%
-          </Badge>
-        </CardAction>
-      </CardHeader>
-      <CardFooter className='flex-col items-start gap-1.5 text-sm'>
-        <div className='line-clamp-1 flex gap-2 font-medium'>
-          Monthly growth <IconTrendingUp className='size-4' />
-        </div>
-        <div className='text-muted-foreground'>Registrations this month</div>
-      </CardFooter>
-    </Card>
+    <AnimatedCard>
+      <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
+        <CardHeader>
+          <CardDescription>This Month</CardDescription>
+          <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
+            <CountUp
+              from={0}
+              to={monthRegistrations}
+              separator=','
+              direction='up'
+              duration={1}
+            />
+          </CardTitle>
+          <CardAction>
+            <Badge variant='outline'>
+              <IconTrendingUp />+{percent}%
+            </Badge>
+          </CardAction>
+        </CardHeader>
+        <CardFooter className='flex-col items-start gap-1.5 text-sm'>
+          <div className='line-clamp-1 flex gap-2 font-medium'>
+            Monthly growth <IconTrendingUp className='size-4' />
+          </div>
+          <div className='text-muted-foreground'>Registrations this month</div>
+        </CardFooter>
+      </Card>
+    </AnimatedCard>
   );
 }
 
@@ -303,48 +341,60 @@ export function YearRegistrationsCard() {
 
   if (loading) {
     return (
-      <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
-        <CardHeader>
-          <CardDescription>Loading...</CardDescription>
-          <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-            ---
-          </CardTitle>
-        </CardHeader>
-      </Card>
+      <AnimatedCard>
+        <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
+          <CardHeader>
+            <CardDescription>Loading...</CardDescription>
+            <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
+              ---
+            </CardTitle>
+          </CardHeader>
+        </Card>
+      </AnimatedCard>
     );
   }
   if (error) {
     return (
-      <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
-        <CardHeader>
-          <CardDescription>Error</CardDescription>
-          <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-            {error}
-          </CardTitle>
-        </CardHeader>
-      </Card>
+      <AnimatedCard>
+        <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
+          <CardHeader>
+            <CardDescription>Error</CardDescription>
+            <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
+              {error}
+            </CardTitle>
+          </CardHeader>
+        </Card>
+      </AnimatedCard>
     );
   }
   return (
-    <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
-      <CardHeader>
-        <CardDescription>This Year</CardDescription>
-        <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-          {yearRegistrations}
-        </CardTitle>
-        <CardAction>
-          <Badge variant='outline'>
-            <IconTrendingUp />+{percent}%
-          </Badge>
-        </CardAction>
-      </CardHeader>
-      <CardFooter className='flex-col items-start gap-1.5 text-sm'>
-        <div className='line-clamp-1 flex gap-2 font-medium'>
-          Yearly growth <IconTrendingUp className='size-4' />
-        </div>
-        <div className='text-muted-foreground'>Annual registrations</div>
-      </CardFooter>
-    </Card>
+    <AnimatedCard>
+      <Card className='@container/card bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
+        <CardHeader>
+          <CardDescription>This Year</CardDescription>
+          <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
+            <CountUp
+              from={0}
+              to={yearRegistrations}
+              separator=','
+              direction='up'
+              duration={1}
+            />
+          </CardTitle>
+          <CardAction>
+            <Badge variant='outline'>
+              <IconTrendingUp />+{percent}%
+            </Badge>
+          </CardAction>
+        </CardHeader>
+        <CardFooter className='flex-col items-start gap-1.5 text-sm'>
+          <div className='line-clamp-1 flex gap-2 font-medium'>
+            Yearly growth <IconTrendingUp className='size-4' />
+          </div>
+          <div className='text-muted-foreground'>Annual registrations</div>
+        </CardFooter>
+      </Card>
+    </AnimatedCard>
   );
 }
 

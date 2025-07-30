@@ -9,6 +9,7 @@ import {
   CardFooter,
 } from '~/components/ui/card';
 import { Badge } from '~/components/ui/badge';
+import AnimatedCard from '~/components/animations/AnimatedCard';
 
 export function TopExhibitCard() {
   const apiPrivate = useApiPrivate();
@@ -63,22 +64,24 @@ export function TopExhibitCard() {
     );
   }
   return (
-    <Card className='bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
-      <CardHeader>
-        <CardDescription>Best Performing Exhibit</CardDescription>
-        <CardTitle className='text-2xl font-semibold'>
-          {topExhibit ? topExhibit.title : 'N/A'}
-        </CardTitle>
-      </CardHeader>
-      <CardFooter className='flex-col items-start gap-1.5 text-sm'>
-        {topExhibit && (
-          <div>
-            <Badge variant='outline'>QR Scans: {topExhibit.scanCount}</Badge>
-          </div>
-        )}
-        <div className='text-muted-foreground'>Most scanned exhibit</div>
-      </CardFooter>
-    </Card>
+    <AnimatedCard>
+      <Card className='bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
+        <CardHeader>
+          <CardDescription>Best Performing Exhibit</CardDescription>
+          <CardTitle className='text-2xl font-semibold'>
+            {topExhibit ? topExhibit.title : 'N/A'}
+          </CardTitle>
+        </CardHeader>
+        <CardFooter className='flex-col items-start gap-1.5 text-sm'>
+          {topExhibit && (
+            <div>
+              <Badge variant='outline'>QR Scans: {topExhibit.scanCount}</Badge>
+            </div>
+          )}
+          <div className='text-muted-foreground'>Most scanned exhibit</div>
+        </CardFooter>
+      </Card>
+    </AnimatedCard>
   );
 }
 
