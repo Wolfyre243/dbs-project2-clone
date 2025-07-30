@@ -6,7 +6,11 @@ import {
   CardDescription,
   CardContent,
 } from '~/components/ui/card';
-import { ChartContainer } from '~/components/ui/chart';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from '~/components/ui/chart';
 import {
   LineChart,
   Line,
@@ -85,18 +89,30 @@ export default function AverageListenDurationLineChart() {
     XLSXUtils.book_append_sheet(
       wb,
       XLSXUtils.json_to_sheet(sheet),
-      'Average Listen Duration Time Series',
+      'Average Listen Duration',
     );
     XLSXWriteFile(wb, 'average-listen-duration-time-series.csv');
   };
 
   return (
-    <Card>
+    <Card className='h-full'>
       <CardHeader>
-        <CardTitle>Average Listen Duration Trends</CardTitle>
-        <CardDescription>
-          Cumulative average listen duration over time
-        </CardDescription>
+        <div className='flex flex-row justify-between'>
+          <div>
+            <CardTitle>Average Listen Duration Trends</CardTitle>
+            <CardDescription>
+              Cumulative average listen duration over time
+            </CardDescription>
+          </div>
+          <Button
+            size='sm'
+            variant='secondary'
+            onClick={handleExportCSV}
+            disabled={data.length === 0}
+          >
+            <DownloadIcon className='mr-1' /> Export CSV
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className='flex flex-wrap gap-4 mb-4 items-center'>
@@ -124,14 +140,6 @@ export default function AverageListenDurationLineChart() {
               }
             />
           </div>
-          <Button
-            size='sm'
-            variant='secondary'
-            onClick={handleExportCSV}
-            disabled={data.length === 0}
-          >
-            <DownloadIcon className='mr-1' /> Export CSV
-          </Button>
         </div>
 
         {/* {loading && (
@@ -164,50 +172,54 @@ export default function AverageListenDurationLineChart() {
         {/* !loading && !error &&  */}
         {data.length > 0 && (
           <ChartContainer
+            className='w-full aspect-auto h-[250px]'
             config={{ avgDuration: { label: 'Average Duration (s)' } }}
           >
-            <ResponsiveContainer width='100%' height={300}>
-              <LineChart data={data}>
-                <CartesianGrid strokeDasharray='3 3' />
-                <XAxis
-                  dataKey='date'
-                  tickFormatter={(value) => {
-                    const date = new Date(value);
-                    return date.toLocaleDateString('en-SG', {
-                      month: 'short',
-                      day: 'numeric',
-                    });
-                  }}
-                />
-                <YAxis allowDecimals={false} />
-                <Tooltip
-                  labelFormatter={(value) => {
-                    const date = new Date(value);
-                    return date.toLocaleDateString('en-SG', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    });
-                  }}
-                />
-                <Line
-                  type='monotone'
-                  dataKey='avgDuration'
-                  stroke='var(--chart-3)'
-                  strokeWidth={2}
-                  dot={{
-                    fill: 'var(--chart-3)',
-                    strokeWidth: 2,
-                    r: 4,
-                  }}
-                  activeDot={{
-                    r: 6,
-                    stroke: 'var(--chart-3)',
-                    strokeWidth: 2,
-                  }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            <LineChart data={data}>
+              <CartesianGrid strokeDasharray='3 3' />
+              <XAxis
+                dataKey='date'
+                tickFormatter={(value) => {
+                  const date = new Date(value);
+                  return date.toLocaleDateString('en-SG', {
+                    month: 'short',
+                    day: 'numeric',
+                  });
+                }}
+              />
+              <YAxis allowDecimals={false} />
+              <ChartTooltip
+                cursor={false}
+                content={
+                  <ChartTooltipContent
+                    labelFormatter={(value) => {
+                      const date = new Date(value);
+                      return date.toLocaleDateString('en-SG', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      });
+                    }}
+                  />
+                }
+              />
+              <Line
+                type='monotone'
+                dataKey='avgDuration'
+                stroke='var(--chart-3)'
+                strokeWidth={2}
+                dot={{
+                  fill: 'var(--chart-3)',
+                  strokeWidth: 2,
+                  r: 4,
+                }}
+                activeDot={{
+                  r: 6,
+                  stroke: 'var(--chart-3)',
+                  strokeWidth: 2,
+                }}
+              />
+            </LineChart>
           </ChartContainer>
         )}
       </CardContent>
