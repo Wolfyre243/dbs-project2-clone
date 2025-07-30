@@ -44,7 +44,7 @@ export function SiteHeader() {
                 <Bell />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className='w-100 shadow-lg' align='end'>
+            <DropdownMenuContent className='w-xs lg:w-lg shadow-lg' align='end'>
               <DropdownMenuLabel>
                 <h1 className='text-md'>Notifications</h1>
               </DropdownMenuLabel>

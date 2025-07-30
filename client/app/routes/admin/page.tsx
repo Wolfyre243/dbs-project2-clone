@@ -1,31 +1,10 @@
-import {
-  SectionCards,
-  TotalUsersCard,
-  TodayRegistrationsCard,
-  MonthRegistrationsCard,
-  YearRegistrationsCard,
-  UserSignUpChart,
-} from './statistics/users';
-import {
-  LanguageDetailsCard,
-  LanguageStatistics,
-  LanguageUsageCard,
-} from './statistics/language';
+import { TotalUsersCard, UserSignUpChart } from './statistics/users';
+import { LanguageUsageCard } from './statistics/language';
 import { QRScanDashboard } from './statistics/qrCode/QrCodeGraphs';
 import AudioStatisticsDashboard from './statistics/audio/page';
 import AudioCompletionRateCard from './statistics/audio/AudioCards';
 import QRScanCountCard from './statistics/qrCode/QrCodeCards';
 import TopExhibitCard from './statistics/exhibit/ExhibitCards';
-import { useNavigate } from 'react-router';
-import { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../../components/ui/select';
 import AudioPlaysByExhibitChart from './statistics/audio/AudioPlaysByExhibitChart';
 
 export default function AdminHomePage() {
@@ -71,23 +50,23 @@ export default function AdminHomePage() {
       </Tabs> */}
 
       {/* Cards */}
-      <section className='w-full flex flex-row gap-4 justify-between'>
-        <div className='w-full'>
+      <section className='w-full flex md:flex-row flex-col gap-4 justify-between'>
+        <div className='w-full space-x-2'>
           <TotalUsersCard />
         </div>
-        <div className='w-full'>
+        <div className='w-full space-x-2'>
           <AudioCompletionRateCard />
         </div>
-        <div className='w-full'>
+        <div className='w-full space-x-2'>
           <QRScanCountCard />
         </div>
-        <div className='w-full'>
+        <div className='w-full space-x-2'>
           <TopExhibitCard />
         </div>
       </section>
 
       {/* Charts */}
-      <section className='flex flex-row w-full gap-4 justify-between'>
+      <section className='flex md:flex-row flex-col w-full gap-4 justify-between'>
         <div className='min-w-3/4 min-h-full'>
           <UserSignUpChart />
         </div>
