@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { DatePicker } from '~/components/date-picker';
 import {
   ResponsiveContainer,
   Bar,
@@ -51,10 +52,22 @@ export function QRScanDashboard() {
   const [lineData, setLineData] = useState<any[]>([]);
   const [summary, setSummary] = useState<any>(null);
 
+  const [filters, setFilters] = useState<{
+    startDate: Date | null;
+    endDate: Date | null;
+  }>({
+    startDate: null,
+    endDate: null,
+  });
+
   const fetchData = async () => {
     try {
       const res = await apiPrivate.get('/statistics/scans-per-exhibit', {
-        params: { granularity },
+        params: {
+          granularity,
+          startDate: filters.startDate?.toISOString(),
+          endDate: filters.endDate?.toISOString(),
+        },
       });
 
       const data = res.data.data;
@@ -100,7 +113,7 @@ export function QRScanDashboard() {
 
   useEffect(() => {
     fetchData();
-  }, [granularity]);
+  }, [granularity, filters.startDate, filters.endDate]);
 
   const chartConfig: ChartConfig = {
     scans: {
@@ -232,26 +245,67 @@ export function QRScanDashboard() {
 
       {/* BOTTOM ROW: Area Chart */}
       <Card className='flex flex-col bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
-        <CardHeader className='flex flex-wrap justify-between items-start gap-2'>
-          <div>
-            <CardTitle>QR Scans Over Time</CardTitle>
-            <CardDescription>
-              Viewing by <span className='capitalize'>{granularity}</span>
-            </CardDescription>
-          </div>
-          <div className='flex flex-wrap gap-2'>
-            {['day', 'month', 'year'].map((g) => (
-              <Button
-                key={g}
-                size='sm'
-                variant={granularity === g ? 'default' : 'outline'}
-                onClick={() => setGranularity(g as 'day' | 'month' | 'year')}
-              >
-                {g.charAt(0).toUpperCase() + g.slice(1)}
-              </Button>
-            ))}
+        <CardHeader>
+          <div className='flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4'>
+            {/* Title + Description */}
+            <div>
+              <CardTitle>QR Scans Over Time</CardTitle>
+              <CardDescription>
+                Viewing by <span className='capitalize'>{granularity}</span>
+              </CardDescription>
+            </div>
+
+            {/* Right side (Buttons + Dates) */}
+            <div className='flex flex-col items-start sm:items-end gap-2'>
+              {/* Granularity buttons */}
+              <div className='flex gap-2'>
+                {['day', 'month', 'year'].map((g) => (
+                  <Button
+                    key={g}
+                    size='sm'
+                    variant={granularity === g ? 'default' : 'outline'}
+                    onClick={() =>
+                      setGranularity(g as 'day' | 'month' | 'year')
+                    }
+                  >
+                    {g.charAt(0).toUpperCase() + g.slice(1)}
+                  </Button>
+                ))}
+              </div>
+
+              {/* Date Pickers */}
+              <div className='flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4'>
+                <div className='flex items-center gap-1'>
+                  <span className='text-sm text-muted-foreground'>Start:</span>
+                  <DatePicker
+                    fieldName='startDate'
+                    label=''
+                    onChange={(val: string) => {
+                      setFilters((prev) => ({
+                        ...prev,
+                        startDate: val ? new Date(val) : null,
+                      }));
+                    }}
+                  />
+                </div>
+                <div className='flex items-center gap-1'>
+                  <span className='text-sm text-muted-foreground'>End:</span>
+                  <DatePicker
+                    fieldName='endDate'
+                    label=''
+                    onChange={(val: string) => {
+                      setFilters((prev) => ({
+                        ...prev,
+                        endDate: val ? new Date(val) : null,
+                      }));
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </CardHeader>
+
         <CardContent className='pb-4 overflow-x-auto sm:overflow-x-visible'>
           <div className='min-w-[500px] sm:min-w-0'>
             <ChartContainer

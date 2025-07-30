@@ -419,21 +419,29 @@ export function SectionCards() {
 
 export function UserSignUpChart() {
   const apiPrivate = useApiPrivate();
-  const [loading, setLoading] = useState(true);
+  // const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [chartData, setChartData] = useState<ChartDataItem[]>([]);
   const [totalMembers, setTotalMembers] = useState(0);
 
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<{
+    gender: string;
+    ageGroup: string;
+    granularity: string;
+    startDate: Date | null;
+    endDate: Date | null;
+  }>({
     gender: 'All',
     ageGroup: 'All',
     granularity: 'day',
+    startDate: null,
+    endDate: null,
   });
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true);
+        // setLoading(true);
         setError(null);
         const res = await apiPrivate.get(
           '/statistics/display-member-sign-ups',
@@ -442,6 +450,8 @@ export function UserSignUpChart() {
               gender: filters.gender,
               ageGroup: filters.ageGroup,
               granularity: filters.granularity,
+              startDate: filters.startDate?.toISOString(),
+              endDate: filters.endDate?.toISOString(),
             },
           },
         );
@@ -467,25 +477,24 @@ export function UserSignUpChart() {
       } catch (err) {
         console.error('Error fetching chart data:', err);
         setError('Failed to load chart data');
-      } finally {
-        setLoading(false);
       }
     };
     fetchData();
   }, [filters, apiPrivate]);
 
-  if (loading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Loading...</CardTitle>
-        </CardHeader>
-        <CardContent className='h-[300px] flex items-center justify-center'>
-          <div>Loading chart data...</div>
-        </CardContent>
-      </Card>
-    );
-  }
+  // if (!loading) {
+  //   return (
+  //     <Card>
+  //       <CardHeader>
+  //         <CardTitle>Loading...</CardTitle>
+  //       </CardHeader>
+  //       <CardContent className='h-[300px] flex items-center justify-center'>
+  //         <div>Loading chart data...</div>
+  //       </CardContent>
+  //     </Card>
+  //   );
+  // }
+
   if (error) {
     return (
       <Card>
@@ -507,52 +516,86 @@ export function UserSignUpChart() {
             Total: {totalMembers.toLocaleString()} members
           </CardDescription>
         </div>
-        <div className='flex flex-wrap gap-2'>
-          <Select
-            value={filters.gender}
-            onValueChange={(val) => setFilters((f) => ({ ...f, gender: val }))}
-          >
-            <SelectTrigger className='w-[120px]'>
-              <SelectValue placeholder='Gender' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='All'>All Genders</SelectItem>
-              <SelectItem value='M'>Male</SelectItem>
-              <SelectItem value='F'>Female</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select
-            value={filters.ageGroup}
-            onValueChange={(val) =>
-              setFilters((f) => ({ ...f, ageGroup: val }))
-            }
-          >
-            <SelectTrigger className='w-[140px]'>
-              <SelectValue placeholder='Age Group' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='All'>All Ages</SelectItem>
-              <SelectItem value='Children'>Children (1 - 13)</SelectItem>
-              <SelectItem value='Youth'>Youth (14 - 18)</SelectItem>
-              <SelectItem value='Adults'>Adults (19 - 64)</SelectItem>
-              <SelectItem value='Seniors'>Seniors (65+)</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select
-            value={filters.granularity}
-            onValueChange={(val) =>
-              setFilters((f) => ({ ...f, granularity: val }))
-            }
-          >
-            <SelectTrigger className='w-[120px]'>
-              <SelectValue placeholder='Period' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='day'>Day</SelectItem>
-              <SelectItem value='month'>Month</SelectItem>
-              <SelectItem value='year'>Year</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className='flex flex-col gap-2 w-full'>
+          {/* Top row: Select dropdowns */}
+          <div className='flex flex-wrap gap-2'>
+            <Select
+              value={filters.gender}
+              onValueChange={(val) =>
+                setFilters((f) => ({ ...f, gender: val }))
+              }
+            >
+              <SelectTrigger className='w-[120px]'>
+                <SelectValue placeholder='Gender' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='All'>All Genders</SelectItem>
+                <SelectItem value='M'>Male</SelectItem>
+                <SelectItem value='F'>Female</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={filters.ageGroup}
+              onValueChange={(val) =>
+                setFilters((f) => ({ ...f, ageGroup: val }))
+              }
+            >
+              <SelectTrigger className='w-[140px]'>
+                <SelectValue placeholder='Age Group' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='All'>All Ages</SelectItem>
+                <SelectItem value='Children'>Children (1 - 13)</SelectItem>
+                <SelectItem value='Youth'>Youth (14 - 18)</SelectItem>
+                <SelectItem value='Adults'>Adults (19 - 64)</SelectItem>
+                <SelectItem value='Seniors'>Seniors (65+)</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={filters.granularity}
+              onValueChange={(val) =>
+                setFilters((f) => ({ ...f, granularity: val }))
+              }
+            >
+              <SelectTrigger className='w-[120px]'>
+                <SelectValue placeholder='Period' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='day'>Day</SelectItem>
+                <SelectItem value='month'>Month</SelectItem>
+                <SelectItem value='year'>Year</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Bottom row: Date pickers */}
+          <div className='flex flex-wrap gap-2 items-center'>
+            <span className='text-sm text-muted-foreground'>Start:</span>
+            <DatePicker
+              fieldName='startDate'
+              label=''
+              onChange={(val: string) => {
+                setFilters((prev) => ({
+                  ...prev,
+                  startDate: val ? new Date(val) : null,
+                }));
+              }}
+            />
+
+            <span className='text-sm text-muted-foreground'>End:</span>
+            <DatePicker
+              fieldName='endDate'
+              label=''
+              onChange={(val: string) => {
+                setFilters((prev) => ({
+                  ...prev,
+                  endDate: val ? new Date(val) : null,
+                }));
+              }}
+            />
+          </div>
         </div>
       </CardHeader>
       <CardContent className='px-2 pt-4 sm:px-6 sm:pt-6'>
