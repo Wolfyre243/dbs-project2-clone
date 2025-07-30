@@ -220,7 +220,7 @@ function Subtitle({
         elements.push(
           <span
             key={i}
-            className='px-1 py-0.5'
+            className='p-0'
             style={{
               borderRadius: '3px',
               background: 'linear-gradient(90deg, #ffeb3b, #ffca28)',
@@ -243,7 +243,7 @@ function Subtitle({
         elements.push(
           <span
             key={i}
-            className='px-1 py-0.5'
+            className='p-0'
             style={{
               borderRadius: '3px',
               fontWeight: '400',

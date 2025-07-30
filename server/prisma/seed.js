@@ -364,6 +364,21 @@ async function main() {
           }
         }
 
+        // Step 10: Create sender types
+        console.log('\n🙋 Step 8: Creating sender types...');
+        const senderTypeData = [
+          { senderType: 'user' },
+          { senderType: 'assistant' },
+        ];
+
+        if (senderTypeData.length > 0) {
+          const createdSenderTypes = await prisma.senderType.createMany({
+            data: senderTypeData,
+            skipDuplicates: true,
+          });
+          console.log(`   ✅ Created ${createdSenderTypes.count} sender types`);
+        }
+
         console.log('\n🎉 Database seeding completed successfully!');
         console.log('\n📊 Summary:');
         console.log(`   - Statuses: ${statusData.length}`);
@@ -375,6 +390,7 @@ async function main() {
         console.log(`   - User Roles: ${userRoleData.length}`);
         console.log(`   - Emails: ${emailData.length}`);
         console.log(`   - Passwords: ${passwordData.length}`);
+        console.log(`   - Sender Types: ${senderTypeData.length}`);
       }
     } else {
       console.log(
