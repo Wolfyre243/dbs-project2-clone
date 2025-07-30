@@ -14,7 +14,7 @@ const eventLogRouter = express.Router();
 eventLogRouter.use(jwtMiddleware.verifyToken);
 
 // Paginated audit logs with filter
-// eventLogRouter.get('/', eventLogController.getPaginatedEventLogs);
+eventLogRouter.get('/', eventLogController.getPaginatedEventLogs);
 
 // List all audit log types
 eventLogRouter.get('/log-types', eventLogController.getAllEventLogTypes);
