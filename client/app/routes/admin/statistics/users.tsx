@@ -3,6 +3,9 @@ import { IconTrendingDown, IconTrendingUp } from '@tabler/icons-react';
 import { Badge } from '~/components/ui/badge';
 import { DatePicker } from '~/components/date-picker';
 import useApiPrivate from '~/hooks/useApiPrivate';
+import { utils as XLSXUtils, writeFile as XLSXWriteFile } from 'xlsx';
+import { Button } from '~/components/ui/button';
+import { DownloadIcon } from 'lucide-react';
 import { TrendingUp } from 'lucide-react';
 import {
   Card,
