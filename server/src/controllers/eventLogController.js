@@ -8,32 +8,32 @@ const { logUserEvent } = require('../utils/eventlogs');
 const EventTypes = require('../configs/eventTypes');
 
 // module.exports.getPaginatedEventLogs = catchAsync(async (req, res, next) => {
-//   const {
-//     page = 1,
-//     pageSize = 10,
-//     sortBy = 'timestamp',
-//     order = 'desc',
-//     actionTypeId,
-//     search = '',
-//   } = req.query;
+module.exports.getPaginatedEventLogs = catchAsync(async (req, res, next) => {
+  const {
+    page = 1,
+    pageSize = 10,
+    sortBy = 'timestamp',
+    order = 'desc',
+    eventTypeId,
+    search = '',
+  } = req.query;
 
-//   const result = await adminAuditModel.getPaginatedAuditLogs({
-//     page: parseInt(page),
-//     pageSize: parseInt(pageSize),
-//     sortBy,
-//     order,
-//     actionTypeId,
-//     search,
-//   });
+  const result = await eventLogModel.getPaginatedEventLogs({
+    page: parseInt(page),
+    pageSize: parseInt(pageSize),
+    sortBy,
+    order,
+    eventTypeId,
+    search,
+  });
 
-//   res.status(200).json({
-//     status: 'success',
-//     pageCount: Math.ceil(result.totalCount / pageSize),
-//     data: result.logs,
-//     totalCount: result.totalCount,
-//   });
-// });
-
+  res.status(200).json({
+    status: 'success',
+    pageCount: Math.ceil(result.totalCount / pageSize),
+    data: result.logs,
+    totalCount: result.totalCount,
+  });
+});
 // Get all audit log types
 module.exports.getAllEventLogTypes = catchAsync(async (req, res, next) => {
   const types = await eventLogModel.getAllEventLogTypes();
