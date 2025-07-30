@@ -3,7 +3,12 @@ const prisma = new PrismaClient();
 const AppError = require('../utils/AppError');
 const { convertDatesToStrings } = require('../utils/formatters');
 const Roles = require('../configs/roleConfig');
-const EventTypes = require('../configs/eventTypes');
+const {
+  AUDIO_COMPLETED,
+  AUDIO_STOPPED,
+  AUDIO_STARTED,
+  QR_SCANNED,
+} = require('../configs/eventTypes');
 
 // Helper functions for age calculations
 const calculateAge = (dateOfBirth) => {
@@ -445,6 +450,242 @@ module.exports.getDisplayCommonLanguagesUsed = async ({ limit } = {}) => {
   }
 };
 
+/**
+ * Audio Plays by Exhibit
+ * Returns: [{ exhibitId, title, playCount }]
+ */
+module.exports.getAudioPlaysPerExhibitStats = async () => {
+  const scans = await prisma.event.findMany({
+    where: { eventTypeId: AUDIO_STARTED },
+    select: { metadata: true },
+  });
+
+  const exhibitPlayMap = {};
+  scans.forEach((event) => {
+    if (!event.metadata) return;
+    const meta = event.metadata;
+    const exhibitId = meta.exhibitId;
+    if (!exhibitId) return;
+    exhibitPlayMap[exhibitId] = (exhibitPlayMap[exhibitId] || 0) + 1;
+  });
+
+  const exhibitIds = Object.keys(exhibitPlayMap);
+  if (exhibitIds.length === 0) return [];
+
+  const exhibits = await prisma.exhibit.findMany({
+    where: { exhibitId: { in: exhibitIds } },
+    select: { exhibitId: true, title: true },
+  });
+
+  return exhibits
+    .map((ex) => ({
+      exhibitId: ex.exhibitId,
+      title: ex.title,
+      playCount: exhibitPlayMap[ex.exhibitId] || 0,
+    }))
+    .sort((a, b) => b.playCount - a.playCount);
+};
+
+/**
+ * Audio Completion Rate
+ * Returns: [{ audioId, exhibitId, title, started, completed, completionRate }]
+ */
+module.exports.getAudioCompletionRatesStats = async () => {
+  const startedEvents = await prisma.event.findMany({
+    where: { eventTypeId: AUDIO_STARTED },
+    select: { metadata: true },
+  });
+  const completedEvents = await prisma.event.findMany({
+    where: { eventTypeId: AUDIO_COMPLETED },
+    select: { metadata: true },
+  });
+
+  // Map: audioId -> { started, completed }
+  const audioMap = {};
+  startedEvents.forEach((event) => {
+    if (!event.metadata) return;
+    const { audioId } = event.metadata;
+    if (!audioId) return;
+    if (!audioMap[audioId]) audioMap[audioId] = { started: 0, completed: 0 };
+    audioMap[audioId].started += 1;
+  });
+  completedEvents.forEach((event) => {
+    if (!event.metadata) return;
+    const { audioId } = event.metadata;
+    if (!audioId || !audioMap[audioId]) return;
+    audioMap[audioId].completed += 1;
+  });
+
+  const audioIds = Object.keys(audioMap);
+  if (audioIds.length === 0) return [];
+
+  // Fetch audio, subtitle, exhibitSubtitle, and exhibit info
+  const audios = await prisma.audio.findMany({
+    where: { audioId: { in: audioIds } },
+    select: {
+      audioId: true,
+      fileName: true,
+      subtitle: {
+        select: {
+          exhibits: {
+            select: {
+              exhibitId: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  // Flatten to (audioId, exhibitId, fileName) tuples
+  const audioExhibitTuples = [];
+  audios.forEach((audio) => {
+    const exhibitLinks = audio.subtitle?.exhibits || [];
+    if (exhibitLinks.length === 0) {
+      // If no exhibit, still push with exhibitId null
+      audioExhibitTuples.push({
+        audioId: audio.audioId,
+        exhibitId: null,
+        fileName: audio.fileName,
+      });
+    } else {
+      exhibitLinks.forEach((link) => {
+        audioExhibitTuples.push({
+          audioId: audio.audioId,
+          exhibitId: link.exhibitId,
+          fileName: audio.fileName,
+        });
+      });
+    }
+  });
+
+  // Get all unique exhibitIds
+  const exhibitIds = [
+    ...new Set(audioExhibitTuples.map((t) => t.exhibitId).filter(Boolean)),
+  ];
+  const exhibits = await prisma.exhibit.findMany({
+    where: { exhibitId: { in: exhibitIds } },
+    select: { exhibitId: true, title: true },
+  });
+  const exhibitMap = {};
+  exhibits.forEach((ex) => {
+    exhibitMap[ex.exhibitId] = ex.title;
+  });
+
+  // Build result per (audioId, exhibitId)
+  return audioExhibitTuples
+    .map((tuple) => {
+      const stats = audioMap[tuple.audioId];
+      const completionRate =
+        stats.started > 0
+          ? +((stats.completed / stats.started) * 100).toFixed(1)
+          : 0;
+      return {
+        audioId: tuple.audioId,
+        exhibitId: tuple.exhibitId,
+        title: tuple.exhibitId ? exhibitMap[tuple.exhibitId] || '' : '',
+        fileName: tuple.fileName,
+        started: stats.started,
+        completed: stats.completed,
+        completionRate,
+      };
+    })
+    .sort((a, b) => b.started - a.started);
+};
+/**
+ * Average Listen Duration
+ * Returns: [{ audioId, exhibitId, title, avgDuration }]
+ */
+module.exports.getAverageListenDurationStats = async () => {
+  const events = await prisma.event.findMany({
+    where: { eventTypeId: { in: [AUDIO_COMPLETED, AUDIO_STOPPED] } },
+    select: { metadata: true },
+  });
+
+  // Map: audioId -> { total, count }
+  const durationMap = {};
+  events.forEach((event) => {
+    if (!event.metadata) return;
+    const { audioId, currentTime } = event.metadata;
+    if (!audioId || typeof currentTime !== 'number') return;
+    if (!durationMap[audioId]) durationMap[audioId] = { total: 0, count: 0 };
+    durationMap[audioId].total += currentTime;
+    durationMap[audioId].count += 1;
+  });
+
+  const audioIds = Object.keys(durationMap);
+  if (audioIds.length === 0) return [];
+
+  // Fetch audio, subtitle, exhibitSubtitle, and exhibit info
+  const audios = await prisma.audio.findMany({
+    where: { audioId: { in: audioIds } },
+    select: {
+      audioId: true,
+      fileName: true,
+      subtitle: {
+        select: {
+          exhibits: {
+            select: {
+              exhibitId: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  // Flatten to (audioId, exhibitId, fileName) tuples
+  const audioExhibitTuples = [];
+  audios.forEach((audio) => {
+    const exhibitLinks = audio.subtitle?.exhibits || [];
+    if (exhibitLinks.length === 0) {
+      audioExhibitTuples.push({
+        audioId: audio.audioId,
+        exhibitId: null,
+        fileName: audio.fileName,
+      });
+    } else {
+      exhibitLinks.forEach((link) => {
+        audioExhibitTuples.push({
+          audioId: audio.audioId,
+          exhibitId: link.exhibitId,
+          fileName: audio.fileName,
+        });
+      });
+    }
+  });
+
+  // Get all unique exhibitIds
+  const exhibitIds = [
+    ...new Set(audioExhibitTuples.map((t) => t.exhibitId).filter(Boolean)),
+  ];
+  const exhibits = await prisma.exhibit.findMany({
+    where: { exhibitId: { in: exhibitIds } },
+    select: { exhibitId: true, title: true },
+  });
+  const exhibitMap = {};
+  exhibits.forEach((ex) => {
+    exhibitMap[ex.exhibitId] = ex.title;
+  });
+
+  // Build result per (audioId, exhibitId)
+  return audioExhibitTuples
+    .map((tuple) => {
+      const stats = durationMap[tuple.audioId];
+      const avgDuration =
+        stats.count > 0 ? +(stats.total / stats.count).toFixed(2) : 0;
+      return {
+        audioId: tuple.audioId,
+        exhibitId: tuple.exhibitId,
+        title: tuple.exhibitId ? exhibitMap[tuple.exhibitId] || '' : '',
+        fileName: tuple.fileName,
+        avgDuration,
+        count: stats.count,
+      };
+    })
+    .sort((a, b) => b.avgDuration - a.avgDuration);
+};
+
 // Get scan counts grouped by exhibit and date
 module.exports.getScansPerExhibitStats = async ({
   startDate = null,
@@ -455,7 +696,7 @@ module.exports.getScansPerExhibitStats = async ({
   try {
     const where = {
       entityName: 'exhibit',
-      eventTypeId: EventTypes.QR_SCANNED,
+      eventTypeId: QR_SCANNED,
     };
 
     // Add date filters
@@ -545,4 +786,97 @@ module.exports.getScansPerExhibitStats = async ({
   } catch (error) {
     throw new AppError('Failed to get scans per exhibit', 500);
   }
+};
+
+// Audio Completion Rate Over Time (for line chart)
+module.exports.getAudioCompletionRatesTimeSeries = async () => {
+  const startedEvents = await prisma.event.findMany({
+    where: { eventTypeId: AUDIO_STARTED },
+    select: { metadata: true, timestamp: true },
+  });
+  const completedEvents = await prisma.event.findMany({
+    where: { eventTypeId: AUDIO_COMPLETED },
+    select: { metadata: true, timestamp: true },
+  });
+
+  // Group by date (YYYY-MM-DD)
+  const startedByDate = {};
+  startedEvents.forEach((event) => {
+    if (!event.metadata) return;
+    const date = event.timestamp.toISOString().slice(0, 10);
+    startedByDate[date] = (startedByDate[date] || 0) + 1;
+  });
+  const completedByDate = {};
+  completedEvents.forEach((event) => {
+    if (!event.metadata) return;
+    const date = event.timestamp.toISOString().slice(0, 10);
+    completedByDate[date] = (completedByDate[date] || 0) + 1;
+  });
+
+  // Get all dates in sorted order
+  const allDates = Array.from(
+    new Set([...Object.keys(startedByDate), ...Object.keys(completedByDate)]),
+  ).sort();
+
+  // Build time series
+  let cumulativeStarted = 0;
+  let cumulativeCompleted = 0;
+  const timeSeries = allDates.map((date) => {
+    cumulativeStarted += startedByDate[date] || 0;
+    cumulativeCompleted += completedByDate[date] || 0;
+    const completionRate =
+      cumulativeStarted > 0
+        ? +((cumulativeCompleted / cumulativeStarted) * 100).toFixed(1)
+        : 0;
+    return {
+      date,
+      started: cumulativeStarted,
+      completed: cumulativeCompleted,
+      completionRate,
+    };
+  });
+
+  return timeSeries;
+};
+
+// Average Listen Duration Over Time (for line chart)
+module.exports.getAverageListenDurationTimeSeries = async () => {
+  const events = await prisma.event.findMany({
+    where: { eventTypeId: { in: [AUDIO_COMPLETED, AUDIO_STOPPED] } },
+    select: { metadata: true, timestamp: true },
+  });
+
+  // Group by date (YYYY-MM-DD)
+  const durationByDate = {};
+  const countByDate = {};
+  events.forEach((event) => {
+    if (!event.metadata) return;
+    const { currentTime } = event.metadata;
+    if (typeof currentTime !== 'number') return;
+    const date = event.timestamp.toISOString().slice(0, 10);
+    durationByDate[date] = (durationByDate[date] || 0) + currentTime;
+    countByDate[date] = (countByDate[date] || 0) + 1;
+  });
+
+  // Get all dates in sorted order
+  const allDates = Object.keys(durationByDate).sort();
+
+  // Build time series
+  let cumulativeDuration = 0;
+  let cumulativeCount = 0;
+  const timeSeries = allDates.map((date) => {
+    cumulativeDuration += durationByDate[date] || 0;
+    cumulativeCount += countByDate[date] || 0;
+    const avgDuration =
+      cumulativeCount > 0
+        ? +(cumulativeDuration / cumulativeCount).toFixed(2)
+        : 0;
+    return {
+      date,
+      avgDuration,
+      count: cumulativeCount,
+    };
+  });
+
+  return timeSeries;
 };

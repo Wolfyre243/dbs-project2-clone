@@ -45,4 +45,19 @@ statisticsRouter.get(
   statisticsController.getScansPerExhibit,
 );
 
+statisticsRouter.get(
+  '/audio-completion-rates',
+  statisticsController.getAudioCompletionRates,
+);
+
+statisticsRouter.get(
+  '/audio-plays-per-exhibit',
+  statisticsController.getAudioPlaysPerExhibit,
+);
+
+statisticsRouter.get(
+  '/average-listen-duration',
+  statisticsController.getAverageListenDuration,
+);
+
 module.exports = statisticsRouter;

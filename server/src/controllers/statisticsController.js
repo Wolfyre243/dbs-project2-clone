@@ -123,6 +123,30 @@ module.exports.getDisplayCommonLanguagesUsed = catchAsync(
   },
 );
 
+module.exports.getAudioPlaysPerExhibit = catchAsync(async (req, res, next) => {
+  const result = await statisticsModel.getAudioPlaysPerExhibitStats();
+  res.status(200).json({
+    status: 'success',
+    data: result,
+  });
+});
+
+module.exports.getAudioCompletionRates = catchAsync(async (req, res, next) => {
+  const result = await statisticsModel.getAudioCompletionRatesStats();
+  res.status(200).json({
+    status: 'success',
+    data: result,
+  });
+});
+
+module.exports.getAverageListenDuration = catchAsync(async (req, res, next) => {
+  const result = await statisticsModel.getAverageListenDurationStats();
+  res.status(200).json({
+    status: 'success',
+    data: result,
+  });
+});
+
 module.exports.getScansPerExhibit = catchAsync(async (req, res, next) => {
   const {
     startDate = null,

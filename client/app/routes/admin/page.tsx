@@ -1,6 +1,7 @@
 import { SectionCards, ChartAreaInteractive } from './statistics/users';
 import { LanguageStatistics } from './statistics/language';
 import { QRScanDashboard } from './statistics/qr-code';
+import AudioStatisticsDashboard from './statistics/audio/page';
 import { useNavigate } from 'react-router';
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs';
@@ -31,6 +32,7 @@ export default function AdminHomePage() {
             <SelectItem value='users'>Users</SelectItem>
             <SelectItem value='languages'>Languages</SelectItem>
             <SelectItem value='qr-codes'>QR Codes</SelectItem>
+            <SelectItem value='audio'>Audio Engagement</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -48,6 +50,10 @@ export default function AdminHomePage() {
 
         <TabsContent value='qr-codes' className='space-y-6'>
           <QRScanDashboard />
+        </TabsContent>
+
+        <TabsContent value='audio' className='space-y-6'>
+          <AudioStatisticsDashboard />
         </TabsContent>
       </Tabs>
     </div>
