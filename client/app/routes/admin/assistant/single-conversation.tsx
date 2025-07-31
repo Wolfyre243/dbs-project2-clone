@@ -1,6 +1,6 @@
 import { AxiosError, isAxiosError } from 'axios';
 import { CircleUserRound, Divide } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { forwardRef, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { AssistantChatBar } from '~/components/assistant-ui';
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
@@ -63,8 +63,8 @@ function ChatMessageComponent({
   );
 }
 
-function ChatMessagePending() {
-  return (
+const ChatMessagePending = forwardRef<HTMLDivElement>((props, ref) => (
+  <div ref={ref} {...props}>
     <div className={`flex flex-row w-full items-center justify-baseline`}>
       <div className={`flex gap-5 max-w-3/4 items-center flex-row-reverse`}>
         <div className='px-4 py-2 bg-neutral-800 max-w-full rounded-xl'>
@@ -91,20 +91,22 @@ function ChatMessagePending() {
         </Avatar>
       </div>
     </div>
-  );
-}
+  </div>
+));
 
 export default function AssistantConversationPage() {
   const { conversationId } = useParams();
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [reload, setReload] = useState(false);
+  const [reload, setReload] = useState(0);
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [messageHistory, setMessageHistory] = useState<Message[]>([]);
 
   const navigate = useNavigate();
   const apiPrivate = useApiPrivate();
+
+  const lastMsgRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const getMessages = async () => {
@@ -131,10 +133,17 @@ export default function AssistantConversationPage() {
     getMessages();
   }, [apiPrivate, reload]);
 
+  useEffect(() => {
+    if (isLoading && lastMsgRef.current) {
+      lastMsgRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
+  }, [isLoading]);
+
   const handleSubmit = async () => {
     if (!message.trim()) return;
 
     setIsLoading(true);
+
     try {
       const { data: responseData } = await apiPrivate.post(
         `/assistant/chat`,
@@ -148,13 +157,13 @@ export default function AssistantConversationPage() {
         },
       );
 
-      setReload(true);
-
       // Clear message after sending
       setMessage('');
+      setReload((prev) => prev + 1);
     } catch (error) {
       console.error('Error sending message:', error);
     } finally {
+      // setReload(false);
       setIsLoading(false);
     }
   };
@@ -169,7 +178,7 @@ export default function AssistantConversationPage() {
 
   return (
     <div className='flex flex-row justify-center w-full min-h-full p-2'>
-      <div className='w-5xl h-200 flex flex-col justify-between'>
+      <div className='w-5xl h-[850px] flex flex-col justify-between'>
         <div className='flex flex-col gap-3 overflow-y-scroll scrollbar-none'>
           {!error ? (
             messageHistory.map((messageItem: Message, index: number) => {
@@ -189,8 +198,8 @@ export default function AssistantConversationPage() {
           )}
           {isLoading ? (
             <div>
-              <ChatMessageComponent role='user' message={message.toString()} />
-              <ChatMessagePending />
+              <ChatMessageComponent role='user' message={message} />
+              <ChatMessagePending ref={lastMsgRef} />
             </div>
           ) : (
             ''
