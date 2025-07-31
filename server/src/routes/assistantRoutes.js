@@ -10,17 +10,45 @@ const assistantRouter = express.Router();
 
 assistantRouter.use(jwtMiddleware.verifyToken);
 
-/**
- * POST /assistant/generate-content
- * Body: { prompt: string }
- */
+// POST /assistant/generate-content
 assistantRouter.post(
   '/generate-content',
-  // TODO: Rate limiting
   authMiddleware.verifyIsAdmin,
   [promptValidation()],
   validate,
   assistantController.generateContent,
+);
+
+// Conversation routes
+assistantRouter.get(
+  '/conversations',
+  authMiddleware.verifyIsAdmin,
+  assistantController.listConversations,
+);
+
+assistantRouter.post(
+  '/conversations',
+  authMiddleware.verifyIsAdmin,
+  assistantController.createConversation,
+);
+
+assistantRouter.get(
+  '/conversations/:conversationId',
+  authMiddleware.verifyIsAdmin,
+  assistantController.getConversation,
+);
+
+// Message routes
+assistantRouter.get(
+  '/conversations/:conversationId/messages',
+  authMiddleware.verifyIsAdmin,
+  assistantController.listMessages,
+);
+
+assistantRouter.post(
+  '/chat',
+  authMiddleware.verifyIsAdmin,
+  assistantController.createMessage,
 );
 
 module.exports = assistantRouter;

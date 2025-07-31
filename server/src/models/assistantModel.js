@@ -1,33 +1,116 @@
+const statusCodes = require('../configs/statusCodes');
 const { PrismaClient } = require('../generated/prisma');
+const { convertDatesToStrings } = require('../utils/formatters');
 const prisma = new PrismaClient();
 
 /**
- * Find or create a conversation for a user.
+ * List all conversations for a user.
  */
-module.exports.findOrCreateConversation = async (userId, exhibitId) => {
-  let conversation = await prisma.conversation.findFirst({
-    where: { userId, statusId: 1 },
+module.exports.listConversations = async (userId) => {
+  const conversations = await prisma.conversation.findMany({
+    where: { userId, statusId: statusCodes.ACTIVE },
+    orderBy: { modifiedAt: 'desc' },
+    select: {
+      conversationId: true,
+      title: true,
+      createdAt: true,
+      modifiedAt: true,
+    },
   });
-  if (!conversation) {
-    conversation = await prisma.conversation.create({
-      data: {
-        userId,
-        title: exhibitId
-          ? `Exhibit ${exhibitId} Content Generation`
-          : 'AI Content Generation',
-        statusId: 1,
-      },
-    });
-  }
-  return conversation;
+
+  return convertDatesToStrings(conversations);
 };
 
 /**
- * Get senderTypeId by type string.
+ * Create a new conversation.
  */
-module.exports.getSenderTypeId = async (senderType) => {
-  const sender = await prisma.senderType.findFirst({ where: { senderType } });
-  return sender?.senderTypeId;
+module.exports.createConversation = async (userId, title) => {
+  try {
+    const conversation = await prisma.conversation.create({
+      data: {
+        userId,
+        title: title || 'New Conversation',
+        statusId: statusCodes.ACTIVE,
+      },
+      select: {
+        conversationId: true,
+        title: true,
+        createdAt: true,
+        modifiedAt: true,
+      },
+    });
+
+    return conversation;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
+
+/**
+ * Get a conversation and its messages.
+ */
+module.exports.getConversation = async (userId, conversationId) => {
+  const conversation = await prisma.conversation.findFirst({
+    where: { conversationId, userId, statusId: statusCodes.ACTIVE },
+    include: {
+      messages: {
+        orderBy: { createdAt: 'asc' },
+        select: {
+          messageId: true,
+          senderType: { select: { senderType: true } },
+          content: true,
+          createdAt: true,
+        },
+      },
+    },
+  });
+
+  return {
+    ...conversation,
+    messages: conversation.messages.map((m) =>
+      convertDatesToStrings({
+        ...m,
+        senderType: m.senderType.senderType,
+      }),
+    ),
+  };
+};
+
+/**
+ * List paginated messages for a conversation.
+ */
+module.exports.listMessages = async (
+  userId,
+  conversationId,
+  page = 1,
+  pageSize = 20,
+) => {
+  const skip = (page - 1) * pageSize;
+  const messages = await prisma.message.findMany({
+    where: {
+      conversationId,
+      conversation: { userId, statusId: statusCodes.ACTIVE },
+      statusId: statusCodes.ACTIVE,
+    },
+    orderBy: { createdAt: 'asc' },
+    skip,
+    take: pageSize,
+    select: {
+      messageId: true,
+      senderType: {
+        select: {
+          senderType: true,
+        },
+      },
+      content: true,
+      createdAt: true,
+    },
+  });
+
+  return messages.map((m) =>
+    convertDatesToStrings({ ...m, senderType: m.senderType.senderType }),
+  );
 };
 
 /**
@@ -38,12 +121,14 @@ module.exports.createMessage = async (
   senderTypeId,
   content,
 ) => {
-  return prisma.message.create({
+  const message = prisma.message.create({
     data: {
       conversationId,
       senderTypeId,
       content,
-      statusId: 1,
+      statusId: statusCodes.ACTIVE,
     },
   });
+
+  return convertDatesToStrings(message);
 };

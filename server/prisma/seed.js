@@ -368,7 +368,7 @@ async function main() {
         console.log('\n🙋 Step 8: Creating sender types...');
         const senderTypeData = [
           { senderType: 'user' },
-          { senderType: 'assistant' },
+          { senderType: 'model' },
         ];
 
         if (senderTypeData.length > 0) {
