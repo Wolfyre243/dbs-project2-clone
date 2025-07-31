@@ -132,3 +132,50 @@ module.exports.createMessage = async (
 
   return convertDatesToStrings(message);
 };
+
+module.exports.getAllConversations = async ({
+  page,
+  pageSize,
+  sortBy,
+  order,
+  search,
+  filter,
+  userId,
+}) => {
+  try {
+    let where = {
+      ...filter,
+      userId,
+      statusId: statusCodes.ACTIVE,
+    };
+
+    if (search && search.trim() !== '') {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { conversationId: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    const conversationCount = await prisma.conversation.count({ where });
+
+    const conversationList = await prisma.conversation.findMany({
+      where,
+      orderBy: { [sortBy]: order },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      select: {
+        conversationId: true,
+        title: true,
+        createdAt: true,
+        modifiedAt: true,
+      },
+    });
+
+    return {
+      pageCount: Math.ceil(conversationCount / pageSize),
+      conversationList: conversationList.map(convertDatesToStrings),
+    };
+  } catch (error) {
+    throw error;
+  }
+};
