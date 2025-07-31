@@ -11,7 +11,7 @@ const languageRouter = require('./languageRoutes');
 const imageRouter = require('./imageRoutes');
 const QRcodeRouter = require('./QRcodeRoutes');
 const statisticsRouter = require('./statisticsRoutes');
-const survey = require('./surveyRoutes');
+const review = require('./reviewRoutes');
 const adminAuditRouter = require('./adminAuditRoute');
 const eventLogRouter = require('./eventLogRoutes');
 const assistantRouter = require('./assistantRoutes');
@@ -31,6 +31,7 @@ mainRouter.use('/statistics', statisticsRouter);
 mainRouter.use('/admin-audit', adminAuditRouter);
 mainRouter.use('/event-log', eventLogRouter);
 mainRouter.use('/assistant', assistantRouter);
+mainRouter.use('/review', review);
 
 //mainRouter.use('/survey', survey);
 mainRouter.get('/', (req, res) => {
