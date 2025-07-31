@@ -44,13 +44,8 @@ export function NavMain({
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip={item.title}>
                 <Link to={item.url}>
-                  <SidebarMenuButton
-                    tooltip={item.title}
-                    className='cursor-pointer'
-                  >
-                    {item.icon && <item.icon />}
-                    <span>{item.title}</span>
-                  </SidebarMenuButton>
+                  {item.icon && <item.icon />}
+                  <span>{item.title}</span>
                 </Link>
               </SidebarMenuButton>
               {item.items?.length ? (
@@ -67,13 +62,8 @@ export function NavMain({
                         <SidebarMenuSubItem key={subItem.title}>
                           <SidebarMenuSubButton asChild>
                             <Link to={subItem.url}>
-                              <SidebarMenuButton
-                                tooltip={subItem.title}
-                                className='cursor-pointer'
-                              >
-                                {subItem.icon && <item.icon />}
-                                <span>{subItem.title}</span>
-                              </SidebarMenuButton>
+                              {subItem.icon && <item.icon />}
+                              <span>{subItem.title}</span>
                             </Link>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>

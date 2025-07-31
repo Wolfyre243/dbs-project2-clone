@@ -9,33 +9,34 @@ datasource db {
 }
 
 model users {
-  userId           String       @id @default(uuid()) @map("user_id") @db.Uuid
-  username         String       @unique @db.VarChar(30)
-  createdAt        DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
-  modifiedAt       DateTime     @default(now()) @map("modified_at") @db.Timestamptz(6)
-  statusId         Int          @map("status_id")
-  audiosCreated    audio[]      @relation("AudioCreatedBy")
+  userId           String         @id @default(uuid()) @map("user_id") @db.Uuid
+  username         String         @unique @db.VarChar(30)
+  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  modifiedAt       DateTime       @default(now()) @map("modified_at") @db.Timestamptz(6)
+  statusId         Int            @map("status_id")
+  audiosCreated    audio[]        @relation("AudioCreatedBy")
   auditLogs        auditLog[]
   emails           email?
   event            event[]
-  exhibitsCreated  exhibit[]    @relation("ExhibitCreatedBy")
-  imagesCreated    image[]      @relation("ImageCreatedBy")
+  exhibitsCreated  exhibit[]      @relation("ExhibitCreatedBy")
+  imagesCreated    image[]        @relation("ImageCreatedBy")
   passwords        password[]
   phoneNumbers     phoneNumber?
-  qrCodesCreated   qrCode[]     @relation("QrCodeCreatedBy")
+  qrCodesCreated   qrCode[]       @relation("QrCodeCreatedBy")
   reviews          review[]
   sessions         session[]
-  subtitlesCreated subtitle[]   @relation("SubtitleCreatedBy")
-  userProfile      userProfile? @relation("UserToProfile")
+  subtitlesCreated subtitle[]     @relation("SubtitleCreatedBy")
+  userProfile      userProfile?   @relation("UserToProfile")
   userRoles        userRole?
-  status           status       @relation(fields: [statusId], references: [statusId])
+  status           status         @relation(fields: [statusId], references: [statusId])
+  conversation     conversation[]
 
   @@index([statusId])
 }
 
 model status {
-  statusId     Int           @id @default(autoincrement()) @map("status_id")
-  statusName   String        @unique @map("status_name") @db.VarChar(30)
+  statusId     Int            @id @default(autoincrement()) @map("status_id")
+  statusName   String         @unique @map("status_name") @db.VarChar(30)
   audios       audio[]
   emails       email[]
   exhibits     exhibit[]
@@ -47,6 +48,8 @@ model status {
   subtitles    subtitle[]
   userProfiles userProfile[]
   users        users[]
+  conversation conversation[]
+  message      message[]
 }
 
 model audio {
@@ -314,4 +317,41 @@ model password {
   user       users    @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model senderType {
+  senderTypeId Int       @id @default(autoincrement()) @map("sender_type_id")
+  senderType   String    @map("sender_type") @db.VarChar(30)
+  message      message[]
+
+  @@map("sender_type")
+}
+
+model conversation {
+  conversationId String    @id @default(uuid()) @map("conversation_id") @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  title          String?   @db.VarChar(100)
+  statusId       Int       @map("status_id")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  modifiedAt     DateTime  @default(now()) @map("modified_at") @db.Timestamptz(6)
+  user           users     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  status         status    @relation(fields: [statusId], references: [statusId])
+  messages       message[]
+
+  @@index([userId, statusId])
+}
+
+model message {
+  messageId      String       @id @default(uuid()) @map("message_id") @db.Uuid
+  conversationId String       @map("conversation_id") @db.Uuid
+  senderTypeId   Int          @map("sender_type_id")
+  content        String
+  metadata       Json?        @db.JsonB
+  statusId       Int          @map("status_id")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  senderType     senderType   @relation(fields: [senderTypeId], references: [senderTypeId], onDelete: Cascade)
+  conversation   conversation @relation(fields: [conversationId], references: [conversationId], onDelete: Cascade)
+  status         status       @relation(fields: [statusId], references: [statusId])
+
+  @@index([conversationId, statusId, createdAt, senderTypeId])
 }

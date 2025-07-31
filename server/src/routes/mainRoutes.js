@@ -14,6 +14,7 @@ const statisticsRouter = require('./statisticsRoutes');
 const survey = require('./surveyRoutes');
 const adminAuditRouter = require('./adminAuditRoute');
 const eventLogRouter = require('./eventLogRoutes');
+const assistantRouter = require('./assistantRoutes');
 
 // Create the main router and register routers
 const mainRouter = express.Router();
@@ -29,6 +30,7 @@ mainRouter.use('/qrcode', QRcodeRouter);
 mainRouter.use('/statistics', statisticsRouter);
 mainRouter.use('/admin-audit', adminAuditRouter);
 mainRouter.use('/event-log', eventLogRouter);
+mainRouter.use('/assistant', assistantRouter);
 
 //mainRouter.use('/survey', survey);
 mainRouter.get('/', (req, res) => {

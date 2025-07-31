@@ -2,7 +2,6 @@ import {
   Gauge,
   Users,
   UserPlus,
-  Settings,
   CircleQuestionMark,
   LayoutDashboard,
   ScrollText,
@@ -11,6 +10,7 @@ import {
   HardDrive,
   SlidersVertical,
   Logs,
+  BotMessageSquare,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -79,6 +79,21 @@ const data = {
       title: 'Logs',
       url: '/admin/logs',
       icon: Logs,
+    },
+    {
+      title: 'Omnie',
+      url: '/admin/assistant',
+      icon: BotMessageSquare,
+      items: [
+        {
+          title: 'New Conversation',
+          url: '/admin/assistant',
+        },
+        {
+          title: 'History',
+          url: '/admin/assistant/history',
+        },
+      ],
     },
   ],
   navSuperadmin: [

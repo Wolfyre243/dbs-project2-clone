@@ -46,6 +46,16 @@ export default [
           ),
         ]),
       ]),
+      ...prefix('assistant', [
+        layout('routes/admin/assistant/layout.tsx', [
+          index('routes/admin/assistant/page.tsx'),
+          route(
+            '/conversation/:conversationId',
+            'routes/admin/assistant/single-conversation.tsx',
+          ),
+          route('/history', 'routes/admin/assistant/history.tsx'),
+        ]),
+      ]),
     ]),
   ]),
 

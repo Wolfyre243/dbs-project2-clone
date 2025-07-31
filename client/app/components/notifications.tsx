@@ -24,14 +24,14 @@ export function NotificationItem({
 
   return (
     <div className='flex flex-row gap-3 h-full w-full text-sm'>
-      <div className='flex flex-col justify-center items-center min-h-full'>
+      <div className='flex flex-col justify-center items-center p-2 min-h-full rounded-full bg-accent'>
         <House className='w-6 h-6' />
       </div>
       <div className='flex flex-col w-full h-full'>
         <div className='flex flex-row justify-between'>
-          <div className='flex flex-row gap-2 w-full'>
+          <div className='flex flex-row gap-2 w-full items-center'>
             <h1>{notificationDetails.username}</h1>
-            <p className='text-muted-foreground'>{timeAgo}</p>
+            <p className='text-xs text-muted-foreground'>{timeAgo}</p>
           </div>
           {/* TODO Perform check to see if actioonType is destructive, if so put badge as destructive variant */}
           {/* <div className='flex flex-row gap-2'>
