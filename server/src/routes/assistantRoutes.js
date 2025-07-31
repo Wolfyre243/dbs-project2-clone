@@ -51,4 +51,6 @@ assistantRouter.post(
   assistantController.createMessage,
 );
 
+assistantRouter.get('/conversations', assistantController.getAllConversations);
+
 module.exports = assistantRouter;
