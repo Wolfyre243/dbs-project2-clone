@@ -17,6 +17,7 @@ import { useLayoutEffect } from 'react';
 import { isAxiosError } from 'node_modules/axios';
 import LoadingSpinner from './components/LoadingSpinner';
 import { Toaster } from 'sonner';
+import './services/translation/translation.ts';
 
 export const links: Route.LinksFunction = () => [
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },

@@ -168,6 +168,37 @@ export function QRScanDashboard() {
           Download
         </Button>
       </div>
+
+      {/* Date Pickers */}
+      <div className='flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4'>
+        <div className='flex items-center gap-1'>
+          <span className='text-sm text-muted-foreground'>Start:</span>
+          <DatePicker
+            fieldName='startDate'
+            label=''
+            onChange={(val: string) => {
+              setFilters((prev) => ({
+                ...prev,
+                startDate: val ? new Date(val) : null,
+              }));
+            }}
+          />
+        </div>
+        <div className='flex items-center gap-1'>
+          <span className='text-sm text-muted-foreground'>End:</span>
+          <DatePicker
+            fieldName='endDate'
+            label=''
+            onChange={(val: string) => {
+              setFilters((prev) => ({
+                ...prev,
+                endDate: val ? new Date(val) : null,
+              }));
+            }}
+          />
+        </div>
+      </div>
+
       {/* TOP ROW: Bar Chart + Table */}
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
         <Card className='flex flex-col bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card '>
@@ -271,36 +302,6 @@ export function QRScanDashboard() {
                     {g.charAt(0).toUpperCase() + g.slice(1)}
                   </Button>
                 ))}
-              </div>
-
-              {/* Date Pickers */}
-              <div className='flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4'>
-                <div className='flex items-center gap-1'>
-                  <span className='text-sm text-muted-foreground'>Start:</span>
-                  <DatePicker
-                    fieldName='startDate'
-                    label=''
-                    onChange={(val: string) => {
-                      setFilters((prev) => ({
-                        ...prev,
-                        startDate: val ? new Date(val) : null,
-                      }));
-                    }}
-                  />
-                </div>
-                <div className='flex items-center gap-1'>
-                  <span className='text-sm text-muted-foreground'>End:</span>
-                  <DatePicker
-                    fieldName='endDate'
-                    label=''
-                    onChange={(val: string) => {
-                      setFilters((prev) => ({
-                        ...prev,
-                        endDate: val ? new Date(val) : null,
-                      }));
-                    }}
-                  />
-                </div>
               </div>
             </div>
           </div>

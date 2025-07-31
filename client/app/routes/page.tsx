@@ -19,11 +19,13 @@ import { useNavigate } from 'react-router';
 import { useJWTDecode } from '~/hooks/useJWTDecode';
 import { isAxiosError } from 'axios';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 export default function LandingPage() {
   const { setAccessToken, accessToken } = useAuth();
   const JWTDecode = useJWTDecode();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleGuestLogin = async () => {
     try {
@@ -67,7 +69,7 @@ export default function LandingPage() {
             <div className='w-fit self-center inline-flex items-center px-4 py-2 rounded-full border border-red-400 dark:border-red-500 bg-red-400/80 dark:bg-red-500/80 backdrop-blur-sm mb-8'>
               <Shield className='w-4 h-4 mr-2 text-white' />
               <span className='text-sm font-medium tracking-wide text-white'>
-                WELCOME TO
+                {t('welcome')}
               </span>
             </div>
 
@@ -78,13 +80,13 @@ export default function LandingPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: 'easeOut' }}
             >
-              DISCOVER
+              {t('mainHeading1')}
               <br />
               <span className='bg-gradient-to-r from-red-400 dark:from-red-500 to-red-300 dark:to-red-400 bg-clip-text text-transparent'>
-                THE SINGAPORE
+                {t('mainHeading2')}
               </span>
               <br />
-              STORY
+              {t('mainHeading3')}
             </motion.h1>
 
             {/* Subheading */}
@@ -94,9 +96,7 @@ export default function LandingPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 0.3, ease: 'easeOut' }}
             >
-              Step into an immersive journey through cutting-edge technology,
-              interactive experiences, and groundbreaking discoveries that shape
-              tomorrow.
+              {t('subHeading')}
             </motion.p>
 
             {/* CTA Buttons */}
@@ -107,7 +107,7 @@ export default function LandingPage() {
                   onClick={() => handleGuestLogin()}
                   className='bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-blue-500/25'
                 >
-                  Start Your Journey
+                  {t('startJourney')}
                   <ArrowRight className='ml-2 w-5 h-5' />
                 </Button>
               ) : (
@@ -121,12 +121,10 @@ export default function LandingPage() {
         <section className='relative w-full bg-background py-20 px-4 border-t border-border'>
           <div className='max-w-6xl mx-auto'>
             <h2 className='text-3xl md:text-4xl font-bold text-center mb-4 text-foreground'>
-              Audio Tour Highlights
+              {t('audioHighlights')}
             </h2>
             <p className='text-lg text-muted-foreground text-center mb-12 max-w-2xl mx-auto'>
-              Experience a preview of our immersive audio tours, designed to
-              guide you through the stories and exhibits of the Singapore
-              Discovery Centre.
+              {t('highlightDesc')}
             </p>
             <div className='grid grid-cols-1 md:grid-cols-3 gap-8'>
               {/* Example 1 */}
@@ -138,18 +136,17 @@ export default function LandingPage() {
                 transition={{ duration: 0.7, delay: 0.1 }}
               >
                 <h3 className='text-xl font-semibold mb-2 text-foreground'>
-                  The Beginnings
+                  {t('beginningsTitle')}
                 </h3>
                 <p className='text-sm text-muted-foreground mb-4 text-center'>
-                  Discover the origins of Singapore and the pivotal moments that
-                  shaped our nation.
+                  {t('beginningsDesc')}
                 </p>
                 <audio controls className='w-full'>
                   <source
                     src='/audio/beginnings-sample.mp3'
                     type='audio/mpeg'
                   />
-                  Your browser does not support the audio element.
+                  {t('supportError')}
                 </audio>
               </motion.div>
               {/* Example 2 */}
@@ -161,15 +158,14 @@ export default function LandingPage() {
                 transition={{ duration: 0.7, delay: 0.3 }}
               >
                 <h3 className='text-xl font-semibold mb-2 text-foreground'>
-                  Defending Our Home
+                  {t('defendingTitle')}
                 </h3>
                 <p className='text-sm text-muted-foreground mb-4 text-center'>
-                  Listen to stories of courage and innovation in Singapore's
-                  journey to safeguard its future.
+                  {t('defendingDesc')}
                 </p>
                 <audio controls className='w-full'>
                   <source src='/audio/defending-sample.mp3' type='audio/mpeg' />
-                  Your browser does not support the audio element.
+                  {t('supportError')}
                 </audio>
               </motion.div>
               {/* Example 3 */}
@@ -181,15 +177,14 @@ export default function LandingPage() {
                 transition={{ duration: 0.7, delay: 0.5 }}
               >
                 <h3 className='text-xl font-semibold mb-2 text-foreground'>
-                  Voices of the People
+                  {t('voicesTitle')}
                 </h3>
                 <p className='text-sm text-muted-foreground mb-4 text-center'>
-                  Hear personal accounts and reflections from Singaporeans
-                  across generations.
+                  {t('voicesDesc')}
                 </p>
                 <audio controls className='w-full'>
                   <source src='/audio/voices-sample.mp3' type='audio/mpeg' />
-                  Your browser does not support the audio element.
+                  {t('supportError')}
                 </audio>
               </motion.div>
             </div>
@@ -200,38 +195,37 @@ export default function LandingPage() {
         <section className='w-full bg-gradient-to-b from-background/90 to-red-500/80 py-30 px-4'>
           <div className='max-w-5xl mx-auto'>
             <h2 className='text-3xl md:text-4xl font-bold text-center mb-4 text-foreground'>
-              Become a Member
+              {t('becomeMember')}
             </h2>
             <p className='text-lg text-muted-foreground text-center mb-10 max-w-2xl mx-auto'>
-              Join the SDC community and unlock exclusive benefits, discounts,
-              and experiences for you and your family.
+              {t('joinSDCCommunity')}
             </p>
             <div className='flex flex-col md:flex-row gap-8 justify-center'>
               <div className='flex-1 rounded-2xl bg-card shadow-lg border border-border p-8 flex flex-col items-center'>
                 <h3 className='text-xl font-semibold mb-2 text-foreground'>
-                  Annual Membership
+                  {t('annualMembership')}
                 </h3>
                 <ul className='text-muted-foreground text-sm mb-6 space-y-2 text-center'>
-                  <li>✔ Free admission to all exhibits</li>
-                  <li>✔ Complimentary audio tour access</li>
-                  <li>✔ Member-only events & workshops</li>
-                  <li>✔ Discounts at SDC cafe & gift shop</li>
-                  <li>✔ Priority booking for special events</li>
+                  <li>✔ {t('freeAdmission')}</li>
+                  <li>✔ {t('complimentaryTours')}</li>
+                  <li>✔ {t('eventsAndWorkshops')}</li>
+                  <li>✔ {t('discounts')}</li>
+                  <li>✔ {t('priorityBooking')}</li>
                 </ul>
-                <Button className='w-full max-w-xs'>Join Now</Button>
+                <Button className='w-full max-w-xs'>{t('joinNow')}</Button>
               </div>
               <div className='flex-1 rounded-2xl bg-card shadow-lg border border-border p-8 flex flex-col items-center'>
                 <h3 className='text-xl font-semibold mb-2 text-foreground'>
-                  Family Plan
+                  {t('familyPlan')}
                 </h3>
                 <ul className='text-muted-foreground text-sm mb-6 space-y-2 text-center'>
-                  <li>✔ All annual benefits for up to 5 family members</li>
-                  <li>✔ Family activity packs</li>
-                  <li>✔ Birthday surprises for kids</li>
-                  <li>✔ Early access to new exhibits</li>
+                  <li>✔ {t('annualFamilyBenefits')}</li>
+                  <li>✔ {t('familyPacks')}</li>
+                  <li>✔ {t('familyBirthday')}</li>
+                  <li>✔ {t('earlyAccess')}</li>
                 </ul>
                 <Button className='w-full max-w-xs' variant='outline'>
-                  Learn More
+                  {t('learnMore')}
                 </Button>
               </div>
             </div>
@@ -242,44 +236,39 @@ export default function LandingPage() {
         <section className='w-full bg-background py-20 px-4 border-t border-border'>
           <div className='max-w-4xl mx-auto'>
             <h2 className='text-3xl md:text-4xl font-bold text-center mb-4 text-foreground'>
-              Frequently Asked Questions
+              {t('faqTitle')}
             </h2>
             <div className='mt-10 space-y-8'>
               <div>
                 <h3 className='text-lg font-semibold text-foreground mb-2'>
-                  How do I access the audio tour?
+                  {t('howAccessAudioTour')}
                 </h3>
                 <p className='text-muted-foreground'>
-                  You can access the audio tour using your own smartphone and
-                  headphones, or borrow a device at the SDC entrance. Simply
-                  scan the QR codes at each exhibit to listen.
+                  {t('howAccessAudioTourResponse')}
                 </p>
               </div>
               <div>
                 <h3 className='text-lg font-semibold text-foreground mb-2'>
-                  Is the audio tour available in multiple languages?
+                  {t('audioAvaliability')}
                 </h3>
                 <p className='text-muted-foreground'>
-                  Yes, the audio tour is available in English, Mandarin, Malay,
-                  and Tamil.
+                  {t('audioAvaliabilityResponse')}
                 </p>
               </div>
               <div>
                 <h3 className='text-lg font-semibold text-foreground mb-2'>
-                  Do I need to be a member to use the audio tour?
+                  {t('memberToUseAudioTour')}
                 </h3>
                 <p className='text-muted-foreground'>
-                  No, all visitors can use the audio tour, but members enjoy
-                  complimentary access and additional features.
+                  {t('memberToUseAudioTourResponse')}
                 </p>
               </div>
               <div>
                 <h3 className='text-lg font-semibold text-foreground mb-2'>
-                  Can I bring my family?
+                  {t('canIBringFamily')}
                 </h3>
                 <p className='text-muted-foreground'>
-                  Absolutely! SDC is family-friendly and offers special family
-                  membership plans and activities for all ages.
+                  {t('canIBringFamilyResponse')}
                 </p>
               </div>
             </div>
@@ -290,17 +279,17 @@ export default function LandingPage() {
         <section className='w-full bg-red-400 dark:bg-red-400 py-16 px-4 border-t border-border'>
           <div className='max-w-4xl mx-auto flex flex-col md:flex-row gap-8 items-center'>
             <div className='flex-1 space-y-4'>
-              <h2 className='text-2xl font-bold mb-2'>Our Location</h2>
+              <h2 className='text-2xl font-bold mb-2'>{t('ourLocation')}</h2>
               <div className=''>
-                Singapore Discovery Centre
+                {t('SDC')}
                 <br />
-                510 Upper Jurong Rd, Singapore 638365
+                {t('ourLocationDesc')}
               </div>
-              <h2 className='text-2xl font-bold mb-2'>Opening Hours</h2>
+              <h2 className='text-2xl font-bold mb-2'>{t('openingHours')}</h2>
               <div className=''>
-                Tue - Sun: 10:00am - 6:00pm
+                {t('openingHoursDesc')}
                 <br />
-                Closed on Mondays (except public holidays)
+                {t('closedDates')}
               </div>
             </div>
             <div className='flex-1 w-full h-48 md:h-56 rounded-xl overflow-hidden shadow-lg border border-border'>
@@ -322,21 +311,19 @@ export default function LandingPage() {
       <footer className='w-full bg-background py-20 border-t border-border'>
         <div className='container mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-8 px-4'>
           <div className='flex-1 flex flex-col gap-2 mb-6 md:mb-0'>
-            <span className='font-semibold text-lg'>
-              Singapore Discovery Centre
-            </span>
+            <span className='font-semibold text-lg'>{t('SDC')}</span>
             <span className='text-xs text-muted-foreground'>
-              &copy; {new Date().getFullYear()} All rights reserved.
+              &copy; {new Date().getFullYear()} {t('allRightsReserved')}
             </span>
             <div className='mt-4'>
-              <div className='font-semibold mb-1'>Contact</div>
+              <div className='font-semibold mb-1'>{t('contact')}</div>
               <div className='text-sm text-muted-foreground'>
-                Email:{' '}
+                {t('email')}{' '}
                 <a href='mailto:info@sdc.com.sg' className='underline'>
                   info@sdc.com.sg
                 </a>
                 <br />
-                Phone:{' '}
+                {t('phone')}{' '}
                 <a href='tel:+6567996100' className='underline'>
                   +65 6799 6100
                 </a>
@@ -346,7 +333,7 @@ export default function LandingPage() {
           </div>
           <div className='flex flex-col items-center gap-4'>
             <Button className='bg-red-400 dark:bg-red-500 text-white cursor-pointer'>
-              Subscribe to our newsletter
+              {t('subscribe')}
             </Button>
             <div className='flex flex-row gap-4 mt-2'>
               <a

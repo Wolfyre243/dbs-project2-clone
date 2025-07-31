@@ -20,6 +20,8 @@ import { User, LogOut, Settings, Menu, X, Shield } from 'lucide-react';
 import useApiPrivate from '~/hooks/useApiPrivate';
 import Roles from '~/rolesConfig';
 import ThemeSwitcher from './theme-switch';
+import LanguageSelector from '~/components/language-selector';
+import { useTranslation } from 'react-i18next';
 
 const links = [
   {
@@ -40,17 +42,19 @@ const links = [
 ];
 
 export function LoginButton() {
+  const { t } = useTranslation();
   return (
     <Button asChild variant='outline' size='sm'>
-      <Link to='/auth/login'>Login</Link>
+      <Link to='/auth/login'>{t('login')}</Link>
     </Button>
   );
 }
 
 export function RegisterButton() {
+  const { t } = useTranslation();
   return (
     <Button asChild variant='default' size='sm'>
-      <Link to='/auth/register'>Register</Link>
+      <Link to='/auth/register'>{t('register')}</Link>
     </Button>
   );
 }
@@ -68,6 +72,7 @@ export function UserMenu() {
   } = useAuth();
   const navigate = useNavigate();
   const apiPrivate = useApiPrivate();
+  const { t } = useTranslation();
 
   const [user, setUser] = useState<any>(null);
 
@@ -129,20 +134,20 @@ export function UserMenu() {
           <DropdownMenuItem asChild>
             <Link to='/admin' className='cursor-pointer'>
               <Shield className='mr-2 h-4 w-4' />
-              Admin Dashboard
+              {t('adminDashboard')}
             </Link>
           </DropdownMenuItem>
         )}
         <DropdownMenuItem asChild>
           <Link to='/home/settings' className='cursor-pointer'>
             <Settings className='mr-2 h-4 w-4' />
-            Settings
+            {t('settings')}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout} className='cursor-pointer'>
           <LogOut className='mr-2 h-4 w-4' />
-          Logout
+          {t('logout')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -150,6 +155,7 @@ export function UserMenu() {
 }
 
 export function MobileMenu({ isLoggedIn }: { isLoggedIn: boolean }) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   // TODO: Add transitions (low priority)
   return (
@@ -176,7 +182,7 @@ export function MobileMenu({ isLoggedIn }: { isLoggedIn: boolean }) {
                     className='text-sm font-medium hover:text-primary'
                     onClick={() => setIsOpen(false)}
                   >
-                    {link.name}
+                    {t(link.name.toLowerCase())}
                   </Link>
                 );
               }
@@ -184,6 +190,7 @@ export function MobileMenu({ isLoggedIn }: { isLoggedIn: boolean }) {
 
             <div className='flex gap-2 pt-2 border-t'>
               <ThemeSwitcher />
+              <LanguageSelector />
               {!isLoggedIn && (
                 <>
                   <LoginButton />
@@ -201,6 +208,7 @@ export function MobileMenu({ isLoggedIn }: { isLoggedIn: boolean }) {
 export function AppBar({ ...props }: React.ComponentProps<any>) {
   const { accessToken } = useAuth();
   const isLoggedIn = Boolean(accessToken);
+  const { t } = useTranslation();
 
   return (
     <div
@@ -224,7 +232,7 @@ export function AppBar({ ...props }: React.ComponentProps<any>) {
                       asChild
                       className='px-3 py-1 rounded-lg text-md'
                     >
-                      <Link to={link.to}>{link.name}</Link>
+                      <Link to={link.to}>{t(link.name.toLowerCase())}</Link>
                     </NavigationMenuLink>
                   </NavigationMenuItem>
                 );
@@ -235,6 +243,7 @@ export function AppBar({ ...props }: React.ComponentProps<any>) {
       </div>
       <div className='hidden md:flex items-center gap-4'>
         <ThemeSwitcher />
+        <LanguageSelector />
         {isLoggedIn ? (
           <UserMenu />
         ) : (
