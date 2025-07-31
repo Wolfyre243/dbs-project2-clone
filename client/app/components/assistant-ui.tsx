@@ -25,15 +25,26 @@ export function GenerateSubtitleButton({
 
   const [text, setText] = useState('');
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <Button
+          disabled={isLoading}
           className={`flex flex-row cursor-pointer rounded-2xl ${gradient}`}
         >
-          <Sparkle />
-          Generate
+          {!isLoading ? (
+            <>
+              <Sparkle />
+              Generate
+            </>
+          ) : (
+            <>
+              <LoaderCircle className='animate-spin' />
+              Generating...
+            </>
+          )}
         </Button>
       </PopoverTrigger>
       <PopoverContent
@@ -52,7 +63,8 @@ export function GenerateSubtitleButton({
           onClick={async () => {
             if (text === '') return;
             setIsOpen(false);
-            handleSubmit(text);
+            setIsLoading(true);
+            handleSubmit(text).then(() => setIsLoading(false));
             setText('');
           }}
         >
@@ -91,7 +103,7 @@ export function AssistantChatBar({
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder='Ask Omnie anything about Singapore Discovery Centre data, analytics, or administrative tasks...'
+              placeholder='Ask Anything...'
               className='min-h-[60px] max-h-[120px] resize-none pr-12 bg-white/90 dark:bg-zinc-900/90 border-gray-200 dark:border-zinc-700 focus:border-red-300 dark:focus:border-red-500 focus:ring-red-200 dark:focus:ring-red-500/20 backdrop-blur-sm'
               disabled={isLoading}
             />

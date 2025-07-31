@@ -5,8 +5,8 @@ import { Button } from '~/components/ui/button';
 export default function AssistantLayout() {
   return (
     <main className='flex flex-col min-h-full w-full'>
-      <header className='flex flex-row justify-between items-center px-4'>
-        <h1 className='text-xl font-bold'>Conversation Title Here</h1>
+      <header className='flex flex-row justify-end items-center px-4'>
+        {/* <h1 className='text-xl font-bold'>Conversation Title Here</h1> */}
         <div className='flex flex-row gap-3 items-center'>
           <Button asChild size={'sm'}>
             <Link to={'/admin/assistant'} className='flex flex-row gap-1'>
@@ -14,8 +14,10 @@ export default function AssistantLayout() {
               New Chat
             </Link>
           </Button>
-          <Button size={'icon'} variant={'ghost'} className='flex'>
-            <History className='size-5' />
+          <Button asChild size={'icon'} variant={'ghost'} className='flex'>
+            <Link to={'/admin/assistant/history'}>
+              <History className='size-5' />
+            </Link>
           </Button>
         </div>
       </header>

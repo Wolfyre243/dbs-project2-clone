@@ -135,3 +135,34 @@ module.exports.createMessage = catchAsync(async (req, res, next) => {
 
   res.status(201).json({ conversation, message, aiMessage });
 });
+
+module.exports.getAllConversations = catchAsync(async (req, res, next) => {
+  const {
+    page = 1,
+    pageSize = 10,
+    sortBy = 'modifiedAt',
+    order = 'desc',
+    search = '',
+  } = req.query;
+
+  const filter = {};
+  // Add more filters if needed
+
+  const conversationList = await assistantModel.getAllConversations({
+    page: parseInt(page),
+    pageSize: parseInt(pageSize),
+    sortBy,
+    order,
+    search,
+    filter,
+    userId: res.locals.user.userId, // or get userId from elsewhere if needed
+  });
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      ...conversationList,
+      message: 'Successfully retrieved conversation list',
+    },
+  });
+});

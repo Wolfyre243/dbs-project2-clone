@@ -23,9 +23,9 @@ const {
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-// const groundingTool = {
-//   googleSearch: {},
-// };
+const groundingTool = {
+  googleSearch: {},
+};
 
 async function executeFunction(funcCall) {
   const { name, args } = funcCall;
