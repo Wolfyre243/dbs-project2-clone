@@ -14,30 +14,31 @@ const mainRouter = require('./routes/mainRoutes');
 const { cookieOptions } = require('./configs/authConfig');
 const loggerMiddleware = require('./middlewares/loggerMiddleware');
 const outputSanitize = require('./middlewares/sanitizeOutput');
+const setupSwagger = require('../swagger');
 
-const swaggerUI = require('swagger-ui-express');
-const swaggerJsDoc = require('swagger-jsdoc');
+// const swaggerUI = require('swagger-ui-express');
+// const swaggerJsDoc = require('swagger-jsdoc');
 
 // Configure swagger
-const swaggerOptions = {
-  definition: {
-    openapi: '3.0.0',
-    info: {
-      title: 'SDC Exhibition App',
-      version: '1.0.0',
-      description: 'API documentation using Swagger',
-    },
-    servers: [{ url: `http://localhost:3000` }],
-  },
-  apis: ['./routes/*.js'], // Path to your API docs
-};
+// const swaggerOptions = {
+//   definition: {
+//     openapi: '3.0.0',
+//     info: {
+//       title: 'SDC Exhibition App',
+//       version: '1.0.0',
+//       description: 'API documentation using Swagger',
+//     },
+//     servers: [{ url: `http://localhost:3000` }],
+//   },
+//   apis: ['./routes/*.js'], // Path to your API docs
+// };
 
-let swaggerDocs;
-try {
-  swaggerDocs = swaggerJsDoc(swaggerOptions);
-} catch (error) {
-  console.error('swagger-jsdoc error:', error);
-}
+// let swaggerDocs;
+// try {
+//   swaggerDocs = swaggerJsDoc(swaggerOptions);
+// } catch (error) {
+//   console.error('swaggerq-jsdoc error:', error);
+// }
 
 const FRONTEND_URL =
   process.env.NODE_ENV === 'production'
@@ -59,6 +60,8 @@ app.use(
 
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: false, limit: '10kb' }));
+
+setupSwagger(app);
 
 // HELMET
 app.use(helmet());
@@ -91,7 +94,7 @@ app.use(loggerMiddleware);
 app.use(outputSanitize);
 
 // Main routes
-app.use('/docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
+// app.use('/docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
 
 app.use('/', mainRouter);
 
