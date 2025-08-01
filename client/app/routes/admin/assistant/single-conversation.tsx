@@ -1,7 +1,7 @@
 import { AxiosError, isAxiosError } from 'axios';
 import { CircleUserRound, Copy, Divide } from 'lucide-react';
 import React, { forwardRef, useEffect, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { useNavigate, useOutletContext, useParams } from 'react-router';
 import { toast } from 'sonner';
 import { AssistantChatBar } from '~/components/assistant-ui';
 import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
@@ -42,7 +42,7 @@ function ChatMessageComponent({
       <div
         className={`flex gap-5 max-w-3/4 items-end ${role === 'user' ? 'flex-row' : 'flex-row-reverse'}`}
       >
-        <div className='px-4 py-2 text-md bg-neutral-200 dark:bg-neutral-800  max-w-full rounded-lg'>
+        <div className='px-4 py-2 text-sm md:text-base bg-neutral-200 dark:bg-neutral-800  max-w-full rounded-lg'>
           <p className='max-w-full text-wrap break-words'>
             {message.split('\n').map((line, index) => (
               <React.Fragment key={index}>
@@ -166,7 +166,7 @@ function AssistantChatMessageComponent({ message }: { message: string }) {
   return (
     <div className={`flex flex-col w-full items-start justify-center`}>
       <div className={`flex flex-col gap-5 max-w-3/4 items-end`}>
-        <div className='py-4 text-md  max-w-full rounded-lg'>
+        <div className='py-2 text-sm md:text-base max-w-full rounded-lg'>
           <p className='max-w-full text-wrap break-words'>
             {message.split('\n').map((line, index) => (
               <React.Fragment key={index}>
@@ -247,6 +247,7 @@ export default function AssistantConversationPage() {
 
   const navigate = useNavigate();
   const apiPrivate = useApiPrivate();
+  const { handleTitle } = useOutletContext<any>();
 
   const lastMsgRef = useRef<HTMLDivElement | null>(null);
 
@@ -260,6 +261,8 @@ export default function AssistantConversationPage() {
         );
 
         setMessageHistory(responseData.messages);
+        setConversation(responseData.conversation);
+        handleTitle(responseData.conversation.title);
       } catch (error: any) {
         let message =
           error.response?.data.message ||
@@ -267,6 +270,7 @@ export default function AssistantConversationPage() {
         console.log(message);
         setError(message);
         setMessageHistory([]);
+        handleTitle('...');
       } finally {
         // setIsLoading(false);
       }
@@ -276,10 +280,10 @@ export default function AssistantConversationPage() {
   }, [apiPrivate, reload]);
 
   useEffect(() => {
-    if (isLoading && lastMsgRef.current) {
+    if (lastMsgRef.current) {
       lastMsgRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
-  }, [isLoading]);
+  }, [isLoading, messageHistory]);
 
   const handleSubmit = async () => {
     if (!message.trim()) return;
@@ -336,9 +340,11 @@ export default function AssistantConversationPage() {
                     key={index}
                     message={messageItem.content}
                   />
-
                   <Separator className='' />
                   <MessageUtilityBar responseText={messageItem.content} />
+                  {index + 1 === messageHistory.length && (
+                    <div ref={lastMsgRef}></div>
+                  )}
                 </>
               );
             })
@@ -356,8 +362,10 @@ export default function AssistantConversationPage() {
           ) : (
             ''
           )}
+          <div className='sticky bottom-0 h-40 bg-gradient-to-b from-transparent to-background shadow blur-xs z-10'>
+            &nbsp;
+          </div>
         </div>
-
         <div className='w-full flex flex-row justify-center'>
           <AssistantChatBar
             isLoading={isLoading}

@@ -188,6 +188,24 @@ module.exports.softDeleteExhibit = async (exhibitId, statusCode) => {
   }
 };
 
+// Bulk soft delete
+module.exports.bulkSoftDeleteExhibits = async (exhibitIds) => {
+  try {
+    const result = await prisma.exhibit.updateMany({
+      where: {
+        exhibitId: { in: exhibitIds },
+      },
+      data: {
+        statusId: statusCodes.DELETED,
+      },
+    });
+    return { count: result.count, ids: exhibitIds };
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+};
+
 // Get all exhibits with pagination, sorting, and search
 module.exports.getAllExhibits = async ({
   page,

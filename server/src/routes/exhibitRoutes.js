@@ -321,6 +321,13 @@ exhibitRouter.delete(
   exhibitController.deleteExhibit,
 );
 
+// Bulk delete exhibits
+exhibitRouter.put(
+  '/bulk',
+  authMiddleware.verifyIsAdmin,
+  exhibitController.bulkDeleteExhibits,
+);
+
 /**
  * @swagger
  * /exhibit/:

@@ -150,7 +150,7 @@ export default function AssistantLaunchPage() {
         />
       </div>
 
-      <div className='relative z-10 container mx-auto px-4 py-12'>
+      <div className='relative z-10 container mx-auto w-full px-4 py-12'>
         {/* Header Section */}
         <motion.div className='text-center mb-16' variants={itemVariants}>
           <motion.div
@@ -228,7 +228,7 @@ export default function AssistantLaunchPage() {
           </motion.p>
         </motion.div>
 
-        <motion.div className='w-full' variants={itemVariants}>
+        <motion.div className='flex flex-col min-w-ful' variants={itemVariants}>
           {/* Quick action suggestions */}
           <motion.div
             className='mt-3 flex flex-wrap gap-2 justify-center mb-8'
@@ -290,6 +290,7 @@ export default function AssistantLaunchPage() {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
+            className='w-4xl flex flex-col self-center'
           >
             <AssistantChatBar
               isLoading={isLoading}

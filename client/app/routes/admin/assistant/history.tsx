@@ -31,23 +31,21 @@ interface Conversation {
   modifiedAt: string;
 }
 
-function HistoryItem({ conversation }: { conversation: Conversation }) {
+function HistoryItem({
+  conversation,
+  handleDelete,
+}: {
+  conversation: Conversation;
+  handleDelete: any;
+}) {
   const timeAgo = formatDistanceToNow(new Date(conversation.createdAt), {
     addSuffix: true,
   });
 
   const apiPrivate = useApiPrivate();
 
-  const handleDelete = async (conversationId: string) => {
-    try {
-      await apiPrivate.delete(`/assistant/conversations/${conversationId}`);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   return (
-    <Card>
+    <Card className='bg-transparent border-none'>
       <CardHeader>
         <CardTitle className='text-lg'>
           <Link
@@ -77,11 +75,13 @@ function HistoryItem({ conversation }: { conversation: Conversation }) {
                 <DialogClose>
                   <Button variant={'secondary'}>Cancel</Button>
                 </DialogClose>
-                <Button
-                  onClick={() => handleDelete(conversation.conversationId)}
-                >
-                  Confirm
-                </Button>
+                <DialogClose>
+                  <Button
+                    onClick={() => handleDelete(conversation.conversationId)}
+                  >
+                    Confirm
+                  </Button>
+                </DialogClose>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -94,45 +94,221 @@ function HistoryItem({ conversation }: { conversation: Conversation }) {
   );
 }
 
+import { useSearchParams } from 'react-router';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '~/components/ui/pagination';
+import { Input } from '~/components/ui/input';
+import { Separator } from '~/components/ui/separator';
+import { toast } from 'sonner';
+
 export default function AssistantHistoryPage() {
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<Conversation[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [reload, setReload] = useState<number>(0);
+  const [pageCount, setPageCount] = useState<number>(1);
+  const [currentPage, setCurrentPage] = useState<number>(1);
 
+  const [searchParams, setSearchParams] = useSearchParams();
   const apiPrivate = useApiPrivate();
+  const pageSize = 10;
 
   useEffect(() => {
-    setIsLoading(true);
-    try {
-      const getHistory = async () => {
+    (async () => {
+      setIsLoading(true);
+      try {
         const { data: responseData } = await apiPrivate.get(
           '/assistant/conversations',
+          {
+            params: {
+              page: searchParams.get('page') || 1,
+              pageSize: searchParams.get('pageSize') || pageSize,
+            },
+          },
         );
+        setHistory(responseData.data.conversationList);
+        setPageCount(responseData.data.pageCount || 1);
+        setCurrentPage(Number(searchParams.get('page')) || 1);
+      } catch (error: any) {
+        setHistory([]);
+        setError(error.response?.data?.message);
+      } finally {
+        setIsLoading(false);
+      }
+    })();
+  }, [apiPrivate, searchParams, reload]);
 
-        setHistory(responseData.conversations);
-      };
+  const handlePrevious = () => {
+    const page = Number(searchParams.get('page')) || 1;
+    const newPage = Math.max(page - 1, 1);
+    setSearchParams({
+      ...Object.fromEntries(searchParams),
+      page: newPage.toString(),
+      pageSize: searchParams.get('pageSize') || pageSize.toString(),
+    });
+  };
 
-      getHistory();
+  const handleNext = () => {
+    const page = Number(searchParams.get('page')) || 1;
+    if (!pageCount || page >= pageCount) return;
+    const newPage = page + 1;
+    setSearchParams({
+      ...Object.fromEntries(searchParams),
+      page: newPage.toString(),
+      pageSize: searchParams.get('pageSize') || pageSize.toString(),
+    });
+  };
+
+  const handleShowPage = (newPage: number) => {
+    setSearchParams({
+      ...Object.fromEntries(searchParams),
+      page: newPage.toString(),
+      pageSize: searchParams.get('pageSize') || pageSize.toString(),
+    });
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    const newSize = Math.max(1, newPageSize);
+    setSearchParams({
+      ...Object.fromEntries(searchParams),
+      pageSize: newSize.toString(),
+      page: '1',
+    });
+  };
+
+  const handleDelete = async (conversationId: string) => {
+    try {
+      await apiPrivate.delete(`/assistant/conversations/${conversationId}`);
+      setReload((prev) => prev + 1);
+      toast.success('Conversation deleted successfully');
     } catch (error: any) {
       console.log(error);
-      setError(error.response?.data.message);
-    } finally {
-      setIsLoading(false);
+      toast.error(error.response?.data.message);
     }
-  }, [apiPrivate]);
+  };
+
+  const paginationControls = {
+    handlePrevious,
+    handleNext,
+    handleShowPage,
+    handlePageSizeChange,
+    pageCount,
+    currentPage: currentPage || 1,
+  };
 
   return (
-    <div className='flex flex-row justify-center w-full'>
-      <div className='w-5xl flex flex-col gap-4 px-4'>
+    <div className='flex flex-row justify-start w-full'>
+      <div className='w-4xl flex flex-col gap-4 px-4'>
         {/* Header */}
         <header className='flex flex-row items-center gap-2'>
-          <History className='size-8' />
-          <h1 className='text-3xl font-bold'>History</h1>
+          <div className='flex flex-row items-center gap-2'>
+            <History className='size-8' />
+            <h1 className='text-3xl font-bold'>History</h1>
+          </div>
+          <Pagination className=''>
+            <PaginationContent className='flex flex-row md:w-full w-fit md:justify-end'>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => paginationControls.handlePrevious()}
+                />
+              </PaginationItem>
+
+              {paginationControls.currentPage > 1 && (
+                <PaginationItem>
+                  <PaginationLink
+                    onClick={() => paginationControls.handlePrevious()}
+                  >
+                    {paginationControls.currentPage - 1}
+                  </PaginationLink>
+                </PaginationItem>
+              )}
+
+              <PaginationItem>
+                <PaginationLink>
+                  {paginationControls.currentPage}
+                </PaginationLink>
+              </PaginationItem>
+
+              {paginationControls.currentPage <
+                paginationControls.pageCount && (
+                <PaginationItem>
+                  <PaginationLink
+                    onClick={() => paginationControls.handleNext()}
+                  >
+                    {paginationControls.currentPage + 1}
+                  </PaginationLink>
+                </PaginationItem>
+              )}
+
+              {paginationControls.currentPage <
+                paginationControls.pageCount - 1 && (
+                <PaginationItem>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              )}
+
+              {paginationControls.pageCount > 3 &&
+                paginationControls.currentPage <
+                  paginationControls.pageCount - 1 && (
+                  <PaginationItem>
+                    <PaginationLink
+                      onClick={() =>
+                        paginationControls.handleShowPage(
+                          paginationControls.pageCount,
+                        )
+                      }
+                    >
+                      {paginationControls.pageCount}
+                    </PaginationLink>
+                  </PaginationItem>
+                )}
+
+              <PaginationItem>
+                <Input
+                  id='pageSizeInput'
+                  type='number'
+                  placeholder='10'
+                  min={'1'}
+                  onChange={(e) => {
+                    const newPageSize = parseInt(e.target.value);
+                    if (!isNaN(newPageSize) && newPageSize > 0) {
+                      paginationControls.handlePageSizeChange(newPageSize);
+                    } else {
+                      paginationControls.handlePageSizeChange(10);
+                    }
+                  }}
+                  className='w-20'
+                />
+              </PaginationItem>
+
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => paginationControls.handleNext()}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </header>
 
         <section className='flex flex-col gap-3'>
-          {history.map((conversationItem, i) => {
-            return <HistoryItem conversation={conversationItem} key={i} />;
+          {history.map((historyItem, i) => {
+            return (
+              <>
+                <HistoryItem
+                  conversation={historyItem}
+                  handleDelete={() => handleDelete(historyItem.conversationId)}
+                  key={i}
+                />
+                <Separator />
+              </>
+            );
           })}
         </section>
       </div>

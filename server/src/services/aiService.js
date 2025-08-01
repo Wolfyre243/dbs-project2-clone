@@ -37,12 +37,14 @@ IMPORTANT CONTEXT AWARENESS RULES:
 3. Use composite analysis when multiple related data points are available
 4. Build upon previous function results to provide richer insights
 5. If you need additional data that complements existing results, call appropriate functions
+6. All responses including data should be backed and proven using only verified data from the database. Do not hallucinate or make up false data in the absence of real data.
 
 FORMAT:
 1. Format responses as plain text with newlines for readability, suitable for frontend parsing. 
 2. For trends (e.g., sign-ups), include total counts and breakdowns (e.g., by age group) with clear headings and newlines.
 3. Bold text by surrounding it in asterisks (*), and surround in double asterisks (**) to mark out important and big headers. You should only use this to section out content.
 4. Please prioritise readability for the user, and use line breaks (\n) where appropriate, to improve user readability.
+5. Do not combine formatting rules for bullet points and headers.
 
 Extra Information:
 Current Date: ${new Date().toLocaleString('en-SG', { timeZone: 'UTC' })}
@@ -451,7 +453,7 @@ function summarizeFunctionResult(result) {
     return `No sign-up data available for ${data.summary.filters.dateRange}`;
   }
 
-  return 'Data retrieved successfully';
+  return 'Data retrieved successfully: \n' + JSON.stringify(data);
 }
 
 /**
@@ -511,6 +513,26 @@ async function generateContent(request) {
       Be appropriate for use as exhibit subtitles.
       Be moderately detailed, elaborating on key ideas in 50-100 words to provide engaging and informative content for exhibit subtitles.
       Align with the user’s prompt while tying back to the Singapore Discovery Centre’s themes. Generate only the subtitle text as plain text, with no newlines, additional commentary or formatting.`,
+
+      tools: [groundingTool],
+    },
+  });
+  return response.text
+    .replace(/[\n\r]+/g, ' ') // Replace newlines with spaces
+    .replace(/["']|\\"|\\'|"/g, '') // Remove single/double quotes and escaped quotes
+    .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+    .trim(); // Remove leading/trailing spaces
+}
+
+async function generateTitle(request) {
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.5-flash',
+    contents: request,
+    config: {
+      systemInstruction: `
+      Create a concise conversation title (max 100 characters) that captures the essence of the user's initial prompt.
+      Do not elaborate further, simply output the prompt.
+      `,
 
       tools: [groundingTool],
     },
@@ -672,6 +694,7 @@ async function generateResponseWithFeedback(request, history = []) {
 
 module.exports = {
   generateContent,
+  generateTitle,
   generateResponse: generateResponseWithFeedback,
   FunctionExecutionContext,
   executeFunction,

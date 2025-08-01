@@ -60,11 +60,11 @@ assistantRouter.post(
 );
 
 // Conversation routes
-assistantRouter.get(
-  '/conversations',
-  authMiddleware.verifyIsAdmin,
-  assistantController.listConversations,
-);
+// assistantRouter.get(
+//   '/conversations',
+//   authMiddleware.verifyIsAdmin,
+//   assistantController.listConversations,
+// );
 
 assistantRouter.post(
   '/conversations',
@@ -76,6 +76,11 @@ assistantRouter.get(
   '/conversations/:conversationId',
   authMiddleware.verifyIsAdmin,
   assistantController.getConversation,
+);
+
+assistantRouter.delete(
+  '/conversations/:conversationId',
+  assistantController.deleteConversation,
 );
 
 // Message routes

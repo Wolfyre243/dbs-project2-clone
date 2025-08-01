@@ -8,6 +8,15 @@ import { Link, useSearchParams } from 'react-router';
 import { Button } from '~/components/ui/button';
 import { PaginationFilterDropdown } from '~/components/pagination-filters';
 import { Plus } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '~/components/ui/dialog';
+import { toast } from 'sonner';
 
 export default function AdminExhibitPagination() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -132,6 +141,32 @@ export default function AdminExhibitPagination() {
     currentPage: currentPage || 1,
   };
 
+  // Dialog state for bulk delete
+  const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
+  const [pendingBulkRows, setPendingBulkRows] = useState<Exhibit[]>([]);
+  const [rowSelection, setRowSelection] = useState({});
+
+  const handleBulkDelete = (selectedRows: Exhibit[]) => {
+    setPendingBulkRows(selectedRows);
+    setBulkDialogOpen(true);
+  };
+
+  const confirmBulkDelete = async () => {
+    if (!pendingBulkRows.length) return;
+    try {
+      const ids = pendingBulkRows.map((row) => row.exhibitId);
+
+      await apiPrivate.put('/exhibit/bulk', { exhibitIds: ids });
+      setData((prev) => prev.filter((ex) => !ids.includes(ex.exhibitId)));
+      setRowSelection({});
+      toast.success(`Successfully deleted ${ids.length} exhibit(s)`);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Bulk delete failed');
+    }
+    setBulkDialogOpen(false);
+    setPendingBulkRows([]);
+  };
+
   return (
     <div className='flex flex-col gap-3'>
       <div className='flex flex-col md:flex-row w-full gap-3 h-fit'>
@@ -176,7 +211,29 @@ export default function AdminExhibitPagination() {
         paginationControls={paginationControls}
         sorting={sorting}
         setSorting={setSorting}
+        onBulkDelete={handleBulkDelete}
+        rowSelection={rowSelection}
+        setRowSelection={setRowSelection}
       />
+      <Dialog open={bulkDialogOpen} onOpenChange={setBulkDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Selected Exhibits</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete {pendingBulkRows.length} selected
+              exhibit(s)? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className='flex gap-2 justify-end'>
+            <Button variant='outline' onClick={() => setBulkDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant='destructive' onClick={confirmBulkDelete}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

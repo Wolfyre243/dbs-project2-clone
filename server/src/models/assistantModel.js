@@ -26,6 +26,7 @@ module.exports.listConversations = async (userId) => {
  */
 module.exports.createConversation = async (userId, title) => {
   try {
+    title = title.length > 100 ? title.slice(0, 100) : title;
     const conversation = await prisma.conversation.create({
       data: {
         userId,
@@ -108,9 +109,16 @@ module.exports.listMessages = async (
     },
   });
 
-  return messages.map((m) =>
-    convertDatesToStrings({ ...m, senderType: m.senderType.senderType }),
-  );
+  const conversation = await prisma.conversation.findUnique({
+    where: { conversationId },
+  });
+
+  return {
+    messages: messages.map((m) =>
+      convertDatesToStrings({ ...m, senderType: m.senderType.senderType }),
+    ),
+    conversation: convertDatesToStrings(conversation),
+  };
 };
 
 /**
@@ -131,6 +139,27 @@ module.exports.createMessage = async (
   });
 
   return convertDatesToStrings(message);
+};
+
+/**
+ * Soft delete a conversation and its messages.
+ */
+module.exports.deleteConversation = async (userId, conversationId) => {
+  try {
+    // Soft delete conversation
+    const updated = await prisma.conversation.updateMany({
+      where: { conversationId, userId, statusId: statusCodes.ACTIVE },
+      data: { statusId: statusCodes.DELETED },
+    });
+    // Soft delete messages
+    await prisma.message.updateMany({
+      where: { conversationId, statusId: statusCodes.ACTIVE },
+      data: { statusId: statusCodes.DELETED },
+    });
+    return updated.count > 0;
+  } catch (error) {
+    throw error;
+  }
 };
 
 module.exports.getAllConversations = async ({

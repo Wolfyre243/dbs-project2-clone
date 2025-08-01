@@ -102,11 +102,11 @@ const data = {
       url: '/admin/register',
       icon: UserPlus,
     },
-    {
-      title: 'Manage Site',
-      url: '/admin/site-settings',
-      icon: SlidersVertical,
-    },
+    // {
+    //   title: 'Manage Site',
+    //   url: '/admin/site-settings',
+    //   icon: SlidersVertical,
+    // },
   ],
   navSecondary: [
     {
