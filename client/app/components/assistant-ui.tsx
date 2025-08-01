@@ -4,6 +4,8 @@ import {
   Sparkle,
   MessageCircle,
   LoaderCircle,
+  CornerDownLeft,
+  ArrowBigUp,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import type React from 'react';
@@ -15,6 +17,7 @@ import {
 } from '~/components/ui/popover';
 import { Textarea } from './ui/textarea';
 import { useState } from 'react';
+import { Badge } from './ui/badge';
 
 export function GenerateSubtitleButton({
   handleSubmit,
@@ -104,11 +107,23 @@ export function AssistantChatBar({
               onChange={(e) => setMessage(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder='Ask Anything...'
-              className='min-h-[60px] max-h-[120px] resize-none pr-12 bg-white/90 dark:bg-zinc-900/90 border-gray-200 dark:border-zinc-700 focus:border-red-300 dark:focus:border-red-500 focus:ring-red-200 dark:focus:ring-red-500/20 backdrop-blur-sm'
+              className='min-h-[60px] max-h-[120px] resize-none pr-12 shadow bg-zinc-50/90 dark:bg-zinc-900/90 border-gray-200 dark:border-zinc-700 focus:border-red-300 dark:focus:border-red-500 focus:ring-red-200 dark:focus:ring-red-500/20 backdrop-blur-sm'
               disabled={isLoading}
             />
-            <div className='absolute bottom-2 right-2 text-xs text-gray-400 dark:text-zinc-500'>
-              Press Enter to send, Shift+Enter for new line
+            <div className='hidden md:flex absolute bottom-2 right-2 text-xs items-center text-gray-400 dark:text-zinc-500'>
+              Press{' '}
+              <Badge className='px-1 py-0 mx-1 rounded-sm bg-muted text-muted-foreground'>
+                <CornerDownLeft />
+                Enter
+              </Badge>{' '}
+              to send,{' '}
+              <Badge className='px-1 py-0 mx-1 rounded-sm bg-muted text-muted-foreground'>
+                <ArrowBigUp />
+                Shift +
+                <CornerDownLeft />
+                Enter
+              </Badge>{' '}
+              for new line
             </div>
           </div>
 
