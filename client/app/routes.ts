@@ -13,6 +13,7 @@ export default [
   route('/unauthorized', 'routes/unauthorized.tsx'),
   route('/exhibits', 'routes/home/exhibits/page.tsx'),
   route('/membership-plans', 'routes/membership.tsx'),
+  route('/review', 'routes/review.tsx'),
 
   ...prefix('home', [
     layout('routes/home/layout.tsx', [

@@ -39,6 +39,11 @@ const links = [
     name: 'Membership',
     auth: false,
   },
+  {
+    to: '/review',
+    name: 'Review',
+    auth: false,
+  },
 ];
 
 export function LoginButton() {
