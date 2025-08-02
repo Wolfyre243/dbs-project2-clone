@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 
 import { Button } from '~/components/ui/button';
 import { Checkbox } from '~/components/ui/checkbox';
+import { Badge } from '~/components/ui/badge';
 import { DataTableColumnHeader } from '~/components/ui/data-table-column-header';
 import {
   DropdownMenu,
@@ -56,14 +57,52 @@ export const columns: ColumnDef<AuditLog>[] = [
     enableSorting: false,
     enableHiding: false,
   },
+  // {
+  //   accessorKey: 'auditLogId',
+  //   header: ({ column }) => (
+  //     <DataTableColumnHeader column={column} title='Log ID' />
+  //   ),
+  //   cell: ({ row }) => {
+  //     const value = row.original.auditLogId;
+  //     return value.length > 8 ? value.slice(0, 8) + '...' : value;
+  //   },
+  // },
   {
-    accessorKey: 'auditLogId',
+    accessorKey: 'auditAction.actionType',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Log ID' />
+      <DataTableColumnHeader column={column} title='Action Type' />
     ),
     cell: ({ row }) => {
-      const value = row.original.auditLogId;
-      return value.length > 8 ? value.slice(0, 8) + '...' : value;
+      const actionType =
+        row.original.auditAction.actionType?.toUpperCase?.() || '';
+      let colorClass = '';
+      let label = actionType;
+      switch (actionType) {
+        case 'CREATE':
+          colorClass = 'bg-green-500/30 border-green-500';
+          label = 'CREATE';
+          break;
+        case 'READ':
+          colorClass = 'bg-blue-500 border-blue-500';
+          label = 'READ';
+          break;
+        case 'UPDATE':
+          colorClass = 'border-yellow-500 bg-yellow-500/50';
+          label = 'UPDATE';
+          break;
+        case 'DELETE':
+          colorClass = 'border-red-500 bg-red-500/30';
+          label = 'DELETE';
+          break;
+        default:
+          colorClass = 'bg-gray-400 text-white';
+          label = actionType || 'OTHER';
+      }
+      return (
+        <Badge className={colorClass} variant={'outline'}>
+          {label}
+        </Badge>
+      );
     },
   },
   {
@@ -111,12 +150,6 @@ export const columns: ColumnDef<AuditLog>[] = [
     },
   },
   {
-    accessorKey: 'auditAction.actionType',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Action Type' />
-    ),
-  },
-  {
     id: 'actions',
     cell: ({ row }) => {
       const auditLog = row.original;
@@ -126,7 +159,9 @@ export const columns: ColumnDef<AuditLog>[] = [
       useEffect(() => {
         const fetchAuditData = async () => {
           try {
-            const { data: responseData } = await apiPrivate.get(`/admin-audit/${auditLog.auditLogId}`);
+            const { data: responseData } = await apiPrivate.get(
+              `/admin-audit/${auditLog.auditLogId}`,
+            );
             setAuditData(responseData.data);
           } catch (error: any) {
             console.log(error.response?.data?.message);
@@ -149,11 +184,11 @@ export const columns: ColumnDef<AuditLog>[] = [
             </DropdownMenuTrigger>
             <DropdownMenuContent align='end'>
               <DropdownMenuItem
-                onClick={() =>{
-                    toast.success('Copied to clipboard', {
+                onClick={() => {
+                  toast.success('Copied to clipboard', {
                     duration: 2000,
                   });
-                  navigator.clipboard.writeText(auditLog.auditLogId.toString())
+                  navigator.clipboard.writeText(auditLog.auditLogId.toString());
                 }}
               >
                 Copy Log ID
@@ -171,21 +206,27 @@ export const columns: ColumnDef<AuditLog>[] = [
               {auditData ? (
                 <>
                   <div className='p-4 border-2 rounded-lg'>
-                    <strong>Action Type:</strong> {auditData.auditAction.actionType}
+                    <strong>Action Type:</strong>{' '}
+                    {auditData.auditAction.actionType}
                   </div>
                   <div className='p-4 border-2 rounded-lg'>
-                    <strong>Description:</strong> {auditData.auditAction.description}
+                    <strong>Description:</strong>{' '}
+                    {auditData.auditAction.description}
                   </div>
                   <div className='p-4 border-2 rounded-lg'>
                     <strong>User:</strong> {auditData.user.username}
                   </div>
                   <div className='p-4 border-2 rounded-lg'>
                     <strong>Log Text:</strong>
-                    <div className='whitespace-pre-wrap'>{auditData.logText}</div>
+                    <div className='whitespace-pre-wrap'>
+                      {auditData.logText}
+                    </div>
                   </div>
                 </>
               ) : (
-                <div className='p-4 border-2 rounded-lg'>Loading audit log details...</div>
+                <div className='p-4 border-2 rounded-lg'>
+                  Loading audit log details...
+                </div>
               )}
             </div>
           </DialogContent>
