@@ -510,15 +510,15 @@ export function UserSignUpChart() {
   return (
     <Card className='h-full bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
       <CardHeader className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
-        <div>
+        <div className='flex flex-col gap-2'>
           <CardTitle>Member Sign-Ups Over Time</CardTitle>
           <CardDescription>
             Total: {totalMembers.toLocaleString()} members
           </CardDescription>
         </div>
-        <div className='flex flex-col gap-2 w-full'>
+        <div className='flex flex-row gap-2 items-end w-full flex-wrap md:flex-nowrap'>
           {/* Top row: Select dropdowns */}
-          <div className='flex flex-wrap gap-2'>
+          <div className='flex gap-2 flex-wrap md:flex-nowrap'>
             <Select
               value={filters.gender}
               onValueChange={(val) =>
@@ -571,30 +571,34 @@ export function UserSignUpChart() {
           </div>
 
           {/* Bottom row: Date pickers */}
-          <div className='flex flex-wrap gap-2 items-center'>
-            <span className='text-sm text-muted-foreground'>Start:</span>
-            <DatePicker
-              fieldName='startDate'
-              label=''
-              onChange={(val: string) => {
-                setFilters((prev) => ({
-                  ...prev,
-                  startDate: val ? new Date(val) : null,
-                }));
-              }}
-            />
+          <div className='flex flex-wrap md:flex-nowrap gap-2 items-center'>
+            <div className='flex flex-col gap-1'>
+              <span className='text-sm text-muted-foreground'>Start:</span>
+              <DatePicker
+                fieldName='startDate'
+                label=''
+                onChange={(val: string) => {
+                  setFilters((prev) => ({
+                    ...prev,
+                    startDate: val ? new Date(val) : null,
+                  }));
+                }}
+              />
+            </div>
 
-            <span className='text-sm text-muted-foreground'>End:</span>
-            <DatePicker
-              fieldName='endDate'
-              label=''
-              onChange={(val: string) => {
-                setFilters((prev) => ({
-                  ...prev,
-                  endDate: val ? new Date(val) : null,
-                }));
-              }}
-            />
+            <div className='flex flex-col gap-1'>
+              <span className='text-sm text-muted-foreground'>End:</span>
+              <DatePicker
+                fieldName='endDate'
+                label=''
+                onChange={(val: string) => {
+                  setFilters((prev) => ({
+                    ...prev,
+                    endDate: val ? new Date(val) : null,
+                  }));
+                }}
+              />
+            </div>
           </div>
         </div>
       </CardHeader>

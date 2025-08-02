@@ -197,7 +197,7 @@ export const columns: ColumnDef<EventLog>[] = [
                   <div className='p-4 border-2 rounded-lg'>
                     <strong>Metadata:</strong>
                     <pre className='text-sm'>
-                      {JSON.stringify(eventData.metadata, null, 2)}
+                      {JSON.stringify(eventData.metadata ?? {}, null, 2)}
                     </pre>
                   </div>
                 </>

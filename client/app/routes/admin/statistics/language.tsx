@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { TrendingUp } from 'lucide-react';
-import { PieChart, Pie, Cell } from 'recharts';
+import { Languages, TrendingUp } from 'lucide-react';
+import { PieChart, Pie, Cell, Label } from 'recharts';
 import { utils as XLSXUtils, writeFile as XLSXWriteFile } from 'xlsx';
 import { Button } from '~/components/ui/button';
 import { DownloadIcon } from 'lucide-react';
@@ -15,6 +15,8 @@ import {
 } from '~/components/ui/card';
 import {
   ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
@@ -174,7 +176,7 @@ export function LanguageUsageCard() {
           className='[&_.recharts-pie-label-text]:fill-foreground mx-auto aspect-square max-h-[250px] pb-0'
         >
           <PieChart>
-            <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+            <ChartTooltip content={<ChartTooltipContent />} />
             <Pie
               data={pieData}
               dataKey='users'
@@ -185,6 +187,10 @@ export function LanguageUsageCard() {
                 <Cell key={index} fill={entry.fill} />
               ))}
             </Pie>
+            {/* <ChartLegend
+              content={<ChartLegendContent nameKey='language' />}
+              className='-translate-y-2 flex-wrap gap-2 *:basis-1/4 *:justify-center'
+            /> */}
           </PieChart>
         </ChartContainer>
       </CardContent>

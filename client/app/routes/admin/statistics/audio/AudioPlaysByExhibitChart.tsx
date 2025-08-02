@@ -121,29 +121,33 @@ export default function AudioPlaysByExhibitChart() {
       </CardHeader>
       <CardContent>
         <div className='flex flex-row gap-4 mb-4 items-center justify-between'>
-          <div className='flex gap-2 items-center'>
-            <span>Start:</span>
-            <DatePicker
-              fieldName='startDate'
-              label=''
-              onChange={(val: string) =>
-                setDateRange((prev) => ({
-                  ...prev,
-                  startDate: val ? new Date(val) : null,
-                }))
-              }
-            />
-            <span>End:</span>
-            <DatePicker
-              fieldName='endDate'
-              label=''
-              onChange={(val: string) =>
-                setDateRange((prev) => ({
-                  ...prev,
-                  endDate: val ? new Date(val) : null,
-                }))
-              }
-            />
+          <div className='flex flex-row flex-wrap md:flex-nowrap gap-2 items-center'>
+            <div className='flex flex-col w-full'>
+              <span>Start:</span>
+              <DatePicker
+                fieldName='startDate'
+                label=''
+                onChange={(val: string) =>
+                  setDateRange((prev) => ({
+                    ...prev,
+                    startDate: val ? new Date(val) : null,
+                  }))
+                }
+              />
+            </div>
+            <div className='flex flex-col w-full'>
+              <span>End:</span>
+              <DatePicker
+                fieldName='endDate'
+                label=''
+                onChange={(val: string) =>
+                  setDateRange((prev) => ({
+                    ...prev,
+                    endDate: val ? new Date(val) : null,
+                  }))
+                }
+              />
+            </div>
           </div>
         </div>
 
