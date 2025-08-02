@@ -1,6 +1,7 @@
 const SenderTypes = require('../configs/senderTypeConfig');
 const assistantModel = require('../models/assistantModel');
 const aiService = require('../services/aiService');
+const AppError = require('../utils/AppError');
 const catchAsync = require('../utils/catchAsync');
 
 /**
@@ -58,13 +59,13 @@ module.exports.listMessages = catchAsync(async (req, res, next) => {
   const userId = res.locals.user.userId;
   const { conversationId } = req.params;
   const { page = 1, pageSize = 100 } = req.query;
-  const messages = await assistantModel.listMessages(
+  const { messages, conversation } = await assistantModel.listMessages(
     userId,
     conversationId,
     Number(page),
     Number(pageSize),
   );
-  res.status(200).json({ messages });
+  res.status(200).json({ messages, conversation });
 });
 
 /**
@@ -82,7 +83,7 @@ module.exports.createMessage = catchAsync(async (req, res, next) => {
   if (conversationId) {
     history = (
       await assistantModel.listMessages(userId, conversationId, 1, 50)
-    ).map((m) => ({
+    ).messages.map((m) => ({
       role: m.senderType,
       parts: [{ text: m.content }],
     }));
@@ -101,20 +102,16 @@ module.exports.createMessage = catchAsync(async (req, res, next) => {
     conversationId === 'undefined'
   ) {
     // Create new conversation if not provided
-    conversation = await assistantModel.createConversation(
-      userId,
-      'New Conversation',
-    ); // TODO Ask AI to generate a title for convo
+    const title = await aiService.generateTitle(content);
+    conversation = await assistantModel.createConversation(userId, title);
     conversationId = conversation.conversationId;
   } else {
     // Try to get conversation, if not found, create it
     conversation = await assistantModel.getConversation(userId, conversationId);
 
     if (!conversation) {
-      conversation = await assistantModel.createConversation(
-        userId,
-        'New Conversation',
-      );
+      const title = await aiService.generateTitle(content);
+      conversation = await assistantModel.createConversation(userId, title);
       conversationId = conversation.conversationId;
     }
   }
@@ -165,4 +162,21 @@ module.exports.getAllConversations = catchAsync(async (req, res, next) => {
       message: 'Successfully retrieved conversation list',
     },
   });
+});
+
+/**
+ * DELETE /assistant/conversations/:conversationId
+ * Soft delete a conversation and its messages.
+ */
+module.exports.deleteConversation = catchAsync(async (req, res, next) => {
+  const userId = res.locals.user.userId;
+  const { conversationId } = req.params;
+  const deleted = await assistantModel.deleteConversation(
+    userId,
+    conversationId,
+  );
+  if (!deleted) {
+    throw new AppError('Conveersation not found', 404);
+  }
+  res.status(200).json({ message: 'Conversation deleted' });
 });

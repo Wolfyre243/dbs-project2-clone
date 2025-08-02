@@ -182,6 +182,36 @@ module.exports.deleteExhibit = catchAsync(async (req, res, next) => {
 const { verifyQrJwt } = require('../utils/qrJwt');
 const EventTypes = require('../configs/eventTypes');
 
+// Bulk soft delete exhibits
+module.exports.bulkDeleteExhibits = catchAsync(async (req, res, next) => {
+  const { exhibitIds } = req.body;
+  const userId = res.locals.user.userId;
+
+  if (!Array.isArray(exhibitIds) || exhibitIds.length === 0) {
+    throw new AppError('exhibitIds must be a non-empty array', 400);
+  }
+
+  const result = await exhibitModel.bulkSoftDeleteExhibits(exhibitIds);
+  // Log admin audit for each exhibit
+  for (const exhibitId of exhibitIds) {
+    await logAdminAudit({
+      userId,
+      ipAddress: req.ip,
+      entityName: 'exhibit',
+      entityId: exhibitId,
+      actionTypeId: AuditActions.DELETE,
+      logText: `Exhibit with ID ${exhibitId} soft deleted by Admin ${userId} (bulk)`,
+    });
+  }
+
+  res.status(200).json({
+    status: 'success',
+    message: `Bulk deleted ${result.count} exhibits`,
+    deletedCount: result.count,
+    exhibitIds: result.ids,
+  });
+});
+
 // Validate QR JWT for exhibit access
 // to log users scanning w/ QR code
 module.exports.validateQrToken = catchAsync(async (req, res, next) => {

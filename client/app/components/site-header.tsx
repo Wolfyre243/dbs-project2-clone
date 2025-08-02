@@ -38,7 +38,7 @@ export function SiteHeader() {
           <LayoutBreadcrumb href={windowHref} />
         </div>
         <div className='ml-auto flex items-center gap-2'>
-          <DropdownMenu>
+          {/* <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant={'ghost'} size={'icon'}>
                 <Bell />
@@ -50,7 +50,7 @@ export function SiteHeader() {
               </DropdownMenuLabel>
               <NotificationList />
             </DropdownMenuContent>
-          </DropdownMenu>
+          </DropdownMenu> */}
           {/* Light/Dark mode toggler */}
           <ThemeSwitcher />
         </div>

@@ -35,6 +35,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu';
+import { Delete, Trash2 } from 'lucide-react';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -42,6 +43,11 @@ interface DataTableProps<TData, TValue> {
   paginationControls: any;
   sorting: SortingState;
   setSorting: React.Dispatch<React.SetStateAction<SortingState>>;
+  onBulkDelete?: (selectedRows: TData[]) => void;
+  rowSelection?: Record<string, boolean>;
+  setRowSelection?: React.Dispatch<
+    React.SetStateAction<Record<string, boolean>>
+  >;
 }
 
 export function DataTable<TData, TValue>({
@@ -50,10 +56,15 @@ export function DataTable<TData, TValue>({
   paginationControls,
   sorting,
   setSorting,
+  onBulkDelete,
+  rowSelection: controlledRowSelection,
+  setRowSelection: setControlledRowSelection,
 }: DataTableProps<TData, TValue>) {
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = React.useState({});
+  const [internalRowSelection, setInternalRowSelection] = React.useState({});
+  const rowSelection = controlledRowSelection ?? internalRowSelection;
+  const setRowSelection = setControlledRowSelection ?? setInternalRowSelection;
 
   const table = useReactTable({
     data,
@@ -70,12 +81,14 @@ export function DataTable<TData, TValue>({
     },
   });
 
+  const selectedRows = table.getFilteredSelectedRowModel().rows;
+
   return (
-    <div>
-      <div className='mb-2'>
+    <div className='w-full'>
+      <div className='flex flex-row gap-3 w-full justify-start mb-2'>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant='outline' className='ml-auto'>
+            <Button variant='outline' className=''>
               Select Columns
             </Button>
           </DropdownMenuTrigger>
@@ -99,6 +112,19 @@ export function DataTable<TData, TValue>({
               })}
           </DropdownMenuContent>
         </DropdownMenu>
+        {onBulkDelete && selectedRows.length > 0 && (
+          <div className=''>
+            <Button
+              variant='destructive'
+              onClick={() =>
+                onBulkDelete(selectedRows.map((row) => row.original))
+              }
+            >
+              <Trash2 />
+              Delete Selected ({selectedRows.length})
+            </Button>
+          </div>
+        )}
       </div>
       <div className='rounded-md border'>
         <Table>

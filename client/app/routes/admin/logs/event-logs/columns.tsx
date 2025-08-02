@@ -22,6 +22,7 @@ import {
 } from '~/components/ui/dialog';
 import useApiPrivate from '~/hooks/useApiPrivate';
 import { toast } from 'sonner';
+import { Badge } from '~/components/ui/badge';
 
 export type EventLog = {
   eventId: string;
@@ -56,15 +57,26 @@ export const columns: ColumnDef<EventLog>[] = [
     enableSorting: false,
     enableHiding: false,
   },
+  // {
+  //   accessorKey: 'eventId',
+  //   header: ({ column }) => (
+  //     <DataTableColumnHeader column={column} title='Event ID' />
+  //   ),
+  //   cell: ({ row }) => {
+  //     const value = row.original.eventId;
+  //     return value.length > 8 ? value.slice(0, 8) + '...' : value;
+  //   },
+  // },
   {
-    accessorKey: 'eventId',
+    accessorKey: 'eventType.eventType',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Event ID' />
+      <DataTableColumnHeader column={column} title='Event Type' />
     ),
-    cell: ({ row }) => {
-      const value = row.original.eventId;
-      return value.length > 8 ? value.slice(0, 8) + '...' : value;
-    },
+    cell: ({ row }) => (
+      <Badge className='bg-neutral-700/30' variant={'outline'}>
+        {row.original.eventType.eventType}
+      </Badge>
+    ),
   },
   {
     accessorKey: 'entityName',
@@ -111,12 +123,6 @@ export const columns: ColumnDef<EventLog>[] = [
     },
   },
   {
-    accessorKey: 'eventType.eventType',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title='Event Type' />
-    ),
-  },
-  {
     id: 'actions',
     cell: ({ row }) => {
       const eventLog = row.original;
@@ -126,7 +132,9 @@ export const columns: ColumnDef<EventLog>[] = [
       useEffect(() => {
         const fetchEventData = async () => {
           try {
-            const { data: responseData } = await apiPrivate.get(`/event-log/${eventLog.eventId}`);
+            const { data: responseData } = await apiPrivate.get(
+              `/event-log/${eventLog.eventId}`,
+            );
             setEventData(responseData.data);
           } catch (error: any) {
             console.log(error.response?.data?.message);
@@ -149,11 +157,11 @@ export const columns: ColumnDef<EventLog>[] = [
             </DropdownMenuTrigger>
             <DropdownMenuContent align='end'>
               <DropdownMenuItem
-                onClick={() =>{
+                onClick={() => {
                   toast.success('Copied to clipboard', {
                     duration: 2000,
                   });
-                  navigator.clipboard.writeText(eventLog.eventId.toString())
+                  navigator.clipboard.writeText(eventLog.eventId.toString());
                 }}
               >
                 Copy Event ID
@@ -174,22 +182,29 @@ export const columns: ColumnDef<EventLog>[] = [
                     <strong>Event Type:</strong> {eventData.eventType.eventType}
                   </div>
                   <div className='p-4 border-2 rounded-lg'>
-                    <strong>Description:</strong> {eventData.eventType.description}
+                    <strong>Description:</strong>{' '}
+                    {eventData.eventType.description}
                   </div>
                   <div className='p-4 border-2 rounded-lg'>
                     <strong>User:</strong> {eventData.users.username}
                   </div>
                   <div className='p-4 border-2 rounded-lg'>
                     <strong>Details:</strong>
-                    <div className='whitespace-pre-wrap'>{eventData.details}</div>
+                    <div className='whitespace-pre-wrap'>
+                      {eventData.details}
+                    </div>
                   </div>
                   <div className='p-4 border-2 rounded-lg'>
                     <strong>Metadata:</strong>
-                    <pre className='text-sm'>{JSON.stringify(eventData.metadata, null, 2)}</pre>
+                    <pre className='text-sm'>
+                      {JSON.stringify(eventData.metadata, null, 2)}
+                    </pre>
                   </div>
                 </>
               ) : (
-                <div className='p-4 border-2 rounded-lg'>Loading event details...</div>
+                <div className='p-4 border-2 rounded-lg'>
+                  Loading event details...
+                </div>
               )}
             </div>
           </DialogContent>

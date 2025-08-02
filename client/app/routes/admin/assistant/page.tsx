@@ -21,6 +21,7 @@ import { useNavigate } from 'react-router';
 import { AssistantChatBar } from '~/components/assistant-ui';
 import useApiPrivate from '~/hooks/useApiPrivate';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useIsMobile } from '~/hooks/use-mobile';
 
 export default function AssistantLaunchPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -28,6 +29,7 @@ export default function AssistantLaunchPage() {
 
   const navigate = useNavigate();
   const apiPrivate = useApiPrivate();
+  const isMobile = useIsMobile();
 
   const handleSubmit = async () => {
     if (!message.trim()) return;
@@ -148,7 +150,7 @@ export default function AssistantLaunchPage() {
         />
       </div>
 
-      <div className='relative z-10 container mx-auto px-4 py-12'>
+      <div className='relative z-10 container mx-auto w-full px-4 py-12'>
         {/* Header Section */}
         <motion.div className='text-center mb-16' variants={itemVariants}>
           <motion.div
@@ -187,23 +189,46 @@ export default function AssistantLaunchPage() {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
           >
-            Good Morning!
+            {(() => {
+              const hour = new Date().getHours();
+              if (hour < 12)
+                return (
+                  <p>
+                    Good Morning! <br /> How can I help you today?
+                  </p>
+                );
+              if (hour < 18)
+                return (
+                  <p>
+                    Good Afternoon! <br /> How can I help you today?
+                  </p>
+                );
+              return (
+                <p>
+                  Good Evening, <br /> how can I help you today?
+                </p>
+              );
+            })()}
           </motion.h1>
 
           <motion.p
-            className='text-xl text-gray-600 dark:text-zinc-300 max-w-3xl mx-auto mb-8 leading-relaxed'
+            className='text-lg text-muted-foreground max-w-3xl mx-auto mb-8 leading-relaxed'
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
           >
             Omnie is your intelligent AI companion for Singapore Discovery
             Centre. <br />
-            Get instant insights, manage data, and streamline administrative
-            tasks with natural language conversations.
+            {!isMobile && (
+              <p>
+                Get instant insights, manage data, and streamline administrative
+                tasks with natural language conversations.
+              </p>
+            )}
           </motion.p>
         </motion.div>
 
-        <motion.div className='w-full' variants={itemVariants}>
+        <motion.div className='flex flex-col min-w-ful' variants={itemVariants}>
           {/* Quick action suggestions */}
           <motion.div
             className='mt-3 flex flex-wrap gap-2 justify-center mb-8'
@@ -265,6 +290,7 @@ export default function AssistantLaunchPage() {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
+            className='w-4xl flex flex-col self-center'
           >
             <AssistantChatBar
               isLoading={isLoading}

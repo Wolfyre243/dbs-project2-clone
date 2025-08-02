@@ -321,13 +321,16 @@ module.exports.getDisplayMemberSignUps = async ({
 
     // Convert time series to array and sort
     const timeSeriesArray = Object.entries(timeSeriesData)
-      .map(([time, groupCounts]) => ({
-        period: time,
-        ...groupCounts,
-      }))
+      .map(([time, groupCounts]) => {
+        // console.log(time, groupCounts);
+        return {
+          period: time,
+          ...groupCounts,
+        };
+      })
       .sort((a, b) => a.period.localeCompare(b.period));
 
-    return {
+    const finalResults = {
       summary: {
         totalMembers,
         filters: {
@@ -360,6 +363,8 @@ module.exports.getDisplayMemberSignUps = async ({
         female: genderBreakdown.F,
       },
     };
+    // console.log(finalResults);
+    return finalResults;
   } catch (error) {
     throw new AppError('Failed to get member sign-ups statistics', 500);
   }
