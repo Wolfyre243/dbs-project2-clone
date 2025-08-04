@@ -405,3 +405,19 @@ module.exports.updateUserProfileWithStatus = async (
     throw error;
   }
 };
+
+module.exports.getRecentActivity = async (userId, limit = 10) => {
+  try {
+    const activities = await prisma.event.findMany({
+      where: { userId },
+      orderBy: { timestamp: 'desc' },
+      take: limit,
+      include: {
+        eventType: { select: { eventType: true, description: true } },
+      },
+    });
+    return activities;
+  } catch (error) {
+    throw new AppError('Failed to fetch recent activity', 500);
+  }
+};

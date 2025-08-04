@@ -183,3 +183,15 @@ module.exports.updateUserProfile = catchAsync(async (req, res, next) => {
     },
   });
 });
+
+module.exports.getRecentActivity = catchAsync(async (req, res, next) => {
+  const userId = res.locals.user.userId;
+  const limit = parseInt(req.query.limit) || 10;
+
+  const activities = await userModel.getRecentActivity(userId, limit);
+
+  res.status(200).json({
+    status: 'success',
+    data: activities,
+  });
+});
