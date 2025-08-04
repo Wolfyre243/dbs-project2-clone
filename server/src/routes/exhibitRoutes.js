@@ -491,4 +491,13 @@ exhibitRouter.get(
   exhibitController.getAllExhibits,
 );
 
+// add favorite exhibit
+exhibitRouter.post('/:exhibitId/favorite', exhibitController.addFavorite);
+
+// remove favorite exhibit
+exhibitRouter.delete('/:exhibitId/favorite', exhibitController.removeFavorite);
+
+// get user's favorite exhibits
+exhibitRouter.get('/favorites', exhibitController.getFavorites);
+
 module.exports = exhibitRouter;

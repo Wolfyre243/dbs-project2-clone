@@ -383,3 +383,52 @@ module.exports.getExhibitById = async (exhibitId) => {
     throw error;
   }
 };
+
+// Add favorite
+module.exports.addFavoriteExhibit = async (userId, exhibitId) => {
+  try {
+    const exists = await prisma.favoriteExhibit.findUnique({
+      where: { userId_exhibitId: { userId, exhibitId } },
+    });
+    if (exists) throw new AppError('Already favorited this exhibit', 400);
+
+    return await prisma.favoriteExhibit.create({
+      data: { userId, exhibitId },
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Remove favorite
+module.exports.removeFavoriteExhibit = async (userId, exhibitId) => {
+  try {
+    return await prisma.favoriteExhibit.delete({
+      where: { userId_exhibitId: { userId, exhibitId } },
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Get all favorites for user
+module.exports.getFavoriteExhibits = async (userId) => {
+  try {
+    const favorites = await prisma.favoriteExhibit.findMany({
+      where: { userId },
+      include: {
+        exhibit: {
+          select: {
+            exhibitId: true,
+            title: true,
+            description: true,
+            imageId: true,
+          },
+        },
+      },
+    });
+    return favorites;
+  } catch (error) {
+    throw error;
+  }
+};
