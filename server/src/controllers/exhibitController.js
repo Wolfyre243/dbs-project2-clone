@@ -286,36 +286,30 @@ module.exports.getAllExhibits = catchAsync(async (req, res, next) => {
 module.exports.addFavorite = catchAsync(async (req, res, next) => {
   const userId = res.locals.user.userId;
   const { exhibitId } = req.params;
-  try {
-    await exhibitModel.addFavoriteExhibit(userId, exhibitId);
-    res.status(201).json({ status: 'success', message: 'Exhibit favorited' });
-  } catch (error) {
-    next(error);
-  }
+
+  await exhibitModel.addFavoriteExhibit(userId, exhibitId);
+
+  res.status(201).json({ status: 'success', message: 'Exhibit favorited' });
 });
 
 // Remove exhibit from favorites
 module.exports.removeFavorite = catchAsync(async (req, res, next) => {
   const userId = res.locals.user.userId;
   const { exhibitId } = req.params;
-  try {
-    await exhibitModel.removeFavoriteExhibit(userId, exhibitId);
-    res.status(200).json({ status: 'success', message: 'Exhibit unfavorited' });
-  } catch (error) {
-    next(error);
-  }
+
+  await exhibitModel.removeFavoriteExhibit(userId, exhibitId);
+
+  res.status(200).json({ status: 'success', message: 'Exhibit unfavorited' });
 });
 
 // Get user's favorite exhibits
 module.exports.getFavorites = catchAsync(async (req, res, next) => {
   const userId = res.locals.user.userId;
-  try {
-    const favorites = await exhibitModel.getFavoriteExhibits(userId);
-    res.status(200).json({
-      status: 'success',
-      data: favorites.map((fav) => fav.exhibit),
-    });
-  } catch (error) {
-    next(error);
-  }
+
+  const favorites = await exhibitModel.getFavoriteExhibits(userId);
+
+  res.status(200).json({
+    status: 'success',
+    data: favorites.map((fav) => fav.exhibit),
+  });
 });

@@ -491,13 +491,116 @@ exhibitRouter.get(
   exhibitController.getAllExhibits,
 );
 
-// add favorite exhibit
+/**
+ * @swagger
+ * /exhibit/{exhibitId}/favorite:
+ *   post:
+ *     summary: Add an exhibit to user's favorites
+ *     tags: [Exhibit]
+ *     description: Adds the specified exhibit to the authenticated user's favorites.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: exhibitId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Exhibit ID to favorite
+ *     responses:
+ *       201:
+ *         description: Exhibit favorited
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 message:
+ *                   type: string
+ *             example:
+ *               status: success
+ *               message: Exhibit favorited
+ *       404:
+ *         description: Exhibit not found
+ *       401:
+ *         description: Unauthorized
+ */
 exhibitRouter.post('/:exhibitId/favorite', exhibitController.addFavorite);
 
-// remove favorite exhibit
+/**
+ * @swagger
+ * /exhibit/{exhibitId}/favorite:
+ *   delete:
+ *     summary: Remove an exhibit from user's favorites
+ *     tags: [Exhibit]
+ *     description: Removes the specified exhibit from the authenticated user's favorites.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: exhibitId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: Exhibit ID to unfavorite
+ *     responses:
+ *       200:
+ *         description: Exhibit unfavorited
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 message:
+ *                   type: string
+ *             example:
+ *               status: success
+ *               message: Exhibit unfavorited
+ *       404:
+ *         description: Exhibit not found
+ *       401:
+ *         description: Unauthorized
+ */
 exhibitRouter.delete('/:exhibitId/favorite', exhibitController.removeFavorite);
 
-// get user's favorite exhibits
+/**
+ * @swagger
+ * /exhibit/favorites:
+ *   get:
+ *     summary: Get user's favorite exhibits
+ *     tags: [Exhibit]
+ *     description: Returns a list of exhibits favorited by the authenticated user.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of favorite exhibits
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *             example:
+ *               status: success
+ *               data:
+ *                 - exhibitId: "123e4567-e89b-12d3-a456-426614174000"
+ *                   title: "Exhibit Title"
+ *                   description: "Exhibit description"
+ *       401:
+ *         description: Unauthorized
+ */
 exhibitRouter.get('/favorites', exhibitController.getFavorites);
 
 module.exports = exhibitRouter;
