@@ -30,6 +30,7 @@ model users {
   userRoles        userRole?
   status           status         @relation(fields: [statusId], references: [statusId])
   conversation     conversation[]
+  favoriteExhibits favoriteExhibit[]
 
   @@index([statusId])
 }
@@ -70,6 +71,19 @@ model audio {
   @@index([statusId, languageCode])
 }
 
+model favoriteExhibit {
+  userId    String   @map("user_id") @db.Uuid
+  exhibitId String   @map("exhibit_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  user      users    @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  exhibit   exhibit  @relation(fields: [exhibitId], references: [exhibitId], onDelete: Cascade)
+
+  @@id([userId, exhibitId])
+  @@index([userId, exhibitId])
+  @@map("favorite_exhibit")
+}
+
+
 model exhibit {
   exhibitId        String            @id @default(uuid()) @map("exhibit_id") @db.Uuid
   title            String            @db.VarChar(100)
@@ -86,6 +100,7 @@ model exhibit {
   // exhibitAudioRelation exhibitAudioRelation[]
   subtitles        exhibitSubtitle[]
   qrCode           qrCode?
+  favoriteExhibits favoriteExhibit[]
 
   @@index([statusId, imageId])
 }
