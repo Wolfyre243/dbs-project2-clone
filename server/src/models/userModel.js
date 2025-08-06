@@ -217,6 +217,162 @@ module.exports.retrieveEmailById = async (emailId) => {
   }
 };
 
+/**
+ * Aggregates user-specific statistics for QR scans and audio engagement.
+ * Returns: {
+ *   qr: { scanCount, topVisitedExhibit: { exhibitId, title, scanCount } },
+ *   audio: {
+ *     playCount, averageListenDuration, mostInterestedExhibit: { exhibitId, title, listenDuration }, completionRate
+ *   }
+ * }
+ */
+// module.exports.getUserStatistics = async (userId) => {
+//   const prisma = require('../generated/prisma').PrismaClient ? new (require('../generated/prisma').PrismaClient)() : null;
+//   // QR SCANS
+//   const qrEvents = await prisma.event.findMany({
+//     where: { userId, eventType: { eventType: 'QR_SCANNED' } },
+//     select: { entityId: true, details: true },
+//   });
+//   const qrScanCount = qrEvents.length;
+//   const exhibitScanMap = {};
+//   for (const event of qrEvents) {
+//     const exhibitId = event.entityId;
+//     if (!exhibitId) continue;
+//     exhibitScanMap[exhibitId] = (exhibitScanMap[exhibitId] || 0) + 1;
+//   }
+//   let topVisitedExhibit = null;
+//   if (Object.keys(exhibitScanMap).length > 0) {
+//     const topId = Object.entries(exhibitScanMap).sort((a, b) => b[1] - a[1])[0][0];
+//     const exhibit = await prisma.exhibit.findUnique({ where: { exhibitId: topId }, select: { exhibitId: true, title: true } });
+//     topVisitedExhibit = { exhibitId: exhibit.exhibitId, title: exhibit.title, scanCount: exhibitScanMap[topId] };
+//   }
+
+//   // AUDIO PLAYS & COMPLETION
+//   const audioPlayEvents = await prisma.event.findMany({
+//     where: { userId, eventType: { eventType: 'AUDIO_STARTED' } },
+//     select: { entityId: true, metadata: true },
+//   });
+//   const audioCompleteEvents = await prisma.event.findMany({
+//     where: { userId, eventType: { eventType: 'AUDIO_COMPLETED' } },
+//     select: { entityId: true, metadata: true },
+//   });
+//   const playCount = audioPlayEvents.length;
+
+//   // Average Listen Duration & Most Interested Exhibit
+//   const listenDurationMap = {};
+//   for (const event of audioCompleteEvents) {
+//     const exhibitId = event.entityId;
+//     const duration = event.metadata?.currentTime || 0;
+//     if (!exhibitId) continue;
+//     listenDurationMap[exhibitId] = (listenDurationMap[exhibitId] || 0) + duration;
+//   }
+//   let totalDuration = 0, totalCompletions = 0, mostInterestedExhibit = null;
+//   if (Object.keys(listenDurationMap).length > 0) {
+//     const topId = Object.entries(listenDurationMap).sort((a, b) => b[1] - a[1])[0][0];
+//     const exhibit = await prisma.exhibit.findUnique({ where: { exhibitId: topId }, select: { exhibitId: true, title: true } });
+//     mostInterestedExhibit = { exhibitId: exhibit.exhibitId, title: exhibit.title, listenDuration: listenDurationMap[topId] };
+//     totalDuration = Object.values(listenDurationMap).reduce((a, b) => a + b, 0);
+//     totalCompletions = Object.values(listenDurationMap).length;
+//   }
+//   const averageListenDuration = totalCompletions > 0 ? totalDuration / totalCompletions : 0;
+
+//   // Completion Rate
+//   const completionRate = playCount > 0 ? (audioCompleteEvents.length / playCount) * 100 : 0;
+
+//   return {
+//     qr: {
+//       scanCount: qrScanCount,
+//       topVisitedExhibit,
+//     },
+//     audio: {
+//       playCount,
+//       averageListenDuration,
+//       mostInterestedExhibit,
+//       completionRate,
+//     },
+//   };
+// };
+
+module.exports.getUserAudioStatistics = async (userId) => {
+  const totalAudioPlays = await prisma.event.count({
+    where: { userId, eventType: { eventType: 'AUDIO_STARTED' } },
+  });
+  const totalAudioCompletions = await prisma.event.count({
+    where: { userId, eventType: { eventType: 'AUDIO_COMPLETED' } },
+  });
+  return {
+    totalAudioPlays,
+    totalAudioCompletions,
+  };
+};
+
+module.exports.getUserQRStatistics = async (userId) => {
+  const totalQRScans = await prisma.event.count({
+    where: { userId, eventType: { eventType: 'QR_SCANNED' } },
+  });
+  const uniqueQRScanned = await prisma.event.findMany({
+    where: { userId, eventType: { eventType: 'QR_SCANNED' } },
+    select: { entityId: true },
+    distinct: ['entityId'],
+  });
+
+  // Top visited exhibit by scan count
+  // const qrEvents = await prisma.event.findMany({
+  //   where: { userId, eventType: { eventType: 'QR_SCANNED' } },
+  //   select: { entityId: true },
+  // });
+
+  const topExhibitId = await prisma.event.groupBy({
+    by: ['entityId'],
+    where: {
+      userId,
+    },
+    _count: {
+      userId: true,
+    },
+    orderBy: {
+      _count: {
+        userId: 'desc',
+      },
+    },
+    take: 1,
+  });
+
+  // const exhibitScanMap = {};
+  // for (const event of qrEvents) {
+  //   const exhibitId = event.entityId;
+  //   if (!exhibitId) continue;
+  //   exhibitScanMap[exhibitId] = (exhibitScanMap[exhibitId] || 0) + 1;
+  // }
+  // let topVisitedExhibit = null;
+  // if (Object.keys(exhibitScanMap).length > 0) {
+  //   const topId = Object.entries(exhibitScanMap).sort(
+  //     (a, b) => b[1] - a[1],
+  //   )[0][0];
+  //   const exhibit = await prisma.exhibit.findUnique({
+  //     where: { exhibitId: topId },
+  //     select: { exhibitId: true, title: true },
+  //   });
+  //   topVisitedExhibit = {
+  //     exhibitId: exhibit.exhibitId,
+  //     title: exhibit.title,
+  //     scanCount: exhibitScanMap[topId],
+  //   };
+  // }
+
+  const topVisitedExhibit = await prisma.exhibit.findUnique({
+    where: {
+      exhibitId: topExhibitId[0].entityId,
+    },
+  });
+
+  return {
+    totalQRScans,
+    uniqueQRScanned: uniqueQRScanned.length,
+    topVisitedExhibit,
+  };
+};
+
 module.exports.verifyUser = async (userId) => {
   try {
     const user = await prisma.users.update({
@@ -370,6 +526,43 @@ module.exports.getAllUsers = async ({
     userCount,
   };
 };
+
+/**
+ * Aggregate user-specific QR scan statistics.
+ * Returns: { totalQRScans, uniqueQRScanned }
+ */
+async function getUserQRStatistics(userId) {
+  // Use the correct Prisma client instance
+  const totalQRScans = await prisma.event.count({
+    where: { userId, eventType: { eventType: 'QR_SCANNED' } },
+  });
+  const uniqueQRScanned = await prisma.event.findMany({
+    where: { userId, eventType: { eventType: 'QR_SCANNED' } },
+    select: { entityId: true },
+    distinct: ['entityId'],
+  });
+  return {
+    totalQRScans,
+    uniqueQRScanned: uniqueQRScanned.length,
+  };
+}
+
+/**
+ * Aggregate user-specific audio statistics.
+ * Returns: { totalAudioPlays, totalAudioCompletions }
+ */
+async function getUserAudioStatistics(userId) {
+  const totalAudioPlays = await prisma.event.count({
+    where: { userId, eventType: { eventType: 'AUDIO_STARTED' } },
+  });
+  const totalAudioCompletions = await prisma.event.count({
+    where: { userId, eventType: { eventType: 'AUDIO_COMPLETED' } },
+  });
+  return {
+    totalAudioPlays,
+    totalAudioCompletions,
+  };
+}
 
 // update user profile, username, lastname, firstname, statusid
 module.exports.updateUserProfileWithStatus = async (

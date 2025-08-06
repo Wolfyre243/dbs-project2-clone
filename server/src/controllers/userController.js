@@ -195,3 +195,15 @@ module.exports.getRecentActivity = catchAsync(async (req, res, next) => {
     data: activities,
   });
 });
+
+module.exports.getUserQRStatistics = catchAsync(async (req, res, next) => {
+  const userId = res.locals.user.userId;
+  const stats = await userModel.getUserQRStatistics(userId);
+  res.status(200).json({ status: 'success', data: stats });
+});
+
+module.exports.getUserAudioStatistics = catchAsync(async (req, res, next) => {
+  const userId = res.locals.user.userId;
+  const stats = await userModel.getUserAudioStatistics(userId);
+  res.status(200).json({ status: 'success', data: stats });
+});

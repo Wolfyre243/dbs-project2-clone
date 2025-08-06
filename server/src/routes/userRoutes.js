@@ -42,4 +42,8 @@ userRouter.put('/profile', userController.updateUserProfile);
 
 userRouter.get('/recent-activity', userController.getRecentActivity);
 
+// User statistics endpoints
+userRouter.get('/statistics/qr', userController.getUserQRStatistics);
+userRouter.get('/statistics/audio', userController.getUserAudioStatistics);
+
 module.exports = userRouter;

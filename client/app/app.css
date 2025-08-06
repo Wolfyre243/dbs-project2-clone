@@ -134,3 +134,11 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+.bg-scenery-dimmed {
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+    url('../public/sdc-scenery.jpg');
+  background-size: cover;
+  background-position: center;
+}
