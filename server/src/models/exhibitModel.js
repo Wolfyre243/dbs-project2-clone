@@ -474,8 +474,6 @@ module.exports.getExhibitsDiscoveredCount = async (userId) => {
       distinct: ['entityId'],
     });
 
-    console.log('discovered:', discovered);
-
     const totalCount = await prisma.exhibit.count({
       where: { statusId: statusCodes.ACTIVE },
     });

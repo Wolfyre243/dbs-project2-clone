@@ -24,13 +24,6 @@ import {
   Play,
   Edit3,
 } from 'lucide-react';
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from '~/components/ui/select';
 import { apiPrivate } from '~/services/api';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
@@ -506,7 +499,7 @@ function ExhibitQrCard({
   };
 
   return (
-    <div className='flex flex-row w-full justify-end'>
+    <div className='flex flex-row w-full justify-center md:justify-end'>
       <Card className='gap-0 w-fit'>
         <CardHeader>
           <CardTitle className='flex flex-row justify-between items-center'>
@@ -1435,7 +1428,7 @@ export default function AdminViewExhibitPage() {
   return (
     <div className='w-full p-6'>
       <div className='flex flex-col gap-8'>
-        <div className='w-full items-start flex flex-col md:flex-row gap-6'>
+        <div className='w-full items-center justify-center flex flex-col md:flex-row gap-6'>
           <ExhibitMetadata
             exhibit={exhibit}
             isEditing={isEditing}

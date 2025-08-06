@@ -19,9 +19,10 @@ export default [
     layout('routes/home/layout.tsx', [
       index('routes/home/page.tsx'),
       route('/settings', 'routes/home/settings.tsx'),
-      ...prefix('exhibits', [
-        route('/:exhibitId', 'routes/home/exhibits/single-exhibit.tsx'),
-      ]),
+      route('/scanner', 'routes/home/scanner.tsx'),
+      // ...prefix('exhibits', [
+      //   route('/:exhibitId', 'routes/home/exhibits/single-exhibit.tsx'),
+      // ]),
     ]),
   ]),
 
