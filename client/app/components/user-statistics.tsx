@@ -9,6 +9,7 @@ import {
   QrCode,
   Search,
 } from 'lucide-react';
+import { f } from 'node_modules/react-router/dist/development/components-CjQijYga.mjs';
 import React, { useEffect, useState } from 'react';
 import useApiPrivate from '~/hooks/useApiPrivate';
 
@@ -17,14 +18,18 @@ export function UserQRCodeScanCount() {
   const apiPrivate = useApiPrivate();
   const [count, setCount] = useState<number | null>(null);
   // TODO Set Loading
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    setIsLoading(true);
     const fetchQRStats = async () => {
       try {
         const res = await apiPrivate.get('/user/statistics/qr');
         setCount(res.data?.data?.totalQRScans ?? 0);
       } catch {
         setCount(null);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchQRStats();
@@ -88,15 +93,19 @@ export function UserTopVisitedExhibit() {
     title: string;
   } | null>(null);
   // TODO Set Loading
+  const [isLoading, setIsLoading] = useState(false);
   // TODO BUG: Top Exhibit doesnt load for guest
 
   useEffect(() => {
+    setIsLoading(true);
     const fetchTopExhibit = async () => {
       try {
         const res = await apiPrivate.get('/user/statistics/qr');
         setTop(res.data?.data?.topVisitedExhibit ?? null);
       } catch {
         setTop(null);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchTopExhibit();
@@ -121,14 +130,18 @@ export function UserAudioPlayCount() {
   const apiPrivate = useApiPrivate();
   const [count, setCount] = useState<number | null>(null);
   // TODO Set Loading
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    setIsLoading(true);
     const fetchAudioCompletions = async () => {
       try {
         const res = await apiPrivate.get('/user/statistics/audio');
         setCount(res.data.data?.totalAudioPlays ?? 0);
       } catch {
         setCount(null);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchAudioCompletions();
@@ -152,14 +165,18 @@ export function UserAudioCompletionRate() {
   const apiPrivate = useApiPrivate();
   const [count, setCount] = useState<number | null>(null);
   // TODO Set Loading
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    setIsLoading(true);
     const fetchAudioCompletions = async () => {
       try {
         const res = await apiPrivate.get('/user/statistics/audio');
         setCount(res.data?.data?.totalAudioCompletions ?? 0);
       } catch {
         setCount(null);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchAudioCompletions();
