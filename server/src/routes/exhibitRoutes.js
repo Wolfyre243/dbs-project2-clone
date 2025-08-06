@@ -603,4 +603,7 @@ exhibitRouter.delete('/:exhibitId/favorite', exhibitController.removeFavorite);
  */
 exhibitRouter.get('/favorites', exhibitController.getFavorites);
 
+// Get how many exhibits the user has discovered
+exhibitRouter.get('/discovered', exhibitController.getExhibitsDiscovered);
+
 module.exports = exhibitRouter;
