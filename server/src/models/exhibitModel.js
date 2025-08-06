@@ -126,6 +126,7 @@ module.exports.updateExhibit = async ({
         description,
         imageId,
         createdBy,
+        modifiedAt: new Date(),
       },
       include: {
         subtitles: {
