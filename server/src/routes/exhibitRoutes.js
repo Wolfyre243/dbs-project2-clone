@@ -90,6 +90,43 @@ exhibitRouter.get(
 
 /**
  * @swagger
+ * /exhibit/favorites:
+ *   get:
+ *     summary: Get user's favorite exhibits
+ *     tags: [Exhibit]
+ *     description: Returns a list of exhibits favorited by the authenticated user.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of favorite exhibits
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *             example:
+ *               status: success
+ *               data:
+ *                 - exhibitId: "123e4567-e89b-12d3-a456-426614174000"
+ *                   title: "Exhibit Title"
+ *                   description: "Exhibit description"
+ *       401:
+ *         description: Unauthorized
+ */
+exhibitRouter.get('/favorites', exhibitController.getFavorites);
+
+// Get how many exhibits the user has discovered
+exhibitRouter.get('/discovered', exhibitController.getExhibitsDiscovered);
+
+/**
+ * @swagger
  * /exhibit/{exhibitId}:
  *   get:
  *     summary: Get full exhibit details (admin only)
@@ -568,42 +605,5 @@ exhibitRouter.post('/:exhibitId/favorite', exhibitController.addFavorite);
  *         description: Unauthorized
  */
 exhibitRouter.delete('/:exhibitId/favorite', exhibitController.removeFavorite);
-
-/**
- * @swagger
- * /exhibit/favorites:
- *   get:
- *     summary: Get user's favorite exhibits
- *     tags: [Exhibit]
- *     description: Returns a list of exhibits favorited by the authenticated user.
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: List of favorite exhibits
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 status:
- *                   type: string
- *                 data:
- *                   type: array
- *                   items:
- *                     type: object
- *             example:
- *               status: success
- *               data:
- *                 - exhibitId: "123e4567-e89b-12d3-a456-426614174000"
- *                   title: "Exhibit Title"
- *                   description: "Exhibit description"
- *       401:
- *         description: Unauthorized
- */
-exhibitRouter.get('/favorites', exhibitController.getFavorites);
-
-// Get how many exhibits the user has discovered
-exhibitRouter.get('/discovered', exhibitController.getExhibitsDiscovered);
 
 module.exports = exhibitRouter;

@@ -316,11 +316,7 @@ module.exports.getUserQRStatistics = async (userId) => {
     distinct: ['entityId'],
   });
 
-  // Top visited exhibit by scan count
-  // const qrEvents = await prisma.event.findMany({
-  //   where: { userId, eventType: { eventType: 'QR_SCANNED' } },
-  //   select: { entityId: true },
-  // });
+  let topVisitedExhibit = null;
 
   const topExhibitId = await prisma.event.groupBy({
     by: ['entityId'],
@@ -338,33 +334,13 @@ module.exports.getUserQRStatistics = async (userId) => {
     take: 1,
   });
 
-  // const exhibitScanMap = {};
-  // for (const event of qrEvents) {
-  //   const exhibitId = event.entityId;
-  //   if (!exhibitId) continue;
-  //   exhibitScanMap[exhibitId] = (exhibitScanMap[exhibitId] || 0) + 1;
-  // }
-  // let topVisitedExhibit = null;
-  // if (Object.keys(exhibitScanMap).length > 0) {
-  //   const topId = Object.entries(exhibitScanMap).sort(
-  //     (a, b) => b[1] - a[1],
-  //   )[0][0];
-  //   const exhibit = await prisma.exhibit.findUnique({
-  //     where: { exhibitId: topId },
-  //     select: { exhibitId: true, title: true },
-  //   });
-  //   topVisitedExhibit = {
-  //     exhibitId: exhibit.exhibitId,
-  //     title: exhibit.title,
-  //     scanCount: exhibitScanMap[topId],
-  //   };
-  // }
-
-  const topVisitedExhibit = await prisma.exhibit.findUnique({
-    where: {
-      exhibitId: topExhibitId[0].entityId,
-    },
-  });
+  if (topExhibitId[0]) {
+    topVisitedExhibit = await prisma.exhibit.findUnique({
+      where: {
+        exhibitId: topExhibitId[0].entityId,
+      },
+    });
+  }
 
   return {
     totalQRScans,

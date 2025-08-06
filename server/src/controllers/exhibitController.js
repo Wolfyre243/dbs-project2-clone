@@ -10,6 +10,8 @@ const generateQrImageBuffer = require('../utils/generateQrImageBuffer');
 const qrModel = require('../models/QRcodeModel');
 const { saveAudioFile } = require('../utils/fileUploader');
 const { logUserEvent } = require('../utils/eventlogs');
+const { verifyQrJwt } = require('../utils/qrJwt');
+const EventTypes = require('../configs/eventTypes');
 
 // Create Exhibit controller function
 // Takes in an array of subtitle and audio IDs
@@ -112,7 +114,6 @@ module.exports.updateExhibit = catchAsync(async (req, res, next) => {
 // Get single exhibit
 module.exports.getSingleExhibit = catchAsync(async (req, res, next) => {
   const exhibitId = req.params.exhibitId;
-
   const exhibit = await exhibitModel.getExhibitById(exhibitId);
 
   res.status(200).json({
@@ -179,9 +180,6 @@ module.exports.deleteExhibit = catchAsync(async (req, res, next) => {
   }
 });
 
-const { verifyQrJwt } = require('../utils/qrJwt');
-const EventTypes = require('../configs/eventTypes');
-
 // Bulk soft delete exhibits
 module.exports.bulkDeleteExhibits = catchAsync(async (req, res, next) => {
   const { exhibitIds } = req.body;
@@ -229,14 +227,14 @@ module.exports.validateQrToken = catchAsync(async (req, res, next) => {
 
   // Log the QR scan event for statistics
   const userId = res.locals.user?.userId || null;
-
+  console.log('PAYLOAD: ', payload);
   await logUserEvent({
     userId,
     entityId: payload.exhibitId,
     entityName: 'exhibit',
     eventTypeId: EventTypes.QR_SCANNED,
     details: `QR code scanned for exhibit ${exhibitId}`,
-    role: res.locals.user?.userId,
+    role: res.locals.user?.roleId,
   });
 
   logger.info(
@@ -305,6 +303,7 @@ module.exports.removeFavorite = catchAsync(async (req, res, next) => {
 // Get user's favorite exhibits
 module.exports.getFavorites = catchAsync(async (req, res, next) => {
   const userId = res.locals.user.userId;
+  console.log('===============================');
 
   const favorites = await exhibitModel.getFavoriteExhibits(userId);
 

@@ -267,9 +267,8 @@ export function UserFavouriteExhibits() {
       setIsLoading(true);
 
       try {
-        const { data: responseData } = await apiPrivate.get(
-          '/exhibit/favourites',
-        );
+        const { data: responseData } =
+          await apiPrivate.get('/exhibit/favorites');
         if (!deepEqualArray(responseData.data, exhibits)) {
           setExhibits(responseData.data);
         }
