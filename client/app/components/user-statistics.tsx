@@ -9,7 +9,6 @@ import {
   QrCode,
   Search,
 } from 'lucide-react';
-import { f } from 'node_modules/react-router/dist/development/components-CjQijYga.mjs';
 import React, { useEffect, useState } from 'react';
 import useApiPrivate from '~/hooks/useApiPrivate';
 
@@ -17,7 +16,6 @@ import useApiPrivate from '~/hooks/useApiPrivate';
 export function UserQRCodeScanCount() {
   const apiPrivate = useApiPrivate();
   const [count, setCount] = useState<number | null>(null);
-  // TODO Set Loading
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -39,9 +37,11 @@ export function UserQRCodeScanCount() {
     <div className='rounded p-4 w-fit'>
       <div className='flex flex-row items-center gap-2 text-2xl font-bold'>
         <QrCode />
-        <h1>
-          {count ?? <Loader2 className='text-muted-foreground animate-spin' />}
-        </h1>
+        {!isLoading ? (
+          <h1>{count}</h1>
+        ) : (
+          <Loader2 className='text-muted-foreground animate-spin' />
+        )}
       </div>
       <div className='text-sm'>QR Codes Scanned</div>
     </div>
@@ -94,6 +94,7 @@ export function UserTopVisitedExhibit() {
   } | null>(null);
   // TODO Set Loading
   const [isLoading, setIsLoading] = useState(false);
+
   // TODO BUG: Top Exhibit doesnt load for guest
 
   useEffect(() => {
@@ -118,7 +119,11 @@ export function UserTopVisitedExhibit() {
           <Landmark /> <h1>Top Exhibit</h1>
         </div>
         <h1 className='text-2xl'>
-          {top?.title ?? <Loader2 className='animate-spin' />}
+          {!isLoading ? (
+            (top?.title ?? 'No data')
+          ) : (
+            <Loader2 className='animate-spin' />
+          )}
         </h1>
       </div>
     </div>
@@ -126,10 +131,10 @@ export function UserTopVisitedExhibit() {
 }
 
 // Audio Play Count
+// Audio Play Count
 export function UserAudioPlayCount() {
   const apiPrivate = useApiPrivate();
   const [count, setCount] = useState<number | null>(null);
-  // TODO Set Loading
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -151,9 +156,11 @@ export function UserAudioPlayCount() {
     <div className='rounded p-4 w-fit'>
       <div className='flex flex-row items-center gap-2 text-2xl font-bold'>
         <Headphones />
-        <h1>
-          {count ?? <Loader2 className='text-muted-foreground animate-spin' />}
-        </h1>
+        {!isLoading ? (
+          <h1>{count}</h1>
+        ) : (
+          <Loader2 className='text-muted-foreground animate-spin' />
+        )}
       </div>
       <div className='text-sm'>Audio Playbacks</div>
     </div>
@@ -164,7 +171,6 @@ export function UserAudioPlayCount() {
 export function UserAudioCompletionRate() {
   const apiPrivate = useApiPrivate();
   const [count, setCount] = useState<number | null>(null);
-  // TODO Set Loading
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -186,9 +192,11 @@ export function UserAudioCompletionRate() {
     <div className='rounded p-4 w-fit'>
       <div className='flex flex-row items-center gap-2 text-2xl font-bold'>
         <AudioLines />
-        <h1>
-          {count ?? <Loader2 className='text-muted-foreground animate-spin' />}
-        </h1>
+        {!isLoading ? (
+          <h1>{count}</h1>
+        ) : (
+          <Loader2 className='text-muted-foreground animate-spin' />
+        )}
       </div>
       <div className='text-sm'>Audio Completions</div>
     </div>
