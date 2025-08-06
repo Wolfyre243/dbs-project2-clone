@@ -1,41 +1,16 @@
-import { Sparkles, Heart, Headphones, QrCode, Flame } from 'lucide-react';
-import { Progress } from '~/components/ui/progress';
 import {
   UserAudioCompletionRate,
   UserAudioPlayCount,
   UserExhibitProgress,
   UserExhibitsDiscovered,
+  UserFavouriteExhibits,
   UserQRCodeScanCount,
   UserTopVisitedExhibit,
 } from '~/components/user-statistics';
 
-const accent = '#e63946';
-
-const favouriteExhibits = [
-  { id: 1, title: 'Innovation Gallery', image: '/sdc-logo.png' },
-  { id: 2, title: 'Defence Pavilion', image: '/sdc-logo.png' },
-];
-
-const audioStats = {
-  playCount: 42,
-  avgDuration: '3m 15s',
-  completionRate: '87%',
-  streak: 5,
-};
-
-const qrStats = {
-  totalScans: 18,
-  mostRevisited: {
-    title: 'Innovation Gallery',
-    image: '/sdc-logo.png',
-    count: 7,
-  },
-  scanTrends: [2, 3, 1, 4, 5, 3], // Placeholder
-};
-
 export default function HomePage() {
   return (
-    <main className='flex flex-col min-h-full w-full items-center justify-start py-8 px-6'>
+    <main className='flex flex-col min-h-full w-full items-center justify-start gap-5 py-8 px-6'>
       <section className='w-full flex flex-row gap-5'>
         <div className='flex flex-col justify-between h-90 w-2/3 p-6 rounded-xl bg-scenery-dimmed'>
           <div className='flex flex-col gap-2 text-white'>
@@ -64,6 +39,18 @@ export default function HomePage() {
               <UserAudioPlayCount />
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Favourites */}
+      <section className='w-full flex flex-row gap-5'>
+        <div className='w-1/4'>
+          <h1 className='text-2xl font-bold'>Your Activity</h1>
+        </div>
+        <div className='w-3/4'>
+          <h1 className='text-2xl font-bold mb-3'>Favourite Exhibits</h1>
+          {/* TODO: Array of Favourite Exhibits */}
+          <UserFavouriteExhibits />
         </div>
       </section>
     </main>

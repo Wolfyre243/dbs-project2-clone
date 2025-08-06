@@ -8,9 +8,28 @@ import {
   Loader2,
   QrCode,
   Search,
+  Star,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import useApiPrivate from '~/hooks/useApiPrivate';
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from './ui/card';
+import { Button } from './ui/button';
+import type { AxiosError } from 'axios';
+import deepEqualArray from '~/lib/equality';
+
+interface Exhibit {
+  exhibitId: string;
+  title: string;
+  description: string;
+  imageUrl?: string;
+}
 
 // QR Scan Count
 export function UserQRCodeScanCount() {
@@ -184,6 +203,77 @@ export function UserExhibitProgress() {
       <h1 className='w-fit'>Progress: </h1>
       <p>33%</p>
       <Progress value={33} className='w-full' />
+    </div>
+  );
+}
+
+export function UserFavouriteExhibitCard({ exhibit }: { exhibit?: Exhibit }) {
+  return (
+    <Card className='w-full p-2'>
+      <CardHeader className='p-2'>
+        <CardTitle>{exhibit?.title}</CardTitle>
+        <CardDescription>{exhibit?.description}</CardDescription>
+        <CardAction>
+          <Button size={'icon'} variant={'ghost'}>
+            <Star />
+          </Button>
+        </CardAction>
+      </CardHeader>
+      <CardContent>
+        {exhibit?.imageUrl && (
+          <img src={exhibit?.imageUrl} className='rounded-md' />
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+export function UserFavouriteExhibits() {
+  const apiPrivate = useApiPrivate();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [exhibits, setExhibits] = useState<Exhibit[]>([]);
+
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
+    const fetchFavExhibits = async () => {
+      setIsLoading(true);
+
+      try {
+        const { data: responseData } = await apiPrivate.get(
+          '/exhibit/favourites',
+        );
+        if (!deepEqualArray(responseData.data, exhibits)) {
+          setExhibits(responseData.data);
+        }
+      } catch (error: any) {
+        setError(error.response?.data.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchFavExhibits();
+    intervalId = setInterval(fetchFavExhibits, 3000); // Poll every 3s
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [apiPrivate]);
+
+  return (
+    <div className='flex flex-row gap-3 w-full'>
+      {!isLoading ? (
+        exhibits.map((exhibit: Exhibit) => {
+          return <UserFavouriteExhibitCard exhibit={exhibit} />;
+        })
+      ) : (
+        <div className='w-full h-full flex flex-row justify-center items-center'>
+          <Loader2 className='animate-spin' />
+        </div>
+      )}
     </div>
   );
 }
