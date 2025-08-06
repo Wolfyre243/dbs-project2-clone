@@ -1,19 +1,16 @@
 import { Progress } from './ui/progress';
 import {
   AudioLines,
-  AudioLinesIcon,
   CircleEllipsis,
   Frown,
   Headphones,
-  Headset,
   Landmark,
   Loader2,
   QrCode,
   Search,
-  Star,
   StarOff,
 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import useApiPrivate from '~/hooks/useApiPrivate';
 import {
   Card,
@@ -24,7 +21,6 @@ import {
   CardTitle,
 } from './ui/card';
 import { Button } from './ui/button';
-import type { AxiosError } from 'axios';
 import deepEqualArray from '~/lib/equality';
 import { toast } from 'sonner';
 import EventTypes from '~/eventTypeConfig';
@@ -114,7 +110,7 @@ export function UserExhibitsDiscovered() {
           <Loader2 className='animate-spin' />
         )}
       </div>
-      <div className='text-sm'>Exhibits Discovered (TOFIX)</div>
+      <div className='text-sm'>Exhibits Discovered</div>
     </div>
   );
 }

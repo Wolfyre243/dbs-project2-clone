@@ -11,7 +11,7 @@ export default [
   route('/*', 'routes/notFound.tsx'),
   route('/verify', 'routes/verify.tsx'),
   route('/unauthorized', 'routes/unauthorized.tsx'),
-  route('/exhibits', 'routes/home/exhibits/page.tsx'),
+  // route('/exhibits', 'routes/home/exhibits/page.tsx'),
   route('/membership-plans', 'routes/membership.tsx'),
   route('/review', 'routes/review.tsx'),
 
@@ -20,9 +20,9 @@ export default [
       index('routes/home/page.tsx'),
       route('/settings', 'routes/home/settings.tsx'),
       route('/scanner', 'routes/home/scanner.tsx'),
-      // ...prefix('exhibits', [
-      //   route('/:exhibitId', 'routes/home/exhibits/single-exhibit.tsx'),
-      // ]),
+      ...prefix('exhibits', [
+        route('/:exhibitId', 'routes/home/exhibits/single-exhibit.tsx'),
+      ]),
     ]),
   ]),
 
