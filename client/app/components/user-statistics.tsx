@@ -2,6 +2,8 @@ import { Progress } from './ui/progress';
 import {
   AudioLines,
   AudioLinesIcon,
+  CircleEllipsis,
+  Frown,
   Headphones,
   Headset,
   Landmark,
@@ -9,6 +11,7 @@ import {
   QrCode,
   Search,
   Star,
+  StarOff,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import useApiPrivate from '~/hooks/useApiPrivate';
@@ -23,12 +26,25 @@ import {
 import { Button } from './ui/button';
 import type { AxiosError } from 'axios';
 import deepEqualArray from '~/lib/equality';
+import { toast } from 'sonner';
+import EventTypes from '~/eventTypeConfig';
 
 interface Exhibit {
   exhibitId: string;
   title: string;
   description: string;
   imageUrl?: string;
+}
+
+interface ActivityLog {
+  eventId: string;
+  entityId: string;
+  entityName: string;
+  eventType: string;
+  eventTypeId: number;
+  details: string;
+  userId: string;
+  timestamp: string;
 }
 
 // QR Scan Count
@@ -56,11 +72,7 @@ export function UserQRCodeScanCount() {
     <div className='rounded p-4 w-fit'>
       <div className='flex flex-row items-center gap-2 text-2xl font-bold'>
         <QrCode />
-        {!isLoading ? (
-          <h1>{count}</h1>
-        ) : (
-          <Loader2 className='text-muted-foreground animate-spin' />
-        )}
+        {!isLoading ? <h1>{count}</h1> : <Loader2 className='animate-spin' />}
       </div>
       <div className='text-sm'>QR Codes Scanned</div>
     </div>
@@ -70,21 +82,24 @@ export function UserQRCodeScanCount() {
 export function UserExhibitsDiscovered() {
   const apiPrivate = useApiPrivate();
   const [count, setCount] = useState<number | null>(null);
+  const [total, setTotal] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     setIsLoading(true);
-    const fetchQRStats = async () => {
+    const fetchExhibitsDiscovered = async () => {
       try {
-        const res = await apiPrivate.get('/user/statistics/qr');
-        setCount(res.data?.data?.totalQRScans ?? 0);
+        const { data: res } = await apiPrivate.get('/exhibit/discovered');
+        setCount(res.data.exhibitsDiscovered ?? 0);
+        setTotal(res.data.totalCount ?? 0);
       } catch {
         setCount(null);
+        setTotal(null);
       } finally {
         setIsLoading(false);
       }
     };
-    fetchQRStats();
+    fetchExhibitsDiscovered();
   }, [apiPrivate]);
 
   return (
@@ -93,7 +108,7 @@ export function UserExhibitsDiscovered() {
         <Search />
         {!isLoading ? (
           <h1>
-            {count} / {count}
+            {count} / {total}
           </h1>
         ) : (
           <Loader2 className='animate-spin' />
@@ -111,10 +126,7 @@ export function UserTopVisitedExhibit() {
     exhibitId: string;
     title: string;
   } | null>(null);
-  // TODO Set Loading
   const [isLoading, setIsLoading] = useState(false);
-
-  // TODO BUG: Top Exhibit doesnt load for guest
 
   useEffect(() => {
     setIsLoading(true);
@@ -175,11 +187,7 @@ export function UserAudioPlayCount() {
     <div className='rounded p-4 w-fit'>
       <div className='flex flex-row items-center gap-2 text-2xl font-bold'>
         <Headphones />
-        {!isLoading ? (
-          <h1>{count}</h1>
-        ) : (
-          <Loader2 className='text-muted-foreground animate-spin' />
-        )}
+        {!isLoading ? <h1>{count}</h1> : <Loader2 className='animate-spin' />}
       </div>
       <div className='text-sm'>Audio Playbacks</div>
     </div>
@@ -211,11 +219,7 @@ export function UserAudioCompletionRate() {
     <div className='rounded p-4 w-fit'>
       <div className='flex flex-row items-center gap-2 text-2xl font-bold'>
         <AudioLines />
-        {!isLoading ? (
-          <h1>{count}</h1>
-        ) : (
-          <Loader2 className='text-muted-foreground animate-spin' />
-        )}
+        {!isLoading ? <h1>{count}</h1> : <Loader2 className='animate-spin' />}
       </div>
       <div className='text-sm'>Audio Completions</div>
     </div>
@@ -223,30 +227,68 @@ export function UserAudioCompletionRate() {
 }
 
 export function UserExhibitProgress() {
+  const apiPrivate = useApiPrivate();
+  const [percentage, setPercentage] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    setIsLoading(true);
+    const fetchExhibitsDiscovered = async () => {
+      try {
+        const { data: res } = await apiPrivate.get('/exhibit/discovered');
+        setPercentage(
+          (res.data.exhibitsDiscovered / res.data.totalCount) * 100,
+        );
+      } catch {
+        setPercentage(0);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchExhibitsDiscovered();
+  }, [apiPrivate]);
+
   return (
     <div className='flex flex-row w-full gap-5 items-center'>
       <h1 className='w-fit'>Progress: </h1>
-      <p>33%</p>
-      <Progress value={33} className='w-full' />
+      <p>{isNaN(percentage) ? 0 : percentage.toFixed(1)}%</p>
+      <Progress value={percentage} className='w-full z-10' />
     </div>
   );
 }
 
 export function UserFavouriteExhibitCard({ exhibit }: { exhibit?: Exhibit }) {
+  const apiPrivate = useApiPrivate();
+
+  const handleUnfavourite = async () => {
+    try {
+      const { data: responseData } = await apiPrivate.delete(
+        `/exhibit/${exhibit?.exhibitId}/favorite`,
+      );
+      toast.success(responseData.message);
+    } catch (error: any) {
+      console.log(error);
+      toast.error(error.response?.data.message);
+    }
+  };
+
   return (
-    <Card className='w-full p-2'>
+    <Card className='w-1/3 px-2 py-4 shadow'>
       <CardHeader className='p-2'>
         <CardTitle>{exhibit?.title}</CardTitle>
         <CardDescription>{exhibit?.description}</CardDescription>
         <CardAction>
-          <Button size={'icon'} variant={'ghost'}>
-            <Star />
+          <Button size={'icon'} variant={'ghost'} onClick={handleUnfavourite}>
+            <StarOff className='size-4' />
           </Button>
         </CardAction>
       </CardHeader>
-      <CardContent>
+      <CardContent className='p-2'>
         {exhibit?.imageUrl && (
-          <img src={exhibit?.imageUrl} className='rounded-md' />
+          <img
+            src={exhibit?.imageUrl}
+            className='rounded-md object-cover w-full h-60'
+          />
         )}
       </CardContent>
     </Card>
@@ -264,7 +306,7 @@ export function UserFavouriteExhibits() {
     let intervalId: NodeJS.Timeout;
 
     const fetchFavExhibits = async () => {
-      setIsLoading(true);
+      // setIsLoading(true);
 
       try {
         const { data: responseData } =
@@ -275,12 +317,12 @@ export function UserFavouriteExhibits() {
       } catch (error: any) {
         setError(error.response?.data.message);
       } finally {
-        setIsLoading(false);
+        // setIsLoading(false);
       }
     };
 
     fetchFavExhibits();
-    intervalId = setInterval(fetchFavExhibits, 3000); // Poll every 3s
+    intervalId = setInterval(fetchFavExhibits, 2000); // Poll every 2s
 
     return () => {
       clearInterval(intervalId);
@@ -289,14 +331,92 @@ export function UserFavouriteExhibits() {
 
   return (
     <div className='flex flex-row gap-3 w-full'>
-      {!isLoading ? (
+      {exhibits.length !== 0 ? (
         exhibits.map((exhibit: Exhibit) => {
           return <UserFavouriteExhibitCard exhibit={exhibit} />;
         })
       ) : (
-        <div className='w-full h-full flex flex-row justify-center items-center'>
-          <Loader2 className='animate-spin' />
-        </div>
+        <h1 className='flex flex-row gap-1 w-full text-muted-foreground/50 justify-center'>
+          <Frown />
+          No exhibits favourited yet!
+        </h1>
+      )}
+    </div>
+  );
+}
+
+export function UserActivityLogItem({ activity }: { activity: ActivityLog }) {
+  let activityIcon;
+  console.log(activity);
+  switch (activity.eventTypeId) {
+    case EventTypes.QR_SCANNED:
+      activityIcon = <QrCode />;
+      break;
+    default:
+      activityIcon = <CircleEllipsis />;
+      break;
+  }
+
+  return (
+    <div className='flex flex-row items-center gap-2 p-2 bg-accent rounded-md shadow'>
+      {activityIcon}
+      <div className='flex flex-col'>
+        <h1 className='font-semibold'>{activity.entityName}</h1>
+        <p className='text-sm text-muted-foreground'>{activity.eventType}</p>
+      </div>
+      <div className='flex-1 text-right text-xs text-muted-foreground'>
+        {new Date(activity.timestamp).toLocaleString()}
+      </div>
+    </div>
+  );
+}
+
+export function UserRecentActivity() {
+  const apiPrivate = useApiPrivate();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [activities, setActivities] = useState<ActivityLog[]>([]);
+
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
+    const fetchFavExhibits = async () => {
+      // setIsLoading(true);
+
+      try {
+        const { data: responseData } = await apiPrivate.get(
+          '/user/recent-activity',
+        );
+        if (!deepEqualArray(responseData.data, activities)) {
+          setActivities(responseData.data);
+        }
+      } catch (error: any) {
+        setError(error.response?.data.message);
+      } finally {
+        // setIsLoading(false);
+      }
+    };
+
+    fetchFavExhibits();
+    intervalId = setInterval(fetchFavExhibits, 2000); // Poll every 2s
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [apiPrivate]);
+
+  return (
+    <div className='flex flex-col gap-3 w-full'>
+      {activities.length !== 0 ? (
+        activities.map((activity: ActivityLog) => {
+          return <UserActivityLogItem activity={activity} />;
+        })
+      ) : (
+        <h1 className='flex flex-row gap-1 w-full text-muted-foreground/50 justify-center'>
+          <Frown />
+          No recent activity!
+        </h1>
       )}
     </div>
   );

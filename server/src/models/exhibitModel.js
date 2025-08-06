@@ -8,6 +8,7 @@ const {
   generateWordTimings,
   generateWordTimingsBatch,
 } = require('../utils/echogardenHelper');
+const EventTypes = require('../configs/eventTypes');
 
 // TODO: Add back imageId
 module.exports.createExhibit = async ({
@@ -396,6 +397,9 @@ module.exports.addFavoriteExhibit = async (userId, exhibitId) => {
       data: { userId, exhibitId },
     });
   } catch (error) {
+    if (error.code === 'P2025') {
+      throw new AppError('Exhibit not found.', 404);
+    }
     throw error;
   }
 };
@@ -407,6 +411,9 @@ module.exports.removeFavoriteExhibit = async (userId, exhibitId) => {
       where: { userId_exhibitId: { userId, exhibitId } },
     });
   } catch (error) {
+    if (error.code === 'P2025') {
+      throw new AppError('You have not favorited this exhibit.', 404);
+    }
     throw error;
   }
 };
@@ -422,12 +429,31 @@ module.exports.getFavoriteExhibits = async (userId) => {
             exhibitId: true,
             title: true,
             description: true,
-            imageId: true,
+            image: {
+              select: {
+                fileLink: true,
+              },
+            },
           },
         },
       },
     });
-    return favorites;
+    return favorites.map((e) => ({
+      ...e.exhibit,
+      imageUrl: e.exhibit.image.fileLink,
+    }));
+  } catch (error) {
+    throw error;
+  }
+};
+
+module.exports.checkExhibitFavourited = async (userId, exhibitId) => {
+  try {
+    const favorite = await prisma.favoriteExhibit.findUnique({
+      where: { userId_exhibitId: { userId, exhibitId } },
+    });
+
+    return favorite;
   } catch (error) {
     throw error;
   }
@@ -441,13 +467,20 @@ module.exports.getExhibitsDiscoveredCount = async (userId) => {
       where: {
         userId,
         entityName: 'exhibit',
-        // eventTypeId: EventTypes.QR_SCANNED, // Uncomment if you want to filter by event type
+        eventTypeId: EventTypes.QR_SCANNED, // Uncomment if you want to filter by event type
       },
       select: { entityId: true },
       distinct: ['entityId'],
     });
-    return discovered.length;
+
+    console.log('discovered:', discovered);
+
+    const totalCount = await prisma.exhibit.count({
+      where: { statusId: statusCodes.ACTIVE },
+    });
+
+    return { totalCount, discoveredCount: discovered.length };
   } catch (error) {
-    throw new AppError('Failed to fetch exhibits discovered count', 500);
+    throw error;
   }
 };

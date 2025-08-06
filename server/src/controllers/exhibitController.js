@@ -125,14 +125,19 @@ module.exports.getSingleExhibit = catchAsync(async (req, res, next) => {
 });
 
 module.exports.getSingleExhibitMetadata = catchAsync(async (req, res, next) => {
+  const userId = res.locals.user.userId;
   const exhibitId = req.params.exhibitId;
 
   const exhibit = await exhibitModel.getExhibitMetadataById(exhibitId);
-
+  const isFavourite = await exhibitModel.checkExhibitFavourited(
+    userId,
+    exhibitId,
+  );
   res.status(200).json({
     status: 'success',
     data: {
       exhibit,
+      isFavourite,
     },
   });
 });
@@ -287,7 +292,7 @@ module.exports.addFavorite = catchAsync(async (req, res, next) => {
 
   await exhibitModel.addFavoriteExhibit(userId, exhibitId);
 
-  res.status(201).json({ status: 'success', message: 'Exhibit favorited' });
+  res.status(201).json({ status: 'success', message: 'Exhibit favorited!' });
 });
 
 // Remove exhibit from favorites
@@ -297,27 +302,30 @@ module.exports.removeFavorite = catchAsync(async (req, res, next) => {
 
   await exhibitModel.removeFavoriteExhibit(userId, exhibitId);
 
-  res.status(200).json({ status: 'success', message: 'Exhibit unfavorited' });
+  res
+    .status(200)
+    .json({ status: 'success', message: 'Exhibit removed from favorites.' });
 });
 
 // Get user's favorite exhibits
 module.exports.getFavorites = catchAsync(async (req, res, next) => {
   const userId = res.locals.user.userId;
-  console.log('===============================');
 
   const favorites = await exhibitModel.getFavoriteExhibits(userId);
 
   res.status(200).json({
     status: 'success',
-    data: favorites.map((fav) => fav.exhibit),
+    data: favorites,
   });
 });
 
 module.exports.getExhibitsDiscovered = catchAsync(async (req, res, next) => {
   const userId = res.locals.user.userId;
-  const count = await exhibitModel.getExhibitsDiscoveredCount(userId);
+  const { totalCount, discoveredCount } =
+    await exhibitModel.getExhibitsDiscoveredCount(userId);
+
   res.status(200).json({
     status: 'success',
-    data: { exhibitsDiscovered: count },
+    data: { exhibitsDiscovered: discoveredCount, totalCount },
   });
 });

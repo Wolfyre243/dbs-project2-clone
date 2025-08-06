@@ -585,8 +585,10 @@ module.exports.getRecentActivity = async (userId, limit = 10) => {
         eventType: { select: { eventType: true, description: true } },
       },
     });
-    return activities;
+    return convertDatesToStrings(
+      activities.map((a) => ({ ...a, eventType: a.eventType.eventType })),
+    );
   } catch (error) {
-    throw new AppError('Failed to fetch recent activity', 500);
+    throw error;
   }
 };

@@ -9,13 +9,13 @@ export default function HomeLayout() {
       allowedRoles={[Roles.GUEST, Roles.MEMBER, Roles.ADMIN, Roles.SUPERADMIN]}
     >
       <main className='flex flex-col justify-between md:justify-start min-h-screen w-full'>
-        <div className='sticky top-0 w-full'>
+        <div className='sticky top-0 w-full z-50'>
           <AppBar />
         </div>
-        <div className='flex flex-col h-full'>
+        <div className='flex flex-col h-full w-full'>
           <Outlet />
         </div>
-        <div className='sticky bottom-0 w-full block md:hidden'>
+        <div className='sticky bottom-0 w-full z-50 block md:hidden'>
           <AppBottomBar />
         </div>
       </main>

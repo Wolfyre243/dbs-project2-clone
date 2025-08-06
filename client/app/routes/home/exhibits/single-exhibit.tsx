@@ -19,6 +19,10 @@ import { useParams, useSearchParams } from 'react-router';
 import EventTypes from '~/eventTypeConfig';
 import useAuth from '~/hooks/useAuth';
 import Roles from '~/rolesConfig';
+import { Button } from '~/components/ui/button';
+import { Star } from 'lucide-react';
+import { Tooltip } from '~/components/ui/tooltip';
+import { toast } from 'sonner';
 
 type ExhibitAudio = {
   audioId: string;
@@ -300,7 +304,10 @@ export default function SingleExhibit() {
   const [currentWordIndices, setCurrentWordIndices] = useState<
     Record<string, number[]>
   >({});
+  const [isFavourite, setIsFavourite] = useState(false);
+
   const audioRefs = useRef<Record<string, HTMLAudioElement | null>>({});
+
   const apiPrivate = useApiPrivate();
   const [searchParams] = useSearchParams();
   const params = useParams();
@@ -323,6 +330,7 @@ export default function SingleExhibit() {
         );
         if (!cancelled) {
           setExhibit(metadataResponseData.data.exhibit);
+          setIsFavourite(metadataResponseData.data.isFavourite);
         }
       } catch (err: any) {
         console.error('Exhibit fetch error:', err);
@@ -442,6 +450,20 @@ export default function SingleExhibit() {
     }));
   }, []);
 
+  const handleToggleFavourite = async () => {
+    try {
+      if (!isFavourite) {
+        await apiPrivate.post(`/exhibit/${exhibit?.exhibitId}/favorite`);
+      } else {
+        await apiPrivate.delete(`/exhibit/${exhibit?.exhibitId}/favorite`);
+      }
+      setIsFavourite(!isFavourite);
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.response?.data.message);
+    }
+  };
+
   if (exhibitLoading) {
     return (
       <div className='flex items-center justify-center h-[60vh]'>
@@ -506,7 +528,7 @@ export default function SingleExhibit() {
         </p>
       </div>
       <Separator className='my-4 sm:my-6' />
-      <div className='mb-4 sm:mb-6 w-full mx-auto'>
+      <div className='flex flex-row justify-between mb-4 sm:mb-6 w-full mx-auto'>
         <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
           <SelectTrigger>
             <SelectValue placeholder='Select language' />
@@ -519,6 +541,13 @@ export default function SingleExhibit() {
             ))}
           </SelectContent>
         </Select>
+        <Button size={'icon'} variant={'ghost'} onClick={handleToggleFavourite}>
+          {isFavourite ? (
+            <Star fill='#ffc636' stroke='none' className='size-6' />
+          ) : (
+            <Star className='size-6' />
+          )}
+        </Button>
       </div>
       <div className='flex flex-col gap-4 sm:gap-6'>
         {subtitleLoading && (

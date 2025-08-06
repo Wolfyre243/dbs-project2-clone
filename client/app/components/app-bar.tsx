@@ -30,11 +30,6 @@ const links = [
     auth: true,
   },
   {
-    to: '/exhibits',
-    name: 'Exhibits',
-    auth: false,
-  },
-  {
     to: '/membership-plans',
     name: 'Membership',
     auth: false,
@@ -165,7 +160,7 @@ export function MobileMenu({ isLoggedIn }: { isLoggedIn: boolean }) {
   // TODO: Add transitions (low priority)
   return (
     // Show on medium device
-    <div className='md:hidden'>
+    <div className='z-50 md:hidden'>
       <Button
         variant='ghost'
         size='sm'
