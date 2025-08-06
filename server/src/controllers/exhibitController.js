@@ -313,3 +313,12 @@ module.exports.getFavorites = catchAsync(async (req, res, next) => {
     data: favorites.map((fav) => fav.exhibit),
   });
 });
+
+module.exports.getExhibitsDiscovered = catchAsync(async (req, res, next) => {
+  const userId = res.locals.user.userId;
+  const count = await exhibitModel.getExhibitsDiscoveredCount(userId);
+  res.status(200).json({
+    status: 'success',
+    data: { exhibitsDiscovered: count },
+  });
+});

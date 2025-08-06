@@ -432,3 +432,22 @@ module.exports.getFavoriteExhibits = async (userId) => {
     throw error;
   }
 };
+
+// Count how many unique exhibits the user has discovered
+module.exports.getExhibitsDiscoveredCount = async (userId) => {
+  try {
+    // Adjust eventTypeId if needed (e.g., QR_SCANNED or VISITED)
+    const discovered = await prisma.event.findMany({
+      where: {
+        userId,
+        entityName: 'exhibit',
+        // eventTypeId: EventTypes.QR_SCANNED, // Uncomment if you want to filter by event type
+      },
+      select: { entityId: true },
+      distinct: ['entityId'],
+    });
+    return discovered.length;
+  } catch (error) {
+    throw new AppError('Failed to fetch exhibits discovered count', 500);
+  }
+};
