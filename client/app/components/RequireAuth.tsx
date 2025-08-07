@@ -32,7 +32,7 @@ const RequireAuth = ({
             : 'Access token not found',
         );
 
-        return navigate('/unauthorized');
+        return navigate('/forbidden');
       }
       console.log('[DEBUG] Authorized.');
     })();

@@ -12,6 +12,11 @@ const {
   validate,
   loginValidationRules,
 } = require('../middlewares/validators');
+const {
+  usernameValidation,
+  emailValidation,
+  passwordValidation,
+} = require('../validators/userValidators');
 
 // -----------------------------------SET UP ROUTES-----------------------------------
 // Create the router
@@ -132,6 +137,21 @@ authRouter.post(
   '/logout',
   jwtMiddleware.verifyRefreshToken,
   authController.logout,
+);
+
+authRouter.post(
+  '/forgot-password',
+  [emailValidation()],
+  validate,
+  authController.forgotPassword,
+  mailMiddleware.sendMail,
+);
+
+authRouter.post(
+  '/reset-password',
+  [passwordValidation()],
+  validate,
+  authController.resetPassword,
 );
 
 module.exports = authRouter;

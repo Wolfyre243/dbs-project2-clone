@@ -15,6 +15,8 @@ const {
   verifySK,
   verifyTokenDuration,
   tokenAlgorithm,
+  resetpwSK,
+  resetpwTokenDuration,
 } = require('../configs/authConfig');
 const catchAsync = require('../utils/catchAsync');
 
@@ -326,4 +328,81 @@ module.exports.generateVerificationMail = catchAsync(async (req, res, next) => {
   res.locals.statusCode = 200;
 
   return next();
+});
+
+module.exports.forgotPassword = catchAsync(async (req, res, next) => {
+  const { email } = req.body;
+
+  const jwtConfig = {
+    algorithm: tokenAlgorithm,
+    expiresIn: resetpwTokenDuration,
+  };
+
+  const { userId } = await userModel.retrieveEmail(encryptData(email));
+
+  const payload = {
+    userId,
+    email,
+    createdAt: new Date(Date.now()),
+  };
+
+  const resetpwToken = jwt.sign(payload, resetpwSK, jwtConfig);
+  const resetpwUrl = `${process.env.NODE_ENV === 'production' ? process.env.FRONTEND_PROD_URL : process.env.FRONTEND_URL}/reset-password?token=${resetpwToken}`;
+
+  res.locals.email = email;
+  res.locals.mailContent = {
+    subject: 'Password Reset Request',
+    html: `
+      A password reset request for your account has been made.<br/>
+      Please <a href="${resetpwUrl}">click here</a> to reset your password.<br/><br/>
+      The link will expire in ${resetpwTokenDuration}.<br/><br/>
+      If this was not you, DO NOT click the link and ignore this email.<br/><br/>
+      Regards,<br/>
+      The SOC DiscovAR Team</p>
+    `,
+  };
+
+  res.locals.statusCode = 204;
+  return next();
+});
+
+module.exports.resetPassword = catchAsync(async (req, res, next) => {
+  const { token } = req.query;
+  const { password, confirmPassword } = req.body;
+
+  try {
+    if (!token) throw new AppError('No password reset token provided', 401);
+
+    if (password !== confirmPassword)
+      throw new AppError('Passwords do not match.', 400);
+
+    const payload = jwt.verify(token, resetpwSK);
+
+    console.log(
+      `[DEBUG] Password Reset token expires in ${((payload.exp * 1000 - Date.now()) / (60 * 1000)).toFixed(2)} mins`,
+    );
+
+    const { userId, email } = payload;
+    if (!userId || !email)
+      throw new AppError('Invalid password reset token provided', 401);
+
+    const passwordHash = bcrypt.hashSync(
+      password,
+      parseInt(process.env.BCRYPT_SALTROUNDS),
+    );
+
+    await userModel.updateUserPassword(userId, passwordHash);
+
+    res.status(204).send();
+  } catch (error) {
+    console.log('Error verifying password reset token: ', error.message);
+
+    if (error.name === 'TokenExpiredError') {
+      throw new AppError('Password reset token expired', 401);
+    } else if (error.name === 'JsonWebTokenError') {
+      throw new AppError('Invalid password reset token provided', 403);
+    }
+
+    throw error;
+  }
 });
