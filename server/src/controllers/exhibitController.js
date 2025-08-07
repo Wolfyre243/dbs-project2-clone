@@ -333,3 +333,36 @@ module.exports.getExhibitsDiscovered = catchAsync(async (req, res, next) => {
     data: { exhibitsDiscovered: discoveredCount, totalCount },
   });
 });
+
+// archive exhibit
+module.exports.archiveExhibit = catchAsync(async (req, res, next) => {
+  const exhibitId = req.params.exhibitId;
+  const userId = res.locals.user.userId;
+
+  validateFields({ exhibitId });
+
+  try {
+    const archiveResult = await exhibitModel.archiveExhibit(exhibitId);
+
+    // Log admin audit for archive
+    await logAdminAudit({
+      userId,
+      ipAddress: req.ip,
+      entityName: 'exhibit',
+      entityId: exhibitId,
+      actionTypeId: AuditActions.UPDATE,
+      logText: `Exhibit with ID ${exhibitId} archived by Admin ${userId}`,
+    });
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Exhibit archived',
+      archivedRecord: archiveResult,
+    });
+  } catch (error) {
+    logger.error('Error archiving exhibit:', error);
+    return next(
+      new AppError('Failed to archive exhibit. Please try again later.', 500),
+    );
+  }
+});

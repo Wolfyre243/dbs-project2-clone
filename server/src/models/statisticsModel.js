@@ -10,6 +10,21 @@ const {
   QR_SCANNED,
 } = require('../configs/eventTypes');
 
+// Helper to build date range filter
+function buildDateRangeFilter(startDate, endDate) {
+  const filter = {};
+  if (startDate || endDate) {
+    filter.timestamp = {};
+    if (startDate) filter.timestamp.gte = new Date(startDate);
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      filter.timestamp.lte = end;
+    }
+  }
+  return filter;
+}
+
 // Helper functions for age calculations
 const calculateAge = (dateOfBirth) => {
   if (!dateOfBirth) return null;
@@ -459,17 +474,25 @@ module.exports.getDisplayCommonLanguagesUsed = async ({ limit } = {}) => {
  * Audio Plays by Exhibit
  * Returns: [{ exhibitId, title, playCount }]
  */
-module.exports.getAudioPlaysPerExhibitStats = async () => {
+// Audio Plays Per Exhibit
+module.exports.getAudioPlaysPerExhibitStats = async ({
+  startDate,
+  endDate,
+} = {}) => {
+  const where = {
+    eventTypeId: AUDIO_STARTED,
+    ...buildDateRangeFilter(startDate, endDate),
+  };
+
   const scans = await prisma.event.findMany({
-    where: { eventTypeId: AUDIO_STARTED },
+    where,
     select: { metadata: true },
   });
 
   const exhibitPlayMap = {};
   scans.forEach((event) => {
     if (!event.metadata) return;
-    const meta = event.metadata;
-    const exhibitId = meta.exhibitId;
+    const exhibitId = event.metadata.exhibitId;
     if (!exhibitId) return;
     exhibitPlayMap[exhibitId] = (exhibitPlayMap[exhibitId] || 0) + 1;
   });
@@ -794,13 +817,22 @@ module.exports.getScansPerExhibitStats = async ({
 };
 
 // Audio Completion Rate Over Time (for line chart)
-module.exports.getAudioCompletionRatesTimeSeries = async () => {
+module.exports.getAudioCompletionRatesTimeSeries = async ({
+  startDate,
+  endDate,
+} = {}) => {
   const startedEvents = await prisma.event.findMany({
-    where: { eventTypeId: AUDIO_STARTED },
+    where: {
+      eventTypeId: AUDIO_STARTED,
+      ...buildDateRangeFilter(startDate, endDate),
+    },
     select: { metadata: true, timestamp: true },
   });
   const completedEvents = await prisma.event.findMany({
-    where: { eventTypeId: AUDIO_COMPLETED },
+    where: {
+      eventTypeId: AUDIO_COMPLETED,
+      ...buildDateRangeFilter(startDate, endDate),
+    },
     select: { metadata: true, timestamp: true },
   });
 
@@ -845,9 +877,15 @@ module.exports.getAudioCompletionRatesTimeSeries = async () => {
 };
 
 // Average Listen Duration Over Time (for line chart)
-module.exports.getAverageListenDurationTimeSeries = async () => {
+module.exports.getAverageListenDurationTimeSeries = async ({
+  startDate,
+  endDate,
+} = {}) => {
   const events = await prisma.event.findMany({
-    where: { eventTypeId: { in: [AUDIO_COMPLETED, AUDIO_STOPPED] } },
+    where: {
+      eventTypeId: { in: [AUDIO_COMPLETED, AUDIO_STOPPED] },
+      ...buildDateRangeFilter(startDate, endDate),
+    },
     select: { metadata: true, timestamp: true },
   });
 

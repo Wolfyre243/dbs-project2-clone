@@ -606,4 +606,11 @@ exhibitRouter.post('/:exhibitId/favorite', exhibitController.addFavorite);
  */
 exhibitRouter.delete('/:exhibitId/favorite', exhibitController.removeFavorite);
 
+// archive exhibit
+exhibitRouter.post(
+  '/:exhibitId/archive',
+  authMiddleware.verifyIsAdmin,
+  exhibitController.archiveExhibit,
+);
+
 module.exports = exhibitRouter;
