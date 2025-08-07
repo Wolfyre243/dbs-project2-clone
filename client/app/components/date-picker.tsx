@@ -43,7 +43,7 @@ export function DatePicker({
   onChange?: (val: string) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [date, setDate] = useState<Date | undefined>(new Date('2025-06-01'));
+  const [date, setDate] = useState<Date | undefined>(new Date(Date.now()));
   const [month, setMonth] = useState<Date | undefined>(date);
   const [internalValue, setInternalValue] = useState(formatDate(date));
   const controlled = value !== undefined && onValueChange !== undefined;
@@ -78,7 +78,7 @@ export function DatePicker({
           id={fieldName}
           name={fieldName}
           value={inputValue}
-          placeholder='June 01, 2025'
+          placeholder=''
           className='bg-background pr-10'
           onChange={(e) => inputOnChange(e.target.value)}
           onKeyDown={(e) => {

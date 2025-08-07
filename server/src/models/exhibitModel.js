@@ -282,7 +282,7 @@ module.exports.getAllExhibits = async ({
 module.exports.getExhibitMetadataById = async (exhibitId) => {
   try {
     const exhibit = await prisma.exhibit.findUnique({
-      where: { exhibitId },
+      where: { exhibitId, statusId: statusCodes.ACTIVE },
       include: {
         subtitles: {
           select: {

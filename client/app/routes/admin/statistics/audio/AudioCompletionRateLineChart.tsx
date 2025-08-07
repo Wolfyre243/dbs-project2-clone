@@ -27,16 +27,13 @@ import useApiPrivate from '~/hooks/useApiPrivate';
 import { utils as XLSXUtils, writeFile as XLSXWriteFile } from 'xlsx';
 import deepEqualArray from '~/lib/equality';
 
-export default function AudioCompletionRateLineChart() {
+export default function AudioCompletionRateLineChart({
+  dateRange,
+}: {
+  dateRange: any;
+}) {
   const apiPrivate = useApiPrivate();
   const [data, setData] = useState([]);
-  const [dateRange, setDateRange] = useState<{
-    startDate: Date | null;
-    endDate: Date | null;
-  }>({
-    startDate: null,
-    endDate: null,
-  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -116,59 +113,11 @@ export default function AudioCompletionRateLineChart() {
         </div>
       </CardHeader>
       <CardContent>
-        <div className='flex flex-wrap gap-4 mb-4 items-center'>
-          <div className='flex gap-2 items-center'>
-            <span>Start:</span>
-            <DatePicker
-              fieldName='startDate'
-              label=''
-              onChange={(val: string) =>
-                setDateRange((prev) => ({
-                  ...prev,
-                  startDate: val ? new Date(val) : null,
-                }))
-              }
-            />
-            <span>End:</span>
-            <DatePicker
-              fieldName='endDate'
-              label=''
-              onChange={(val: string) =>
-                setDateRange((prev) => ({
-                  ...prev,
-                  endDate: val ? new Date(val) : null,
-                }))
-              }
-            />
-          </div>
-        </div>
-
-        {/* {loading && (
-          <div className='h-[300px] flex items-center justify-center'>
-            <div className='flex items-center gap-2'>
-              <Loader2 className='h-4 w-4 animate-spin' />
-              <span>Loading completion rate data...</span>
-            </div>
+        {data.length === 0 && (
+          <div>
+            <h1>No data found.</h1>
           </div>
         )}
-        
-        {error && (
-          <div className='h-[300px] flex items-center justify-center'>
-            <div className='text-center text-muted-foreground'>
-              <p className='text-red-500 mb-2'>{error}</p>
-              <p className='text-sm'>Please try again later</p>
-            </div>
-          </div>
-        )}
-        
-        {!loading && !error && data.length === 0 && (
-          <div className='h-[300px] flex items-center justify-center'>
-            <div className='text-center text-muted-foreground'>
-              <p className='mb-2'>No completion rate data available</p>
-              <p className='text-sm'>Try adjusting your date range</p>
-            </div>
-          </div>
-        )} */}
 
         {/* !loading && !error &&  */}
         {data.length > 0 && (

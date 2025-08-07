@@ -18,6 +18,7 @@ import {
 } from '~/components/ui/dialog';
 import { toast } from 'sonner';
 import StatusCodes from '~/statusConfig';
+import deepEqualArray from '~/lib/equality';
 
 export default function AdminExhibitPagination() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -68,7 +69,9 @@ export default function AdminExhibitPagination() {
   }, [statusFilterValue]);
 
   useEffect(() => {
-    (async () => {
+    let intervalId: NodeJS.Timeout;
+
+    const fetchExhibits = async () => {
       try {
         const { data: responseData } = await apiPrivate.get('/exhibit', {
           params: {
@@ -81,14 +84,24 @@ export default function AdminExhibitPagination() {
             statusFilter: searchParams.get('statusFilter') || null,
           },
         });
-        setData(responseData.data);
+        if (!deepEqualArray(responseData.data, data)) {
+          setData(responseData.data);
+        }
+
         setPageCount(responseData.pageCount);
         setCurrentPage(Number(searchParams.get('page')));
       } catch (error: any) {
         setData([]);
         console.log(error.response?.data?.message);
       }
-    })();
+    };
+
+    fetchExhibits();
+    intervalId = setInterval(fetchExhibits, 2000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
   }, [accessToken, searchParams]);
 
   useEffect(() => {

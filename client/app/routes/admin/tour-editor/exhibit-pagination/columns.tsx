@@ -1,5 +1,11 @@
 import { type ColumnDef } from '@tanstack/react-table';
-import { MoreHorizontal } from 'lucide-react';
+import {
+  Archive,
+  Clipboard,
+  ExternalLink,
+  MoreHorizontal,
+  Trash2,
+} from 'lucide-react';
 import { isAxiosError } from 'axios';
 import { toast } from 'sonner';
 
@@ -251,19 +257,24 @@ export const columns: ColumnDef<Exhibit, any>[] = [
                   navigator.clipboard.writeText(exhibit.exhibitId.toString());
                 }}
               >
-                Copy Exhibit ID
+                <Clipboard />
+                <span>Copy Exhibit ID</span>
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <Link
+                  className='flex flex-row gap-2'
                   to={`/admin/tour-editor/view-exhibit/${exhibit.exhibitId}`}
                 >
-                  View Exhibit
+                  <ExternalLink />
+                  <span>View Exhibit</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setShowArchiveConfirm(true)}>
-                <span className='text-yellow-600'>Archive Exhibit</span>
+                <Archive />
+                <span className='text-yellow-400'>Archive Exhibit</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setShowDeleteConfirm(true)}>
+                <Trash2 />
                 <span className='text-red-400'>Delete Exhibit</span>
               </DropdownMenuItem>
             </DropdownMenuContent>

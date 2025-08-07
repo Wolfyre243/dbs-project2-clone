@@ -336,7 +336,7 @@ export default function SingleExhibit() {
         console.error('Exhibit fetch error:', err);
         if (!cancelled) {
           setExhibit(null);
-          setExhibitError('Error loading exhibit.');
+          setExhibitError(err.response?.data.message);
         }
       } finally {
         if (!cancelled) {
