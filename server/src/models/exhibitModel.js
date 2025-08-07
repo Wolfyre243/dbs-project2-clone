@@ -217,9 +217,12 @@ module.exports.getAllExhibits = async ({
   search,
   filter = {},
 }) => {
-  let where = { ...filter, statusId: statusCodes.ACTIVE };
+  // If filter.statusId is set, use it; otherwise default to ACTIVE
+  let where = { ...filter };
+  if (!filter.statusId) {
+    where.statusId = statusCodes.ACTIVE;
+  }
 
-  // Conditional search terms
   if (search && search.trim() !== '') {
     where.OR = [
       { title: { contains: search, mode: 'insensitive' } },
@@ -484,23 +487,85 @@ module.exports.getExhibitsDiscoveredCount = async (userId) => {
   }
 };
 
-// Archive exhibit (set status to ARCHIVED)
+// Archive exhibit (set status to ARCHIVED only if not already archived)
 module.exports.archiveExhibit = async (exhibitId) => {
   try {
-    const updatedExhibit = await prisma.exhibit.update({
+    const exhibit = await prisma.exhibit.findUnique({
       where: { exhibitId },
-      data: { statusId: statusCodes.ARCHIVED },
+      select: { statusId: true },
     });
 
-    if (!updatedExhibit) {
+    if (!exhibit) {
       throw new AppError(
         `Exhibit with ID ${exhibitId} not found for archive.`,
         404,
       );
     }
 
+    if (exhibit.statusId === statusCodes.ARCHIVED) {
+      throw new AppError('Exhibit is already archived.', 400);
+    }
+
+    const updatedExhibit = await prisma.exhibit.update({
+      where: { exhibitId },
+      data: { statusId: statusCodes.ARCHIVED, modifiedAt: new Date() },
+    });
+
     return { id: exhibitId, status: statusCodes.ARCHIVED };
   } catch (error) {
-    throw new AppError('Failed to archive exhibit', 500);
+    throw error;
   }
 };
+
+// Unarchive exhibit (set status to ACTIVE only if currently ARCHIVED)
+module.exports.unarchiveExhibit = async (exhibitId) => {
+  try {
+    const exhibit = await prisma.exhibit.findUnique({
+      where: { exhibitId },
+      select: { statusId: true },
+    });
+
+    if (!exhibit) {
+      throw new AppError(
+        `Exhibit with ID ${exhibitId} not found for unarchive.`,
+        404,
+      );
+    }
+
+    if (exhibit.statusId !== statusCodes.ARCHIVED) {
+      throw new AppError(
+        'Exhibit is not archived and cannot be unarchived.',
+        400,
+      );
+    }
+
+    const updatedExhibit = await prisma.exhibit.update({
+      where: { exhibitId },
+      data: { statusId: statusCodes.ACTIVE, modifiedAt: new Date() },
+    });
+
+    return { id: exhibitId, status: statusCodes.ACTIVE };
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Get all archived exhibits
+/* module.exports.getArchivedExhibits = async () => {
+  try {
+    const exhibits = await prisma.exhibit.findMany({
+      where: { statusId: statusCodes.ARCHIVED },
+      select: {
+        exhibitId: true,
+        title: true,
+        description: true,
+        imageId: true,
+        createdBy: true,
+        modifiedAt: true,
+      },
+    });
+    return exhibits;
+  } catch (error) {
+    throw new AppError('Failed to fetch archived exhibits', 500);
+  }
+}; */

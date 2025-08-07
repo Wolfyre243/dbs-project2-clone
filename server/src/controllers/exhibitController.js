@@ -261,12 +261,12 @@ module.exports.getAllExhibits = catchAsync(async (req, res, next) => {
     sortBy = 'createdAt',
     order = 'desc',
     search = '',
-    statusFilter = null,
+    statusFilter = null, // can be ACTIVE, ARCHIVED, etc.
   } = req.query;
 
   const filter = {};
   if (statusFilter) {
-    filter.statusId = parseInt(statusFilter);
+    filter.statusId = parseInt(statusFilter); // expects status code (number)
   }
 
   const result = await exhibitModel.getAllExhibits({
@@ -334,17 +334,14 @@ module.exports.getExhibitsDiscovered = catchAsync(async (req, res, next) => {
   });
 });
 
-// archive exhibit
+// Archive exhibit
 module.exports.archiveExhibit = catchAsync(async (req, res, next) => {
   const exhibitId = req.params.exhibitId;
   const userId = res.locals.user.userId;
 
-  validateFields({ exhibitId });
-
   try {
     const archiveResult = await exhibitModel.archiveExhibit(exhibitId);
 
-    // Log admin audit for archive
     await logAdminAudit({
       userId,
       ipAddress: req.ip,
@@ -361,8 +358,48 @@ module.exports.archiveExhibit = catchAsync(async (req, res, next) => {
     });
   } catch (error) {
     logger.error('Error archiving exhibit:', error);
-    return next(
-      new AppError('Failed to archive exhibit. Please try again later.', 500),
-    );
+    return next(error);
   }
 });
+
+// Unarchive exhibit
+module.exports.unarchiveExhibit = catchAsync(async (req, res, next) => {
+  const exhibitId = req.params.exhibitId;
+  const userId = res.locals.user.userId;
+
+  try {
+    const unarchiveResult = await exhibitModel.unarchiveExhibit(exhibitId);
+
+    await logAdminAudit({
+      userId,
+      ipAddress: req.ip,
+      entityName: 'exhibit',
+      entityId: exhibitId,
+      actionTypeId: AuditActions.UPDATE,
+      logText: `Exhibit with ID ${exhibitId} unarchived by Admin ${userId}`,
+    });
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Exhibit unarchived',
+      unarchivedRecord: unarchiveResult,
+    });
+  } catch (error) {
+    logger.error('Error unarchiving exhibit:', error);
+    return next(error);
+  }
+});
+
+// Get all archived exhibits
+/* module.exports.getArchivedExhibits = catchAsync(async (req, res, next) => {
+  try {
+    const exhibits = await exhibitModel.getArchivedExhibits();
+    res.status(200).json({
+      status: 'success',
+      data: exhibits,
+    });
+  } catch (error) {
+    logger.error('Error fetching archived exhibits:', error);
+    return next(error);
+  }
+}); */

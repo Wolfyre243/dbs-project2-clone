@@ -613,4 +613,18 @@ exhibitRouter.post(
   exhibitController.archiveExhibit,
 );
 
+// Unarchive exhibit
+exhibitRouter.put(
+  '/:exhibitId/unarchive',
+  authMiddleware.verifyIsAdmin,
+  exhibitController.unarchiveExhibit,
+);
+
+// Get all archived exhibits
+/* exhibitRouter.get(
+  '/archived',
+  authMiddleware.verifyIsAdmin,
+  exhibitController.getArchivedExhibits,
+); */
+
 module.exports = exhibitRouter;
