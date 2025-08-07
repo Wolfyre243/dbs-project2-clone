@@ -114,6 +114,12 @@ export function UserMenu() {
     return 'U';
   };
 
+  // Helper to truncate username
+  const getTruncatedUsername = (username: string) => {
+    if (!username) return '';
+    return username.length > 15 ? username.slice(0, 15) + '...' : username;
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -121,7 +127,9 @@ export function UserMenu() {
           variant={'ghost'}
           className='cursor-pointer relative rounded-full !ring-none !bg-transparent !hover:bg-transparent'
         >
-          <h1>{`${role === Roles.ADMIN ? '🛠️' : ''}${role === Roles.SUPERADMIN ? '👑' : ''} ${user?.username}`}</h1>
+          <h1>
+            {`${role === Roles.ADMIN ? '🛠️' : ''}${role === Roles.SUPERADMIN ? '👑' : ''} ${getTruncatedUsername(user?.username)}`}
+          </h1>
           <Avatar className='h-8 w-8'>
             <AvatarFallback className='bg-primary/10 text-primary'>
               {getUserInitials()}

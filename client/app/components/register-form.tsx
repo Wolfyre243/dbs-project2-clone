@@ -25,6 +25,8 @@ export function RegistrationGenderSelect({
   label,
   fieldName,
   required = false,
+  value,
+  onValueChange,
   onChange,
 }: {
   className?: string;
@@ -32,20 +34,25 @@ export function RegistrationGenderSelect({
   label?: string;
   fieldName: string;
   required?: boolean;
-  onChange: any;
+  value?: string;
+  onValueChange?: (val: string) => void;
+  onChange?: any;
 }) {
-  const [value, setValue] = useState<string>('');
-
-  const handleValueChange = (val: string) => {
-    setValue(val);
-    if (onChange) {
-      onChange({ target: { value: val } });
-    }
-  };
+  const [internalValue, setInternalValue] = useState<string>('');
+  const controlled = value !== undefined && onValueChange !== undefined;
+  const selectValue = controlled ? value : internalValue;
+  const selectOnChange = controlled
+    ? onValueChange
+    : (val: string) => {
+        setInternalValue(val);
+        if (onChange) {
+          onChange({ target: { value: val } });
+        }
+      };
 
   return (
     <>
-      <Select value={value} onValueChange={handleValueChange}>
+      <Select value={selectValue} onValueChange={selectOnChange}>
         <SelectTrigger className={cn('w-full', className)}>
           <SelectValue placeholder={placeholder ?? 'Gender'} />
         </SelectTrigger>
@@ -60,7 +67,7 @@ export function RegistrationGenderSelect({
       <input
         type='hidden'
         name={fieldName}
-        value={value}
+        value={selectValue}
         required={required}
         onChange={onChange}
       />

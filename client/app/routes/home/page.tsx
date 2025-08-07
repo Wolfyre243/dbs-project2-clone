@@ -65,22 +65,3 @@ export default function HomePage() {
     </main>
   );
 }
-
-// Minimal stat card component
-function StatCard({
-  label,
-  value,
-  icon,
-}: {
-  label: string;
-  value: any;
-  icon: React.ReactNode;
-}) {
-  return (
-    <div className='flex flex-col items-center bg-[#ffe5e9] rounded-lg px-4 py-3 border border-[#f7cad0] min-w-[90px]'>
-      <div>{icon}</div>
-      <div className='font-bold text-[#e63946] text-lg'>{value}</div>
-      <div className='text-xs text-[#1d3557]'>{label}</div>
-    </div>
-  );
-}

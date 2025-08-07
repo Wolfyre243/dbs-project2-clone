@@ -31,24 +31,40 @@ export function DatePicker({
   fieldName,
   label,
   required = true,
+  value,
+  onValueChange,
   onChange,
 }: {
   fieldName: string;
   label?: string;
   required?: boolean;
+  value?: string;
+  onValueChange?: (val: string) => void;
   onChange?: (val: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [date, setDate] = useState<Date | undefined>(new Date('2025-06-01'));
   const [month, setMonth] = useState<Date | undefined>(date);
-  const [value, setValue] = useState(formatDate(date));
+  const [internalValue, setInternalValue] = useState(formatDate(date));
+  const controlled = value !== undefined && onValueChange !== undefined;
+  const inputValue = controlled ? value : internalValue;
+  const inputOnChange = controlled
+    ? onValueChange
+    : (val: string) => {
+        setInternalValue(val);
+        if (onChange) onChange(val);
+      };
 
   const handleChange = (val: string) => {
-    setValue(val);
-    if (isValidDate(new Date(val))) {
-      setDate(new Date(val));
-      setMonth(new Date(val));
-      if (onChange) onChange(val);
+    if (controlled) {
+      inputOnChange(val);
+    } else {
+      setInternalValue(val);
+      if (isValidDate(new Date(val))) {
+        setDate(new Date(val));
+        setMonth(new Date(val));
+        if (onChange) onChange(val);
+      }
     }
   };
 
@@ -61,10 +77,10 @@ export function DatePicker({
         <Input
           id={fieldName}
           name={fieldName}
-          value={value}
+          value={inputValue}
           placeholder='June 01, 2025'
           className='bg-background pr-10'
-          onChange={(e) => handleChange(e.target.value)}
+          onChange={(e) => inputOnChange(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'ArrowDown') {
               e.preventDefault();
@@ -99,9 +115,13 @@ export function DatePicker({
               onSelect={(date) => {
                 setDate(date);
                 const formatted = formatDate(date);
-                setValue(formatted);
+                if (controlled) {
+                  onValueChange && onValueChange(formatted);
+                } else {
+                  setInternalValue(formatted);
+                  if (onChange) onChange(formatted);
+                }
                 setOpen(false);
-                if (onChange) onChange(formatted);
               }}
             />
           </PopoverContent>

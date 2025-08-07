@@ -82,6 +82,10 @@ export default function MemberRegisterPage() {
     }
   };
 
+  const handleBack = () => {
+    setError(null);
+  };
+
   return (
     <div className='bg-background flex w-full md:w-1/2 min-h-screen flex-col items-center justify-center gap-6 p-6 md:p-10'>
       <a href='/' className='mb-2 flex gap-2 items-center justify-center'>
@@ -100,6 +104,7 @@ export default function MemberRegisterPage() {
           form={form}
           setForm={updateForm}
           isLoading={isLoading}
+          onBack={handleBack}
         />
         {error ? (
           <div className='bg-red-500 px-2 py-1 rounded-md'>{error}</div>

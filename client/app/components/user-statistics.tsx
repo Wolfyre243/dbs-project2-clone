@@ -2,6 +2,7 @@ import { Progress } from './ui/progress';
 import {
   AudioLines,
   CircleEllipsis,
+  ExternalLink,
   Frown,
   Headphones,
   Landmark,
@@ -20,10 +21,19 @@ import {
   CardHeader,
   CardTitle,
 } from './ui/card';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '~/components/ui/carousel';
+import { type CarouselApi } from '~/components/ui/carousel';
 import { Button } from './ui/button';
 import deepEqualArray from '~/lib/equality';
 import { toast } from 'sonner';
 import EventTypes from '~/eventTypeConfig';
+import { Link } from 'react-router';
 
 interface Exhibit {
   exhibitId: string;
@@ -269,11 +279,16 @@ export function UserFavouriteExhibitCard({ exhibit }: { exhibit?: Exhibit }) {
   };
 
   return (
-    <Card className='w-1/3 px-2 py-4 shadow'>
+    <Card className='w-full h-full px-2 py-4 shadow'>
       <CardHeader className='p-2'>
         <CardTitle>{exhibit?.title}</CardTitle>
         <CardDescription>{exhibit?.description}</CardDescription>
         <CardAction>
+          <Button asChild size={'icon'} variant={'ghost'}>
+            <Link to={`/home/exhibits/${exhibit?.exhibitId}`}>
+              <ExternalLink />
+            </Link>
+          </Button>
           <Button size={'icon'} variant={'ghost'} onClick={handleUnfavourite}>
             <StarOff className='size-4' />
           </Button>
@@ -293,6 +308,9 @@ export function UserFavouriteExhibitCard({ exhibit }: { exhibit?: Exhibit }) {
 
 export function UserFavouriteExhibits() {
   const apiPrivate = useApiPrivate();
+  const [api, setApi] = useState<CarouselApi>();
+  const [count, setCount] = useState(0);
+  const [index, setIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -310,6 +328,7 @@ export function UserFavouriteExhibits() {
         if (!deepEqualArray(responseData.data, exhibits)) {
           setExhibits(responseData.data);
         }
+        setCount(responseData.data.length);
       } catch (error: any) {
         setError(error.response?.data.message);
       } finally {
@@ -325,18 +344,42 @@ export function UserFavouriteExhibits() {
     };
   }, [apiPrivate]);
 
+  useEffect(() => {
+    if (!api) {
+      return;
+    }
+
+    // setCount(api.scrollSnapList().length);
+    setIndex(api.selectedScrollSnap() + 1);
+
+    api.on('select', () => {
+      setIndex(api.selectedScrollSnap() + 1);
+    });
+  }, [api]);
+
   return (
-    <div className='flex flex-row gap-3 w-full'>
-      {exhibits.length !== 0 ? (
-        exhibits.map((exhibit: Exhibit) => {
-          return <UserFavouriteExhibitCard exhibit={exhibit} />;
-        })
-      ) : (
-        <h1 className='flex flex-row gap-1 w-full text-muted-foreground/50 justify-center'>
-          <Frown />
-          No exhibits favourited yet!
-        </h1>
-      )}
+    <div className='flex flex-col gap-3 w-full'>
+      <Carousel setApi={setApi}>
+        <CarouselContent>
+          {exhibits.length !== 0 ? (
+            exhibits.map((exhibit: Exhibit) => {
+              return (
+                <CarouselItem className='md:basis-1/3'>
+                  <UserFavouriteExhibitCard exhibit={exhibit} />
+                </CarouselItem>
+              );
+            })
+          ) : (
+            <h1 className='flex flex-row gap-1 w-full text-muted-foreground/50 justify-center'>
+              <Frown />
+              No exhibits favourited yet!
+            </h1>
+          )}
+        </CarouselContent>
+      </Carousel>
+      <p className='w-full text-sm text-muted-foreground text-center'>
+        Exhibit {index} of {count}
+      </p>
     </div>
   );
 }

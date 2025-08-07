@@ -50,7 +50,7 @@ export default function AdminHomePage() {
       </Tabs> */}
 
       {/* Cards */}
-      <section className='w-full flex md:flex-row flex-col gap-4 justify-between'>
+      <section className='w-full flex lg:flex-row flex-col gap-4 justify-between'>
         <div className='w-full space-x-2'>
           <TotalUsersCard />
         </div>
@@ -66,8 +66,8 @@ export default function AdminHomePage() {
       </section>
 
       {/* Charts */}
-      <section className='flex md:flex-row flex-col w-full gap-4 justify-between'>
-        <div className='min-w-3/4 min-h-full'>
+      <section className='flex xl:flex-row flex-col w-full gap-4 justify-between'>
+        <div className='min-w-full xl:min-w-3/4 min-h-full'>
           <UserSignUpChart />
         </div>
         <div className='w-full h-full'>

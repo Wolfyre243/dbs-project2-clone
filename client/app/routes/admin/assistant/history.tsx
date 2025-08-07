@@ -9,7 +9,14 @@ import {
   DialogTrigger,
 } from '~/components/ui/dialog';
 import { formatDistanceToNow } from 'date-fns';
-import { Delete, History, Trash } from 'lucide-react';
+import {
+  Delete,
+  Divide,
+  History,
+  MessageCircle,
+  SearchX,
+  Trash,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '~/components/ui/button';
 import {
@@ -298,18 +305,33 @@ export default function AssistantHistoryPage() {
         </header>
 
         <section className='flex flex-col gap-3'>
-          {history.map((historyItem, i) => {
-            return (
-              <>
-                <HistoryItem
-                  conversation={historyItem}
-                  handleDelete={() => handleDelete(historyItem.conversationId)}
-                  key={i}
-                />
-                <Separator />
-              </>
-            );
-          })}
+          {history.length !== 0 ? (
+            history.map((historyItem, i) => {
+              return (
+                <>
+                  <HistoryItem
+                    conversation={historyItem}
+                    handleDelete={() =>
+                      handleDelete(historyItem.conversationId)
+                    }
+                    key={i}
+                  />
+                  <Separator />
+                </>
+              );
+            })
+          ) : (
+            <div className='flex flex-col gap-3 p-2 text-center items-center'>
+              <h1 className='flex flex-row gap-1 items-center justify-center font-semibold'>
+                <SearchX /> No conversation history found...
+              </h1>
+              <Button asChild size={'sm'} className='w-fit' variant={'outline'}>
+                <Link to={'/admin/assistant'}>
+                  <MessageCircle /> Start a Conversation
+                </Link>
+              </Button>
+            </div>
+          )}
         </section>
       </div>
     </div>

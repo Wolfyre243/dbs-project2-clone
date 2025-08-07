@@ -336,11 +336,7 @@ export default function SingleExhibit() {
         console.error('Exhibit fetch error:', err);
         if (!cancelled) {
           setExhibit(null);
-          setExhibitError(
-            err.response?.status === 403
-              ? 'Access denied: Invalid or expired QR code token.'
-              : 'Error loading exhibit.',
-          );
+          setExhibitError('Error loading exhibit.');
         }
       } finally {
         if (!cancelled) {
@@ -349,7 +345,7 @@ export default function SingleExhibit() {
       }
     }
 
-    if (exhibitId && token) {
+    if (exhibitId) {
       fetchExhibit();
     } else {
       setExhibitError('Access denied: QR code token or exhibit ID missing.');

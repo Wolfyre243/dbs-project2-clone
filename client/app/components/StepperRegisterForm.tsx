@@ -21,18 +21,6 @@ type FormState = {
   dob: string;
 };
 
-const initialState: FormState = {
-  username: '',
-  email: '',
-  password: '',
-  confirmPassword: '',
-  firstName: '',
-  lastName: '',
-  gender: '',
-  languageCode: '',
-  dob: '',
-};
-
 const passwordRequirements = [
   {
     label: 'At least one lowercase letter',
@@ -147,10 +135,21 @@ function Step1AccountInfo({
           variant={'default'}
           size={'icon'}
           className='px-2 py-1 bg-transparent text-accent-foreground hover:bg-transparent'
-          onClick={() => setShowPassword((v) => !v)}
+          onClick={() => setShowConfirm((v) => !v)}
         >
-          {showPassword ? <Eye /> : <EyeClosed />}
+          {showConfirm ? <Eye /> : <EyeClosed />}
         </Button>
+      </div>
+      <div className='text-sm mt-1'>
+        {form.confirmPassword ? (
+          form.confirmPassword === form.password ? (
+            <span style={{ color: 'green', fontWeight: 'bold' }}>
+              ✓ Passwords match
+            </span>
+          ) : (
+            <span style={{ color: 'red' }}>✗ Passwords do not match</span>
+          )
+        ) : null}
       </div>
       <Button className='w-full mt-4' onClick={next} disabled={!allValid}>
         Next
@@ -205,7 +204,8 @@ function Step2PersonalDetails({
         className='w-full'
         label='Gender'
         placeholder='Gender'
-        onChange={(e: any) => setForm({ gender: e.target.value })}
+        value={form.gender}
+        onValueChange={(val: string) => setForm({ gender: val })}
       />
       <Label htmlFor='languageCode'>Language</Label>
       <LanguageSelect
@@ -220,7 +220,8 @@ function Step2PersonalDetails({
         label='Date of Birth'
         fieldName='dob'
         required={true}
-        onChange={(val: string) => setForm({ dob: val })}
+        value={form.dob}
+        onValueChange={(val: string) => setForm({ dob: val })}
       />
       <div className='flex flex-row gap-2 mt-4'>
         <Button className='w-1/2' variant='outline' onClick={back}>
@@ -300,6 +301,7 @@ export function StepperRegisterForm({
   form,
   setForm,
   isLoading,
+  onBack,
   ...props
 }: {
   className?: string;
@@ -308,11 +310,15 @@ export function StepperRegisterForm({
   form: FormState;
   setForm: (fields: Partial<FormState>) => void;
   isLoading: boolean;
+  onBack?: () => void;
 }) {
   const [step, setStep] = useState(0);
 
   const next = () => setStep((s) => Math.min(s + 1, 2));
-  const back = () => setStep((s) => Math.max(s - 1, 0));
+  const back = () => {
+    setStep((s) => Math.max(s - 1, 0));
+    if (onBack) onBack();
+  };
 
   return (
     <div className={cn('flex flex-col gap-6 w-full', className)} {...props}>

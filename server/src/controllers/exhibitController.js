@@ -220,33 +220,37 @@ module.exports.bulkDeleteExhibits = catchAsync(async (req, res, next) => {
 module.exports.validateQrToken = catchAsync(async (req, res, next) => {
   const { exhibitId } = req.params;
   const { token } = req.body;
+  let valid = false;
 
   if (!token) {
-    throw new AppError('Missing QR token', 400);
+    // throw new AppError('Missing QR token', 400);
+    return res.status(200).json({ status: 'success', valid });
   }
 
+  // Only log if token is present to prevent false data
   const payload = verifyQrJwt(token);
-  if (payload.exhibitId !== exhibitId) {
-    throw new AppError('Invalid QR token for this exhibit', 403);
+  if (payload.exhibitId === exhibitId) {
+    // throw new AppError('Invalid QR token for this exhibit', 403);
+    // Log the QR scan event for statistics
+    const userId = res.locals.user?.userId || null;
+    console.log('PAYLOAD: ', payload);
+    await logUserEvent({
+      userId,
+      entityId: payload.exhibitId,
+      entityName: 'exhibit',
+      eventTypeId: EventTypes.QR_SCANNED,
+      details: `QR code scanned for exhibit ${exhibitId}`,
+      role: res.locals.user?.roleId,
+    });
+
+    logger.info(
+      `QR code scanned for exhibit ${exhibitId} by user ${userId || 'guest'}`,
+    );
+
+    valid = true;
   }
 
-  // Log the QR scan event for statistics
-  const userId = res.locals.user?.userId || null;
-  console.log('PAYLOAD: ', payload);
-  await logUserEvent({
-    userId,
-    entityId: payload.exhibitId,
-    entityName: 'exhibit',
-    eventTypeId: EventTypes.QR_SCANNED,
-    details: `QR code scanned for exhibit ${exhibitId}`,
-    role: res.locals.user?.roleId,
-  });
-
-  logger.info(
-    `QR code scanned for exhibit ${exhibitId} by user ${userId || 'guest'}`,
-  );
-
-  res.status(200).json({ status: 'success', valid: true });
+  res.status(200).json({ status: 'success', valid });
 });
 
 // Get all exhibits with pagination, sorting, and search

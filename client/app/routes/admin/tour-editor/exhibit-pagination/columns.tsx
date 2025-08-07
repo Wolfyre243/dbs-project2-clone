@@ -121,11 +121,14 @@ export const columns: ColumnDef<Exhibit, any>[] = [
     cell: ({ row }) => {
       const value = row.original.status;
       return (
-        <span
-          className={value === 'Active' ? 'text-green-600' : 'text-red-600'}
+        <Badge
+          style={{
+            backgroundColor: value === 'Active' ? '#16a34a' : '#dc2626',
+            color: 'white',
+          }}
         >
           {value}
-        </span>
+        </Badge>
       );
     },
   },

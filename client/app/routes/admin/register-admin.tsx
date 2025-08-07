@@ -18,6 +18,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import api from '~/services/api';
 import useApiPrivate from '~/hooks/useApiPrivate';
+import { Eye, EyeClosed } from 'lucide-react';
 
 export default function AdminRegisterPage() {
   const navigate = useNavigate();
@@ -36,6 +37,32 @@ export default function AdminRegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const passwordRequirements = [
+    {
+      label: 'At least one lowercase letter',
+      test: (pw: string) => /[a-z]/.test(pw),
+    },
+    {
+      label: 'At least one uppercase letter',
+      test: (pw: string) => /[A-Z]/.test(pw),
+    },
+    {
+      label: 'At least one digit',
+      test: (pw: string) => /\d/.test(pw),
+    },
+    {
+      label: 'At least one special character (@$!%*?&)',
+      test: (pw: string) => /[@$!%*?&]/.test(pw),
+    },
+    {
+      label: '6-50 characters',
+      test: (pw: string) => pw.length >= 6 && pw.length <= 50,
+    },
+  ];
+
   const updateForm = (fields: Partial<typeof form>) =>
     setForm((prev) => ({ ...prev, ...fields }));
 
@@ -162,31 +189,87 @@ export default function AdminRegisterPage() {
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                   <div className='space-y-2'>
                     <Label htmlFor='password'>Password</Label>
-                    <Input
-                      id='password'
-                      name='password'
-                      type='password'
-                      placeholder='Enter secure password'
-                      className='bg-background border-border'
-                      value={form.password}
-                      onChange={(e) => updateForm({ password: e.target.value })}
-                      required
-                    />
+                    <div className='relative flex flex-row gap-1'>
+                      <Input
+                        id='password'
+                        name='password'
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder='Enter secure password'
+                        className='bg-background border-border'
+                        value={form.password}
+                        onChange={(e) =>
+                          updateForm({ password: e.target.value })
+                        }
+                        required
+                        autoComplete='new-password'
+                      />
+                      <Button
+                        type='button'
+                        variant={'default'}
+                        size={'icon'}
+                        className='px-2 py-1 bg-transparent text-accent-foreground hover:bg-transparent'
+                        onClick={() => setShowPassword((v) => !v)}
+                      >
+                        {showPassword ? <Eye /> : <EyeClosed />}
+                      </Button>
+                    </div>
+                    <div className='flex flex-col gap-1 text-sm mt-1'>
+                      {passwordRequirements.map((req, idx) => (
+                        <div key={idx} className='flex items-center gap-2'>
+                          <span
+                            style={{
+                              color: req.test(form.password) ? 'green' : 'red',
+                              fontWeight: req.test(form.password)
+                                ? 'bold'
+                                : 'normal',
+                            }}
+                          >
+                            {req.test(form.password) ? '✓' : '✗'}
+                          </span>
+                          <span>{req.label}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                   <div className='space-y-2'>
                     <Label htmlFor='confirmPassword'>Confirm Password</Label>
-                    <Input
-                      id='confirmPassword'
-                      name='confirmPassword'
-                      type='password'
-                      placeholder='Confirm password'
-                      className='bg-background border-border'
-                      value={form.confirmPassword}
-                      onChange={(e) =>
-                        updateForm({ confirmPassword: e.target.value })
-                      }
-                      required
-                    />
+                    <div className='relative flex flex-row gap-1'>
+                      <Input
+                        id='confirmPassword'
+                        name='confirmPassword'
+                        type={showConfirm ? 'text' : 'password'}
+                        placeholder='Confirm password'
+                        className='bg-background border-border'
+                        value={form.confirmPassword}
+                        onChange={(e) =>
+                          updateForm({ confirmPassword: e.target.value })
+                        }
+                        required
+                        autoComplete='new-password'
+                      />
+                      <Button
+                        type='button'
+                        variant={'default'}
+                        size={'icon'}
+                        className='px-2 py-1 bg-transparent text-accent-foreground hover:bg-transparent'
+                        onClick={() => setShowConfirm((v) => !v)}
+                      >
+                        {showConfirm ? <Eye /> : <EyeClosed />}
+                      </Button>
+                    </div>
+                    <div className='text-sm mt-1'>
+                      {form.confirmPassword ? (
+                        form.confirmPassword === form.password ? (
+                          <span style={{ color: 'green', fontWeight: 'bold' }}>
+                            ✓ Passwords match
+                          </span>
+                        ) : (
+                          <span style={{ color: 'red' }}>
+                            ✗ Passwords do not match
+                          </span>
+                        )
+                      ) : null}
+                    </div>
                   </div>
                 </div>
                 <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
