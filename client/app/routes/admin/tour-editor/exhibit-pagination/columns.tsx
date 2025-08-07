@@ -123,7 +123,12 @@ export const columns: ColumnDef<Exhibit, any>[] = [
       return (
         <Badge
           style={{
-            backgroundColor: value === 'Active' ? '#16a34a' : '#dc2626',
+            backgroundColor:
+              value === 'Active'
+                ? '#16a34a'
+                : value === 'ARCHIVED'
+                  ? '#6b7280'
+                  : '#dc2626',
             color: 'white',
           }}
         >
@@ -167,8 +172,8 @@ export const columns: ColumnDef<Exhibit, any>[] = [
     cell: ({ row, table }) => {
       const exhibit = row.original;
       const apiPrivate = useApiPrivate();
-
-      const [showConfirm, setShowConfirm] = useState(false);
+      const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+      const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
 
       const handleDelete = async () => {
         try {
@@ -196,11 +201,40 @@ export const columns: ColumnDef<Exhibit, any>[] = [
             });
           }
         }
-        setShowConfirm(false);
+        setShowDeleteConfirm(false);
+      };
+
+      const handleArchive = async () => {
+        try {
+          const response = await apiPrivate.post(
+            `/exhibit/${exhibit.exhibitId}/archive`,
+          );
+          if (response.status === 200) {
+            toast.success('Exhibit archived successfully!', {
+              duration: 2000,
+            });
+            // Trigger table data refresh
+            (table.options.meta as TableMeta)?.onDelete?.(exhibit.exhibitId);
+          }
+        } catch (error) {
+          if (isAxiosError(error)) {
+            toast.error(
+              error.response?.data.message || 'Failed to archive exhibit',
+              {
+                duration: 2000,
+              },
+            );
+          } else {
+            toast.error('An unexpected error occurred', {
+              duration: 2000,
+            });
+          }
+        }
+        setShowArchiveConfirm(false);
       };
 
       return (
-        <Dialog>
+        <>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant='ghost' className='h-8 w-8 p-0'>
@@ -226,31 +260,58 @@ export const columns: ColumnDef<Exhibit, any>[] = [
                   View Exhibit
                 </Link>
               </DropdownMenuItem>
-              <DialogTrigger asChild>
-                <DropdownMenuItem>
-                  <span className='text-red-400'>Delete Exhibit</span>
-                </DropdownMenuItem>
-              </DialogTrigger>
+              <DropdownMenuItem onClick={() => setShowArchiveConfirm(true)}>
+                <span className='text-yellow-600'>Archive Exhibit</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setShowDeleteConfirm(true)}>
+                <span className='text-red-400'>Delete Exhibit</span>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Hold Up!</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to delete this exhibit? This action cannot
-                be undone.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter className='flex gap-2 justify-end'>
-              <DialogClose asChild>
-                <Button variant='outline'>Cancel</Button>
-              </DialogClose>
-              <Button variant='destructive' onClick={handleDelete}>
-                Delete
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+
+          <Dialog
+            open={showArchiveConfirm}
+            onOpenChange={setShowArchiveConfirm}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Archive Exhibit</DialogTitle>
+                <DialogDescription>
+                  Are you sure you want to archive this exhibit? This will set
+                  its status to ARCHIVED.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter className='flex gap-2 justify-end'>
+                <DialogClose asChild>
+                  <Button variant='outline'>Cancel</Button>
+                </DialogClose>
+                <Button variant='default' onClick={handleArchive}>
+                  Archive
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Hold Up!</DialogTitle>
+                <DialogDescription>
+                  Are you sure you want to delete this exhibit? This action
+                  cannot be undone.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter className='flex gap-2 justify-end'>
+                <DialogClose asChild>
+                  <Button variant='outline'>Cancel</Button>
+                </DialogClose>
+                <Button variant='destructive' onClick={handleDelete}>
+                  Delete
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </>
       );
     },
   },

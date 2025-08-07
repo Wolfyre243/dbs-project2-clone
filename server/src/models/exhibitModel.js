@@ -483,3 +483,24 @@ module.exports.getExhibitsDiscoveredCount = async (userId) => {
     throw error;
   }
 };
+
+// Archive exhibit (set status to ARCHIVED)
+module.exports.archiveExhibit = async (exhibitId) => {
+  try {
+    const updatedExhibit = await prisma.exhibit.update({
+      where: { exhibitId },
+      data: { statusId: statusCodes.ARCHIVED },
+    });
+
+    if (!updatedExhibit) {
+      throw new AppError(
+        `Exhibit with ID ${exhibitId} not found for archive.`,
+        404,
+      );
+    }
+
+    return { id: exhibitId, status: statusCodes.ARCHIVED };
+  } catch (error) {
+    throw new AppError('Failed to archive exhibit', 500);
+  }
+};
