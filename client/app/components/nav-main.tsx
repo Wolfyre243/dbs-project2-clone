@@ -1,7 +1,7 @@
 'use client';
 
 import { ChevronRight, type LucideIcon } from 'lucide-react';
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
 
 import {
   Collapsible,
@@ -35,6 +35,21 @@ export function NavMain({
     }[];
   }[];
 }) {
+  const location = useLocation();
+  const pathname = location.pathname;
+
+  // Find the longest matching main item
+  let activeIndex = -1;
+  let longestMatchLength = -1;
+  items.forEach((item, idx) => {
+    if (pathname === item.url || pathname.startsWith(item.url + '/')) {
+      if (item.url.length > longestMatchLength) {
+        activeIndex = idx;
+        longestMatchLength = item.url.length;
+      }
+    }
+  });
+
   return (
     <SidebarGroup>
       <SidebarGroupLabel>General</SidebarGroupLabel>
@@ -42,7 +57,11 @@ export function NavMain({
         {items.map((item, i) => (
           <Collapsible key={item.title} asChild defaultOpen={item.isActive}>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip={item.title}>
+              <SidebarMenuButton
+                asChild
+                tooltip={item.title}
+                isActive={i === activeIndex}
+              >
                 <Link to={item.url}>
                   {item.icon && <item.icon />}
                   <span>{item.title}</span>

@@ -37,7 +37,7 @@ userRouter.delete(
 
 // Get all users for admin
 userRouter.get('/', authMiddleware.verifyIsAdmin, userController.getAllUsers);
-// Update user profile username, first name, lastname
+// Update user profile username, first name, lastname, languageCode
 userRouter.put('/profile', userController.updateUserProfile);
 
 userRouter.get('/recent-activity', userController.getRecentActivity);

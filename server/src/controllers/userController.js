@@ -157,13 +157,17 @@ module.exports.getAllUsers = catchAsync(async (req, res, next) => {
 // Update user profile username, first name, lastname, status
 module.exports.updateUserProfile = catchAsync(async (req, res, next) => {
   const userId = res.locals.user.userId;
-  const { username, firstName, lastName } = req.body;
+  const { username, firstName, lastName, languageCode = null } = req.body;
+
+  const languageCodeRegex = /^[a-z]{2,3}-[A-Z]{2,3}$/;
 
   // Validate input
   if (!username || !firstName || !lastName) {
-    return next(
-      new AppError('Username, first name, and last name are required', 400),
-    );
+    throw new AppError('Username, first name, and last name are required', 400);
+  }
+
+  if (languageCode && !languageCodeRegex.test(languageCode)) {
+    throw new AppError('Invalid language code provided', 400);
   }
 
   // Update user profile with status set to ACTIVE
@@ -171,6 +175,7 @@ module.exports.updateUserProfile = catchAsync(async (req, res, next) => {
     username,
     firstName,
     lastName,
+    languageCode,
     statusId: statusCodes.ACTIVE,
   });
 

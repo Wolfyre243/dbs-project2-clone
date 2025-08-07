@@ -11,9 +11,11 @@ export default [
   route('/*', 'routes/notFound.tsx'),
   route('/verify', 'routes/verify.tsx'),
   route('/unauthorized', 'routes/unauthorized.tsx'),
+  route('/forbidden', 'routes/forbidden.tsx'),
   // route('/exhibits', 'routes/home/exhibits/page.tsx'),
   route('/membership-plans', 'routes/membership.tsx'),
   route('/review', 'routes/review.tsx'),
+  route('/reset-password', 'routes/reset-password.tsx'),
 
   ...prefix('home', [
     layout('routes/home/layout.tsx', [

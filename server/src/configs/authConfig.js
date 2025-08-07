@@ -14,6 +14,8 @@ const accessTokenDuration = process.env.JWT_ACCESS_EXPIRES_IN;
 const refreshSK = process.env.JWT_REFRESH_SECRET_KEY;
 const refreshTokenDuration = process.env.JWT_REFRESH_EXPIRES_IN;
 const tokenAlgorithm = process.env.JWT_ALGORITHM;
+const resetpwSK = process.env.JWT_RESETPW_SECRET_KEY;
+const resetpwTokenDuration = process.env.JWT_RESETPW_EXPIRES_IN;
 
 module.exports = {
   cookieOptions,
@@ -23,5 +25,7 @@ module.exports = {
   accessTokenDuration,
   refreshSK,
   refreshTokenDuration,
+  resetpwSK,
+  resetpwTokenDuration,
   tokenAlgorithm,
 };

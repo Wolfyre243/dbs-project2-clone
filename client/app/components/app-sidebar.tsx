@@ -30,6 +30,7 @@ import useApiPrivate from '~/hooks/useApiPrivate';
 import useAuth from '~/hooks/useAuth';
 import { NavSuperAdmin } from './nav-superadmin';
 import Roles from '~/rolesConfig';
+import { Link, useLocation } from 'react-router';
 
 const data = {
   user: {
@@ -109,16 +110,16 @@ const data = {
     // },
   ],
   navSecondary: [
-    {
-      title: 'Release Notes',
-      url: '#',
-      icon: ScrollText,
-    },
-    {
-      title: 'Get Help',
-      url: '#',
-      icon: CircleQuestionMark,
-    },
+    // {
+    //   title: 'Release Notes',
+    //   url: '#',
+    //   icon: ScrollText,
+    // },
+    // {
+    //   title: 'Get Help',
+    //   url: '#',
+    //   icon: CircleQuestionMark,
+    // },
   ],
 };
 
@@ -154,7 +155,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size='lg' asChild>
-              <a href='/'>
+              <Link to={'/'}>
                 <div className='flex aspect-square size-8 items-center justify-center rounded-lg'>
                   <LayoutDashboard className='size-6' />
                 </div>
@@ -166,7 +167,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     Admin Dashboard
                   </span>
                 </div>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

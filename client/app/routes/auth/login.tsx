@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router';
 import { LoginForm } from '~/components/login-form';
 import useAuth from '~/hooks/useAuth';
 import { useJWTDecode } from '~/hooks/useJWTDecode';
+import useApiPrivate from '~/hooks/useApiPrivate';
+import { toast } from 'sonner';
 import api from '~/services/api';
 
 export default function LoginPage() {
@@ -14,6 +16,8 @@ export default function LoginPage() {
   const navigate = useNavigate();
 
   const [error, setError] = useState<string | null>(null);
+
+  const apiPrivate = useApiPrivate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,7 +53,7 @@ export default function LoginPage() {
 
   const handleGuestLogin = async () => {
     try {
-      const { data: responseData } = await api.post(
+      const { data: responseData } = await apiPrivate.post(
         '/auth/guest-login',
         {},
         { withCredentials: true },

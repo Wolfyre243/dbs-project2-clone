@@ -156,12 +156,16 @@ module.exports.retrieveById = async (userId) => {
 module.exports.retrieveEmail = async (email) => {
   try {
     const emailObj = await prisma.email.findFirst({
-      where: { email: email },
+      where: { email },
     });
+
+    if (!emailObj) {
+      throw new AppError('Email not found.', 404);
+    }
 
     return emailObj;
   } catch (error) {
-    console.log(error);
+    console.error(error);
     throw error;
   }
 };
@@ -503,50 +507,50 @@ module.exports.getAllUsers = async ({
   };
 };
 
-/**
- * Aggregate user-specific QR scan statistics.
- * Returns: { totalQRScans, uniqueQRScanned }
- */
-async function getUserQRStatistics(userId) {
-  // Use the correct Prisma client instance
-  const totalQRScans = await prisma.event.count({
-    where: { userId, eventType: { eventType: 'QR_SCANNED' } },
-  });
-  const uniqueQRScanned = await prisma.event.findMany({
-    where: { userId, eventType: { eventType: 'QR_SCANNED' } },
-    select: { entityId: true },
-    distinct: ['entityId'],
-  });
-  return {
-    totalQRScans,
-    uniqueQRScanned: uniqueQRScanned.length,
-  };
-}
+// /**
+//  * Aggregate user-specific QR scan statistics.
+//  * Returns: { totalQRScans, uniqueQRScanned }
+//  */
+// async function getUserQRStatistics(userId) {
+//   // Use the correct Prisma client instance
+//   const totalQRScans = await prisma.event.count({
+//     where: { userId, eventType: { eventType: 'QR_SCANNED' } },
+//   });
+//   const uniqueQRScanned = await prisma.event.findMany({
+//     where: { userId, eventType: { eventType: 'QR_SCANNED' } },
+//     select: { entityId: true },
+//     distinct: ['entityId'],
+//   });
+//   return {
+//     totalQRScans,
+//     uniqueQRScanned: uniqueQRScanned.length,
+//   };
+// }
 
-/**
- * Aggregate user-specific audio statistics.
- * Returns: { totalAudioPlays, totalAudioCompletions }
- */
-async function getUserAudioStatistics(userId) {
-  const totalAudioPlays = await prisma.event.count({
-    where: { userId, eventType: { eventType: 'AUDIO_STARTED' } },
-  });
-  const totalAudioCompletions = await prisma.event.count({
-    where: { userId, eventType: { eventType: 'AUDIO_COMPLETED' } },
-  });
-  return {
-    totalAudioPlays,
-    totalAudioCompletions,
-  };
-}
+// /**
+//  * Aggregate user-specific audio statistics.
+//  * Returns: { totalAudioPlays, totalAudioCompletions }
+//  */
+// async function getUserAudioStatistics(userId) {
+//   const totalAudioPlays = await prisma.event.count({
+//     where: { userId, eventType: { eventType: 'AUDIO_STARTED' } },
+//   });
+//   const totalAudioCompletions = await prisma.event.count({
+//     where: { userId, eventType: { eventType: 'AUDIO_COMPLETED' } },
+//   });
+//   return {
+//     totalAudioPlays,
+//     totalAudioCompletions,
+//   };
+// }
 
 // update user profile, username, lastname, firstname, statusid
 module.exports.updateUserProfileWithStatus = async (
   userId,
-  { username, firstName, lastName, statusId },
+  { username, firstName, lastName, languageCode, statusId },
 ) => {
   try {
-    const updatedUser = await prisma.users.update({
+    await prisma.users.update({
       where: { userId: userId },
       data: {
         username: username,
@@ -554,6 +558,7 @@ module.exports.updateUserProfileWithStatus = async (
           update: {
             firstName: firstName,
             lastName: lastName,
+            languageCode: languageCode ?? undefined,
           },
         },
         statusId: statusId,
@@ -563,9 +568,37 @@ module.exports.updateUserProfileWithStatus = async (
       },
     });
 
+    const updatedUser = await prisma.users.findUnique({
+      where: { userId: userId },
+      include: {
+        userRoles: {
+          include: {
+            role: true,
+          },
+        },
+        userProfile: true,
+        status: true,
+        emails: true,
+        phoneNumbers: true,
+      },
+    });
+
+    if (updatedUser.emails)
+      updatedUser.emails.email = decryptData(updatedUser.emails.email);
+
     return convertDatesToStrings(updatedUser);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        if (
+          error.meta &&
+          error.meta.target &&
+          error.meta.target.includes('username')
+        ) {
+          throw new AppError('Username is already taken.', 400);
+        }
+        throw new AppError('Duplicate field error.', 400);
+      }
       if (error.code === 'P2025') {
         throw new AppError('User not found', 404);
       }
@@ -589,6 +622,29 @@ module.exports.getRecentActivity = async (userId, limit = 10) => {
       activities.map((a) => ({ ...a, eventType: a.eventType.eventType })),
     );
   } catch (error) {
+    throw error;
+  }
+};
+
+module.exports.updateUserPassword = async (userId, passwordHash) => {
+  try {
+    await prisma.$transaction(async (tx) => {
+      // Deactivate all previous active passwords for the user
+      await tx.password.updateMany({
+        where: { userId, isActive: true },
+        data: { isActive: false },
+      });
+      // Insert new password as active
+      await tx.password.create({
+        data: {
+          userId,
+          password: passwordHash,
+          isActive: true,
+        },
+      });
+    });
+  } catch (error) {
+    console.log(error);
     throw error;
   }
 };
