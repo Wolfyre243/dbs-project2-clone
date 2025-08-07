@@ -124,7 +124,11 @@ module.exports.getDisplayCommonLanguagesUsed = catchAsync(
 );
 
 module.exports.getAudioPlaysPerExhibit = catchAsync(async (req, res, next) => {
-  const result = await statisticsModel.getAudioPlaysPerExhibitStats();
+  const { startDate, endDate } = req.query;
+  const result = await statisticsModel.getAudioPlaysPerExhibitStats({
+    startDate,
+    endDate,
+  });
   res.status(200).json({
     status: 'success',
     data: result,
@@ -150,7 +154,11 @@ module.exports.getAverageListenDuration = catchAsync(async (req, res, next) => {
 // Get audio completion rates time series data for line charts
 module.exports.getAudioCompletionRatesTimeSeries = catchAsync(
   async (req, res, next) => {
-    const result = await statisticsModel.getAudioCompletionRatesTimeSeries();
+    const { startDate, endDate } = req.query;
+    const result = await statisticsModel.getAudioCompletionRatesTimeSeries({
+      startDate,
+      endDate,
+    });
     res.status(200).json({
       status: 'success',
       data: result,
@@ -161,7 +169,11 @@ module.exports.getAudioCompletionRatesTimeSeries = catchAsync(
 // Get average listen duration time series data for line charts
 module.exports.getAverageListenDurationTimeSeries = catchAsync(
   async (req, res, next) => {
-    const result = await statisticsModel.getAverageListenDurationTimeSeries();
+    const { startDate, endDate } = req.query;
+    const result = await statisticsModel.getAverageListenDurationTimeSeries({
+      startDate,
+      endDate,
+    });
     res.status(200).json({
       status: 'success',
       data: result,
