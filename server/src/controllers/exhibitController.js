@@ -261,7 +261,7 @@ module.exports.getAllExhibits = catchAsync(async (req, res, next) => {
     sortBy = 'createdAt',
     order = 'desc',
     search = '',
-    statusFilter = null, // can be ACTIVE, ARCHIVED, etc.
+    statusFilter = null,
   } = req.query;
 
   const filter = {};

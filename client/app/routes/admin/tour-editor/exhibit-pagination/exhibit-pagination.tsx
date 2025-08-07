@@ -17,6 +17,7 @@ import {
   DialogFooter,
 } from '~/components/ui/dialog';
 import { toast } from 'sonner';
+import StatusCodes from '~/statusConfig';
 
 export default function AdminExhibitPagination() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -26,6 +27,7 @@ export default function AdminExhibitPagination() {
   // For supportedLanguages filter
   const [languageData, setLanguageData] = useState<any[]>([]);
   const [languageFilterValue, setLanguageFilterValue] = useState('');
+  const [statusFilterValue, setStatusFilterValue] = useState(''); // Exhibit status filter
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const { accessToken } = useAuth();
@@ -55,6 +57,17 @@ export default function AdminExhibitPagination() {
   }, [languageFilterValue]);
 
   useEffect(() => {
+    // Update searchParams when statusFilterValue changes
+    if (statusFilterValue !== undefined) {
+      setSearchParams({
+        ...Object.fromEntries(searchParams),
+        statusFilter: statusFilterValue || '',
+        page: '1',
+      });
+    }
+  }, [statusFilterValue]);
+
+  useEffect(() => {
     (async () => {
       try {
         const { data: responseData } = await apiPrivate.get('/exhibit', {
@@ -65,6 +78,7 @@ export default function AdminExhibitPagination() {
             order: searchParams.get('order') || null,
             search: searchParams.get('search') || null,
             languageCodeFilter: searchParams.get('languageCode') || null,
+            statusFilter: searchParams.get('statusFilter') || null,
           },
         });
         setData(responseData.data);
@@ -170,7 +184,7 @@ export default function AdminExhibitPagination() {
   return (
     <div className='flex flex-col gap-3'>
       <div className='flex flex-col md:flex-row w-full gap-3 h-fit'>
-        <div className='w-full'>
+        <div className='flex flex-col md:flex-row w-full h-fit gap-3'>
           <input
             type='text'
             placeholder='Search exhibits...'
@@ -178,24 +192,34 @@ export default function AdminExhibitPagination() {
             defaultValue={searchParams.get('search') || ''}
             onChange={(e) => handleSearchChange(e.target.value)}
           />
-          {/* <div className='flex flex-row items-center gap-3'>
-          <PaginationFilterDropdown
-            filterTitle={'Language'}
-            filterOptionList={languageData.map((lang) => ({ languageCode: lang }))}
-            valueAccessor='languageCode'
-            nameAccessor='languageCode'
-            selectedValue={languageFilterValue}
-            setSelectedValue={setLanguageFilterValue}
-            placeholder='Filter Language'
-          />
-          {languageFilterValue !== '' ? (
-            <Button onClick={() => setLanguageFilterValue('')}>
-              Reset Filters
-            </Button>
-          ) : (
-            ''
-          )}
-        </div> */}
+          <div className='flex flex-row items-center gap-3'>
+            <PaginationFilterDropdown
+              filterTitle={'Status'}
+              filterOptionList={[
+                { statusCode: 'All', statusName: 'All' },
+                {
+                  statusCode: StatusCodes.ACTIVE.toString(),
+                  statusName: 'Active',
+                },
+                {
+                  statusCode: StatusCodes.ARCHIVED.toString(),
+                  statusName: 'Archived',
+                },
+              ]}
+              valueAccessor='statusCode'
+              nameAccessor='statusName'
+              selectedValue={statusFilterValue}
+              setSelectedValue={setStatusFilterValue}
+              placeholder='Filter Status'
+            />
+            {statusFilterValue !== '' ? (
+              <Button onClick={() => setStatusFilterValue('')}>
+                Reset Status
+              </Button>
+            ) : (
+              ''
+            )}
+          </div>
         </div>
         <Link
           to={'/admin/tour-editor/create-exhibit'}

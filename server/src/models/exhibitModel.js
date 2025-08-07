@@ -217,10 +217,11 @@ module.exports.getAllExhibits = async ({
   search,
   filter = {},
 }) => {
+  const allowedStatuses = [statusCodes.ACTIVE, statusCodes.ARCHIVED];
   // If filter.statusId is set, use it; otherwise default to ACTIVE
   let where = { ...filter };
-  if (!filter.statusId) {
-    where.statusId = statusCodes.ACTIVE;
+  if (!filter.statusId || !allowedStatuses.includes(filter.statusId)) {
+    where.statusId = { in: allowedStatuses };
   }
 
   if (search && search.trim() !== '') {
