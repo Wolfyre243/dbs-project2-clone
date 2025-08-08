@@ -173,7 +173,7 @@ export function LanguageUsageCard() {
       <CardContent className='flex-1 pb-0'>
         <ChartContainer
           config={chartConfig}
-          className='[&_.recharts-pie-label-text]:fill-foreground mx-auto aspect-square max-h-[250px] pb-0'
+          className='[&_.recharts-pie-label-text]:fill-foreground mx-auto aspect-square pb-0'
         >
           <PieChart>
             <ChartTooltip content={<ChartTooltipContent />} />

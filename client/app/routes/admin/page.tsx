@@ -22,6 +22,9 @@ export default function AdminHomePage() {
         <h1 className='text-3xl font-bold'>Dashboard</h1>
       </div>
 
+      {/* Charts */}
+      <StartEndDatePicker setDateRange={setDateRange} title='All Statistics' />
+
       {/* Cards */}
       <section className='w-full flex lg:flex-row flex-col gap-4 justify-between'>
         <div className='w-full space-x-2'>
@@ -37,9 +40,6 @@ export default function AdminHomePage() {
           <TopExhibitCard />
         </div>
       </section>
-
-      {/* Charts */}
-      <StartEndDatePicker setDateRange={setDateRange} />
 
       <section className='flex xl:flex-row flex-col w-full gap-4 justify-between'>
         <div className='min-w-full xl:min-w-3/4 min-h-full'>

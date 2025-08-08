@@ -31,6 +31,7 @@ import {
 import { Link } from 'react-router';
 import useApiPrivate from '~/hooks/useApiPrivate';
 import { DialogClose, DialogTrigger } from '@radix-ui/react-dialog';
+import StatusCodes from '~/statusConfig';
 
 // Define meta type for TanStack Table
 interface TableMeta {
@@ -44,6 +45,7 @@ export type Exhibit = {
   createdAt: string;
   image: string | null;
   status: string;
+  statusId: number;
   exhibitCreatedBy: string;
   supportedLanguages: string[];
 };
@@ -180,7 +182,7 @@ export const columns: ColumnDef<Exhibit, any>[] = [
       const apiPrivate = useApiPrivate();
       const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
       const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
-
+      const [showUnarchiveConfirm, setShowUnarchiveConfirm] = useState(false);
       const handleDelete = async () => {
         try {
           const response = await apiPrivate.delete(
@@ -239,6 +241,40 @@ export const columns: ColumnDef<Exhibit, any>[] = [
         setShowArchiveConfirm(false);
       };
 
+      const handleUnarchive = async () => {
+        if (exhibit.statusId !== StatusCodes.ARCHIVED) {
+          toast.error('Exhibit is not archived.', { duration: 2000 });
+          setShowUnarchiveConfirm(false);
+          return;
+        }
+        try {
+          const response = await apiPrivate.put(
+            `/exhibit/${exhibit.exhibitId}/unarchive`,
+          );
+          if (response.status === 200) {
+            toast.success('Exhibit unarchived successfully!', {
+              duration: 2000,
+            });
+            // Trigger table data refresh
+            (table.options.meta as TableMeta)?.onDelete?.(exhibit.exhibitId);
+          }
+        } catch (error) {
+          if (isAxiosError(error)) {
+            toast.error(
+              error.response?.data.message || 'Failed to unarchive exhibit',
+              {
+                duration: 2000,
+              },
+            );
+          } else {
+            toast.error('An unexpected error occurred', {
+              duration: 2000,
+            });
+          }
+        }
+        setShowUnarchiveConfirm(false);
+      };
+
       return (
         <>
           <DropdownMenu>
@@ -269,10 +305,17 @@ export const columns: ColumnDef<Exhibit, any>[] = [
                   <span>View Exhibit</span>
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setShowArchiveConfirm(true)}>
-                <Archive />
-                <span className='text-yellow-400'>Archive Exhibit</span>
-              </DropdownMenuItem>
+              {exhibit.statusId === StatusCodes.ARCHIVED ? (
+                <DropdownMenuItem onClick={() => setShowUnarchiveConfirm(true)}>
+                  <Archive />
+                  <span className='text-green-400'>Unarchive Exhibit</span>
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem onClick={() => setShowArchiveConfirm(true)}>
+                  <Archive />
+                  <span className='text-yellow-400'>Archive Exhibit</span>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onClick={() => setShowDeleteConfirm(true)}>
                 <Trash2 />
                 <span className='text-red-400'>Delete Exhibit</span>
@@ -318,6 +361,28 @@ export const columns: ColumnDef<Exhibit, any>[] = [
                 </DialogClose>
                 <Button variant='destructive' onClick={handleDelete}>
                   Delete
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          <Dialog
+            open={showUnarchiveConfirm}
+            onOpenChange={setShowUnarchiveConfirm}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Unarchive Exhibit</DialogTitle>
+                <DialogDescription>
+                  Are you sure you want to unarchive this exhibit? This will set
+                  its status to ACTIVE.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter className='flex gap-2 justify-end'>
+                <DialogClose asChild>
+                  <Button variant='outline'>Cancel</Button>
+                </DialogClose>
+                <Button variant='default' onClick={handleUnarchive}>
+                  Unarchive
                 </Button>
               </DialogFooter>
             </DialogContent>
