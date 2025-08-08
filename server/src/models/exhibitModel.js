@@ -271,6 +271,7 @@ module.exports.getAllExhibits = async ({
           subtitles: undefined,
           supportedLanguages: supportedLangArr,
           status: exhibit.status.statusName,
+          statusId: exhibit.status.statusId,
           exhibitCreatedBy: exhibit.exhibitCreatedBy.username,
         };
       })

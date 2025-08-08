@@ -448,6 +448,10 @@ module.exports.getAllUsers = async ({
     },
   };
 
+  let orderBy = {
+    createdAt: 'desc',
+  };
+
   // Conditional search terms
   if (search && search.trim() !== '') {
     where.OR = [
@@ -455,6 +459,26 @@ module.exports.getAllUsers = async ({
       { userProfile: { firstName: { contains: search } } },
       { userProfile: { lastName: { contains: search } } },
     ];
+  }
+
+  if (sortBy && order) {
+    if (sortBy === 'age') {
+      orderBy = {
+        userProfile: {
+          dob: order,
+        },
+      };
+    } else if (sortBy === 'gender' || sortBy === 'languageCode') {
+      orderBy = {
+        userProfile: {
+          [sortBy]: order,
+        },
+      };
+    } else {
+      orderBy = {
+        [sortBy]: order,
+      };
+    }
   }
 
   const userCount = await prisma.users.count({ where });
@@ -492,9 +516,7 @@ module.exports.getAllUsers = async ({
         },
       },
     },
-    orderBy: {
-      [sortBy]: order,
-    },
+    orderBy,
   });
 
   const users = usersRaw

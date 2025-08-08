@@ -18,7 +18,7 @@ export function StartEndDatePicker({
   return (
     <div
       className={cn(
-        'sticky z-50 top-15 bg-background/50 backdrop-blur-xl px-6 py-6 rounded-md dark:shadow-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4',
+        'sticky z-50 top-12 bg-background/50 backdrop-blur-xl px-6 py-6 rounded-md dark:shadow-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4',
         className,
       )}
     >
