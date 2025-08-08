@@ -145,6 +145,9 @@ module.exports.getAllUsers = catchAsync(async (req, res, next) => {
     order,
     search,
     filter,
+    ageMin: req.query.ageMin ? parseInt(req.query.ageMin) : undefined,
+    ageMax: req.query.ageMax ? parseInt(req.query.ageMax) : undefined,
+    gender: req.query.gender,
   });
 
   res.status(200).json({
