@@ -43,6 +43,7 @@ import {
   SelectValue,
 } from '~/components/ui/select';
 import CountUp from '~/components/animations/CountUp';
+import type { DateRange } from '~/components/analytics-ui';
 
 // TypeScript interface for chart data
 interface ChartDataItem {
@@ -417,9 +418,8 @@ export function SectionCards() {
   );
 }
 
-export function UserSignUpChart() {
+export function UserSignUpChart({ dateRange }: { dateRange: DateRange }) {
   const apiPrivate = useApiPrivate();
-  // const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [chartData, setChartData] = useState<ChartDataItem[]>([]);
   const [totalMembers, setTotalMembers] = useState(0);
@@ -428,20 +428,15 @@ export function UserSignUpChart() {
     gender: string;
     ageGroup: string;
     granularity: string;
-    startDate: Date | null;
-    endDate: Date | null;
   }>({
     gender: 'All',
     ageGroup: 'All',
     granularity: 'day',
-    startDate: null,
-    endDate: null,
   });
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // setLoading(true);
         setError(null);
         const res = await apiPrivate.get(
           '/statistics/display-member-sign-ups',
@@ -450,15 +445,19 @@ export function UserSignUpChart() {
               gender: filters.gender,
               ageGroup: filters.ageGroup,
               granularity: filters.granularity,
-              startDate: filters.startDate?.toISOString(),
-              endDate: filters.endDate?.toISOString(),
+              startDate: dateRange.startDate
+                ? dateRange.startDate.toISOString()
+                : undefined,
+              endDate: dateRange.endDate
+                ? dateRange.endDate.toISOString()
+                : undefined,
             },
           },
         );
 
         const rawData = res.data.data.timeSeries.data;
 
-        const formatted = rawData.map((item: any, index: number) => {
+        const formatted = rawData.map((item: any) => {
           const dailyTotal =
             (item.Children || 0) +
             (item.Youth || 0) +
@@ -480,20 +479,23 @@ export function UserSignUpChart() {
       }
     };
     fetchData();
-  }, [filters, apiPrivate]);
+  }, [filters, dateRange, apiPrivate]);
 
-  // if (!loading) {
-  //   return (
-  //     <Card>
-  //       <CardHeader>
-  //         <CardTitle>Loading...</CardTitle>
-  //       </CardHeader>
-  //       <CardContent className='h-[300px] flex items-center justify-center'>
-  //         <div>Loading chart data...</div>
-  //       </CardContent>
-  //     </Card>
-  //   );
-  // }
+  const handleExportCSV = () => {
+    if (chartData.length === 0) return;
+    const sheet = chartData.map((item: any) => ({
+      Date: item.date,
+      'Total Sign-Ups': item.totalCount,
+      'Daily Sign-Ups': item.dailySignups,
+    }));
+    const wb = XLSXUtils.book_new();
+    XLSXUtils.book_append_sheet(
+      wb,
+      XLSXUtils.json_to_sheet(sheet),
+      'User Sign-Ups',
+    );
+    XLSXWriteFile(wb, 'user-sign-ups-time-series.csv');
+  };
 
   if (error) {
     return (
@@ -509,100 +511,74 @@ export function UserSignUpChart() {
   }
   return (
     <Card className='h-full bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
-      <CardHeader className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
-        <div className='flex flex-col gap-2'>
-          <CardTitle>Member Sign-Ups Over Time</CardTitle>
-          <CardDescription>
-            Total: {totalMembers.toLocaleString()} members
-          </CardDescription>
-        </div>
-        <div className='flex flex-row gap-2 items-end w-full flex-wrap md:flex-nowrap'>
-          {/* Top row: Select dropdowns */}
-          <div className='flex gap-2 flex-wrap md:flex-nowrap'>
-            <Select
-              value={filters.gender}
-              onValueChange={(val) =>
-                setFilters((f) => ({ ...f, gender: val }))
-              }
-            >
-              <SelectTrigger className='w-[120px]'>
-                <SelectValue placeholder='Gender' />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='All'>All Genders</SelectItem>
-                <SelectItem value='M'>Male</SelectItem>
-                <SelectItem value='F'>Female</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={filters.ageGroup}
-              onValueChange={(val) =>
-                setFilters((f) => ({ ...f, ageGroup: val }))
-              }
-            >
-              <SelectTrigger className='w-[140px]'>
-                <SelectValue placeholder='Age Group' />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='All'>All Ages</SelectItem>
-                <SelectItem value='Children'>Children (1 - 13)</SelectItem>
-                <SelectItem value='Youth'>Youth (14 - 18)</SelectItem>
-                <SelectItem value='Adults'>Adults (19 - 64)</SelectItem>
-                <SelectItem value='Seniors'>Seniors (65+)</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={filters.granularity}
-              onValueChange={(val) =>
-                setFilters((f) => ({ ...f, granularity: val }))
-              }
-            >
-              <SelectTrigger className='w-[120px]'>
-                <SelectValue placeholder='Period' />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='day'>Day</SelectItem>
-                <SelectItem value='month'>Month</SelectItem>
-                <SelectItem value='year'>Year</SelectItem>
-              </SelectContent>
-            </Select>
+      <CardHeader>
+        <div className='flex flex-row justify-between'>
+          <div>
+            <CardTitle>Member Sign-Ups Over Time</CardTitle>
+            <CardDescription>
+              Total: {totalMembers.toLocaleString()} members
+            </CardDescription>
           </div>
-
-          {/* Bottom row: Date pickers */}
-          <div className='flex flex-wrap md:flex-nowrap gap-2 items-center'>
-            <div className='flex flex-col gap-1'>
-              <span className='text-sm text-muted-foreground'>Start:</span>
-              <DatePicker
-                fieldName='startDate'
-                label=''
-                onChange={(val: string) => {
-                  setFilters((prev) => ({
-                    ...prev,
-                    startDate: val ? new Date(val) : null,
-                  }));
-                }}
-              />
-            </div>
-
-            <div className='flex flex-col gap-1'>
-              <span className='text-sm text-muted-foreground'>End:</span>
-              <DatePicker
-                fieldName='endDate'
-                label=''
-                onChange={(val: string) => {
-                  setFilters((prev) => ({
-                    ...prev,
-                    endDate: val ? new Date(val) : null,
-                  }));
-                }}
-              />
-            </div>
-          </div>
+          <Button
+            size='sm'
+            variant='secondary'
+            onClick={handleExportCSV}
+            disabled={chartData.length === 0}
+          >
+            <DownloadIcon className='mr-1' /> Export CSV
+          </Button>
         </div>
       </CardHeader>
       <CardContent className='px-2 pt-4 sm:px-6 sm:pt-6'>
+        <div className='flex gap-2 mb-4'>
+          <Select
+            value={filters.gender}
+            onValueChange={(val) => setFilters((f) => ({ ...f, gender: val }))}
+          >
+            <SelectTrigger className='w-[120px]'>
+              <SelectValue placeholder='Gender' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='All'>All Genders</SelectItem>
+              <SelectItem value='M'>Male</SelectItem>
+              <SelectItem value='F'>Female</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={filters.ageGroup}
+            onValueChange={(val) =>
+              setFilters((f) => ({ ...f, ageGroup: val }))
+            }
+          >
+            <SelectTrigger className='w-[140px]'>
+              <SelectValue placeholder='Age Group' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='All'>All Ages</SelectItem>
+              <SelectItem value='Children'>Children (1 - 13)</SelectItem>
+              <SelectItem value='Youth'>Youth (14 - 18)</SelectItem>
+              <SelectItem value='Adults'>Adults (19 - 64)</SelectItem>
+              <SelectItem value='Seniors'>Seniors (65+)</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={filters.granularity}
+            onValueChange={(val) =>
+              setFilters((f) => ({ ...f, granularity: val }))
+            }
+          >
+            <SelectTrigger className='w-[120px]'>
+              <SelectValue placeholder='Period' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='day'>Day</SelectItem>
+              <SelectItem value='month'>Month</SelectItem>
+              <SelectItem value='year'>Year</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <ChartContainer config={chartConfig} className='h-[300px] w-full'>
           <ResponsiveContainer width='100%' height='100%'>
             <LineChart data={chartData}>

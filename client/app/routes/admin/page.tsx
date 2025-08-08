@@ -6,48 +6,21 @@ import AudioCompletionRateCard from './statistics/audio/AudioCards';
 import QRScanCountCard from './statistics/qrCode/QrCodeCards';
 import TopExhibitCard from './statistics/exhibit/ExhibitCards';
 import AudioPlaysByExhibitChart from './statistics/audio/AudioPlaysByExhibitChart';
+import { StartEndDatePicker, type DateRange } from '~/components/analytics-ui';
+import { useState } from 'react';
 
 export default function AdminHomePage() {
   // const [activeTab, setActiveTab] = useState('users');
+  const [dateRange, setDateRange] = useState<DateRange>({
+    startDate: null,
+    endDate: null,
+  });
 
   return (
-    <div className='space-y-6 px-4 py-6'>
+    <div className='space-y-4 px-4 py-6'>
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
         <h1 className='text-3xl font-bold'>Dashboard</h1>
-
-        {/* Dropdown Select that controls content */}
-        {/* <Select value={activeTab} onValueChange={setActiveTab}>
-          <SelectTrigger className='w-[180px]'>
-            <SelectValue placeholder='Select View' />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value='users'>Users</SelectItem>
-            <SelectItem value='languages'>Languages</SelectItem>
-            <SelectItem value='qr-codes'>QR Codes</SelectItem>
-            <SelectItem value='audio'>Audio Engagement</SelectItem>
-          </SelectContent>
-        </Select> */}
       </div>
-
-      {/* Hidden Tabs - only content is shown, no tab buttons */}
-      {/* <Tabs value={activeTab} className='w-full'>
-        <TabsContent value='users' className='space-y-6'>
-          <SectionCards />
-          <ChartAreaInteractive />
-        </TabsContent>
-
-        <TabsContent value='languages' className='space-y-6'>
-          <LanguageStatistics />
-        </TabsContent>
-
-        <TabsContent value='qr-codes' className='space-y-6'>
-          <QRScanDashboard />
-        </TabsContent>
-
-        <TabsContent value='audio' className='space-y-6'>
-          <AudioStatisticsDashboard />
-        </TabsContent>
-      </Tabs> */}
 
       {/* Cards */}
       <section className='w-full flex lg:flex-row flex-col gap-4 justify-between'>
@@ -66,9 +39,11 @@ export default function AdminHomePage() {
       </section>
 
       {/* Charts */}
+      <StartEndDatePicker setDateRange={setDateRange} />
+
       <section className='flex xl:flex-row flex-col w-full gap-4 justify-between'>
         <div className='min-w-full xl:min-w-3/4 min-h-full'>
-          <UserSignUpChart />
+          <UserSignUpChart dateRange={dateRange} />
         </div>
         <div className='w-full h-full'>
           <LanguageUsageCard />
@@ -76,7 +51,7 @@ export default function AdminHomePage() {
       </section>
 
       <section>
-        <AudioPlaysByExhibitChart />
+        <AudioPlaysByExhibitChart dateRange={dateRange} />
       </section>
     </div>
   );

@@ -14,6 +14,13 @@ import { useState } from 'react';
 
 export default function AdminAnalyticsPage() {
   const [activeTab, setActiveTab] = useState('users');
+  const [dateRange, setDateRange] = useState<{
+    startDate: Date | null;
+    endDate: Date | null;
+  }>({
+    startDate: null,
+    endDate: null,
+  });
 
   return (
     <div className='space-y-6 px-4 py-6'>
@@ -38,7 +45,8 @@ export default function AdminAnalyticsPage() {
         <Tabs value={activeTab} className='w-full'>
           <TabsContent value='users' className='space-y-6'>
             <SectionCards />
-            <UserSignUpChart />
+            {/* TODO DatePicker */}
+            <UserSignUpChart dateRange={dateRange} />
           </TabsContent>
 
           <TabsContent value='languages' className='space-y-6'>

@@ -236,7 +236,7 @@ export default function AdminExhibitPagination() {
         </div>
         <Link
           to={'/admin/tour-editor/create-exhibit'}
-          className='flex flex-row items-center gap-2 w-fit h-fit text-nowrap px-3 py-1.5 text-muted bg-primary rounded-lg text-sm'
+          className='flex flex-row items-center gap-2 w-fit h-fit text-nowrap px-3 py-1.5 bg-primary rounded-lg text-sm'
         >
           <Plus />
           Create New
