@@ -43,7 +43,7 @@ import {
   SelectValue,
 } from '~/components/ui/select';
 import CountUp from '~/components/animations/CountUp';
-import type { DateRange } from '~/components/analytics-ui';
+import { StartEndDatePicker, type DateRange } from '~/components/analytics-ui';
 
 // TypeScript interface for chart data
 interface ChartDataItem {
@@ -653,5 +653,20 @@ export function UserSignUpChart({ dateRange }: { dateRange: DateRange }) {
         </ChartContainer>
       </CardContent>
     </Card>
+  );
+}
+
+export function UserAnalyticsDashboard() {
+  const [dateRange, setDateRange] = useState<DateRange>({
+    startDate: null,
+    endDate: null,
+  });
+
+  return (
+    <section className='flex flex-col gap-3'>
+      <StartEndDatePicker setDateRange={setDateRange} title='User Analytics' />
+      <SectionCards />
+      <UserSignUpChart dateRange={dateRange} />
+    </section>
   );
 }

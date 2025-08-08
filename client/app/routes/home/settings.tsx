@@ -174,7 +174,15 @@ function EditProfileDialog({
           </div>
           <DialogFooter>
             <DialogClose asChild>
-              <Button type='button' variant='outline'>
+              <Button
+                type='button'
+                variant='outline'
+                onClick={() => {
+                  setUsername(user.username || '');
+                  setFirstName(user.userProfile?.firstName || '');
+                  setLastName(user.userProfile?.lastName || '');
+                }}
+              >
                 Cancel
               </Button>
             </DialogClose>

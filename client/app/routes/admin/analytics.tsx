@@ -6,7 +6,11 @@ import {
   SelectValue,
 } from '../../components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs';
-import { SectionCards, UserSignUpChart } from './statistics/users';
+import {
+  SectionCards,
+  UserAnalyticsDashboard,
+  UserSignUpChart,
+} from './statistics/users';
 import { LanguageStatistics } from './statistics/language';
 import { QRScanDashboard } from './statistics/qrCode/QrCodeGraphs';
 import AudioStatisticsDashboard from './statistics/audio/page';
@@ -44,9 +48,7 @@ export default function AdminAnalyticsPage() {
         {/* Hidden Tabs - only content is shown, no tab buttons */}
         <Tabs value={activeTab} className='w-full'>
           <TabsContent value='users' className='space-y-6'>
-            <SectionCards />
-            {/* TODO DatePicker */}
-            <UserSignUpChart dateRange={dateRange} />
+            <UserAnalyticsDashboard />
           </TabsContent>
 
           <TabsContent value='languages' className='space-y-6'>
