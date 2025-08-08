@@ -1,3 +1,4 @@
+const Roles = require('../configs/roleConfig');
 const statusCodes = require('../configs/statusCodes');
 const { Prisma, PrismaClient } = require('../generated/prisma');
 const prisma = new PrismaClient();
@@ -437,7 +438,15 @@ module.exports.getAllUsers = async ({
   search,
   filter = {},
 }) => {
-  let where = { ...filter, statusId: statusCodes.ACTIVE };
+  let where = {
+    ...filter,
+    statusId: statusCodes.ACTIVE,
+    userRoles: {
+      roleId: {
+        in: [Roles.MEMBER, Roles.ADMIN, Roles.SUPERADMIN],
+      },
+    },
+  };
 
   // Conditional search terms
   if (search && search.trim() !== '') {
