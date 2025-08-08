@@ -437,6 +437,9 @@ module.exports.getAllUsers = async ({
   order,
   search,
   filter = {},
+  ageMin,
+  ageMax,
+  gender,
 }) => {
   let where = {
     ...filter,
@@ -447,6 +450,40 @@ module.exports.getAllUsers = async ({
       },
     },
   };
+
+  // Gender filter
+  if (gender) {
+    where.userProfile = {
+      ...where.userProfile,
+      gender: gender,
+    };
+  }
+
+  // Age filter (calculate year range from dob)
+  if (ageMin || ageMax) {
+    const today = new Date();
+    let dobFilter = {};
+    if (ageMin) {
+      const maxDob = new Date(
+        today.getFullYear() - ageMin,
+        today.getMonth(),
+        today.getDate(),
+      );
+      dobFilter.lte = maxDob;
+    }
+    if (ageMax) {
+      const minDob = new Date(
+        today.getFullYear() - ageMax - 1,
+        today.getMonth(),
+        today.getDate() + 1,
+      );
+      dobFilter.gte = minDob;
+    }
+    where.userProfile = {
+      ...where.userProfile,
+      dob: dobFilter,
+    };
+  }
 
   let orderBy = {
     createdAt: 'desc',
