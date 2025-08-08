@@ -418,10 +418,8 @@ export function UserRecentActivity() {
   const [activities, setActivities] = useState<ActivityLog[]>([]);
 
   useEffect(() => {
-    let intervalId: NodeJS.Timeout;
-
-    const fetchFavExhibits = async () => {
-      // setIsLoading(true);
+    const fetchActivity = async () => {
+      setIsLoading(true);
 
       try {
         const { data: responseData } = await apiPrivate.get(
@@ -433,17 +431,23 @@ export function UserRecentActivity() {
       } catch (error: any) {
         setError(error.response?.data.message);
       } finally {
-        // setIsLoading(false);
+        setIsLoading(false);
       }
     };
 
-    fetchFavExhibits();
-    intervalId = setInterval(fetchFavExhibits, 2000); // Poll every 2s
-
-    return () => {
-      clearInterval(intervalId);
-    };
+    fetchActivity();
   }, [apiPrivate]);
+
+  if (isLoading) {
+    return (
+      <div className='flex flex-col gap-3 w-full'>
+        <div className='flex flex-row gap-1'>
+          <Loader2 className='animate-spin' />
+          <h1>Loading...</h1>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className='flex flex-col gap-3 w-full'>
