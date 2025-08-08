@@ -212,3 +212,12 @@ module.exports.getUserAudioStatistics = catchAsync(async (req, res, next) => {
   const stats = await userModel.getUserAudioStatistics(userId);
   res.status(200).json({ status: 'success', data: stats });
 });
+
+module.exports.getSingleUser = catchAsync(async (req, res, next) => {
+  const { userId } = req.params;
+  const user = await userModel.getUserById(userId);
+  res.status(200).json({
+    status: 'success',
+    data: user,
+  });
+});

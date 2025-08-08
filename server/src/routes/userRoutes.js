@@ -46,4 +46,10 @@ userRouter.get('/recent-activity', userController.getRecentActivity);
 userRouter.get('/statistics/qr', userController.getUserQRStatistics);
 userRouter.get('/statistics/audio', userController.getUserAudioStatistics);
 
+userRouter.get(
+  '/admin/:userId',
+  authMiddleware.verifyIsAdmin,
+  userController.getSingleUser,
+);
+
 module.exports = userRouter;

@@ -648,3 +648,23 @@ module.exports.updateUserPassword = async (userId, passwordHash) => {
     throw error;
   }
 };
+
+module.exports.getUserById = async (userId) => {
+  try {
+    const user = await prisma.users.findUnique({
+      where: { userId },
+      include: {
+        userRoles: { include: { role: true } },
+        userProfile: true,
+        status: true,
+        emails: true,
+        phoneNumbers: true,
+      },
+    });
+    if (!user) throw new AppError('User not found', 404);
+    if (user.emails) user.emails.email = decryptData(user.emails.email);
+    return convertDatesToStrings(user);
+  } catch (error) {
+    throw error;
+  }
+};
