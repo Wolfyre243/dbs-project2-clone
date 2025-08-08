@@ -43,6 +43,26 @@ export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang='en'>
       <head>
+        {/*
+          Preload user's theme before React hydration to prevent flash.
+          This script reads 'sdc-theme' from localStorage and sets the theme class
+          on document.documentElement before React renders. Only 'dark' and 'light'
+          are handled as per requirements.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  let theme = localStorage.getItem('sdc-theme');
+                  if (theme === 'dark' || theme === 'light') {
+                    document.documentElement.classList.add(theme);
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
         <meta charSet='utf-8' />
         <meta name='viewport' content='width=device-width, initial-scale=1' />
         <Meta />
