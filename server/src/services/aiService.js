@@ -529,8 +529,15 @@ async function generateTitle(request) {
     contents: request,
     config: {
       systemInstruction: `
-      Create a concise conversation title (max 100 characters) that captures the essence of the user's initial prompt.
-      Do not elaborate further, simply output the prompt.
+      From the first user message only, produce a neutral, headline-style title (≤100 characters) that captures the essence of the user's initial prompt.
+      Rules:
+      No punctuation at the end
+      No quotation marks.
+      No conversational tone.
+      No explanations or extra sentences.
+      Do not rephrase as a question.
+      Output only the title text.
+      If you cannot follow all rules, output exactly: "New Conversation".
       `,
 
       tools: [groundingTool],

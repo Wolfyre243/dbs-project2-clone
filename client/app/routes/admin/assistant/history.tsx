@@ -52,7 +52,7 @@ function HistoryItem({
   const apiPrivate = useApiPrivate();
 
   return (
-    <Card className='bg-transparent border-none'>
+    <Card className='flex flex-col w-full bg-transparent border-none'>
       <CardHeader>
         <CardTitle className='text-lg'>
           <Link
@@ -214,7 +214,7 @@ export default function AssistantHistoryPage() {
     <div className='flex flex-row justify-start w-full'>
       <div className='w-4xl flex flex-col gap-4 px-4'>
         {/* Header */}
-        <header className='flex flex-row items-center gap-2'>
+        <header className='flex flex-row items-center gap-2 flex-wrap'>
           <div className='flex flex-row items-center gap-2'>
             <History className='size-8' />
             <h1 className='text-3xl font-bold'>History</h1>
@@ -304,7 +304,7 @@ export default function AssistantHistoryPage() {
           </Pagination>
         </header>
 
-        <section className='flex flex-col gap-3'>
+        <section className='flex flex-col min-w-full gap-3'>
           {history.length !== 0 ? (
             history.map((historyItem, i) => {
               return (

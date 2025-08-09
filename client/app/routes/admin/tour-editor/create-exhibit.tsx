@@ -123,6 +123,7 @@ export default function TourEditorCreateExhibitPage() {
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isCreatingSubtitle, setIsCreatingSubtitle] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
+  const [isDragged, setIsDragged] = useState<boolean>(false);
 
   // Drag and drop handlers
   const handleImageDrop = async (e: React.DragEvent<HTMLDivElement>) => {
@@ -144,6 +145,7 @@ export default function TourEditorCreateExhibitPage() {
   };
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    setIsDragged(false);
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
@@ -160,6 +162,7 @@ export default function TourEditorCreateExhibitPage() {
   };
 
   const uploadImage = async (file: File) => {
+    setIsDragged(false);
     setIsUploadingImage(true);
 
     try {
@@ -683,8 +686,17 @@ export default function TourEditorCreateExhibitPage() {
                   ) : (
                     <div
                       onDrop={handleImageDrop}
-                      onDragOver={(e) => e.preventDefault()}
-                      className={`flex min-h-full border-2 border-dashed rounded-md p-4 flex-col items-center justify-center cursor-pointer transition-colors ${isUploadingImage ? 'opacity-50' : 'hover:border-primary'}`}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setIsDragged(true);
+                      }}
+                      onDragLeave={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setIsDragged(false);
+                      }}
+                      className={`flex min-h-full border-2 border-dashed rounded-md p-4 flex-col items-center justify-center cursor-pointer transition-colors ${isDragged ? 'border-primary' : ''} ${isUploadingImage ? 'opacity-50' : 'hover:border-primary'}`}
                       // style={{ minHeight: 150 }}
                       onClick={() =>
                         document.getElementById('exhibit-image-input')?.click()

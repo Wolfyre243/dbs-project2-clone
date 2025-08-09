@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   MessageCircle,
   Sparkles,
@@ -17,7 +17,7 @@ import {
   CardHeader,
   CardTitle,
 } from '~/components/ui/card';
-import { useNavigate } from 'react-router';
+import { useNavigate, useOutletContext } from 'react-router';
 import { AssistantChatBar } from '~/components/assistant-ui';
 import useApiPrivate from '~/hooks/useApiPrivate';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -30,6 +30,11 @@ export default function AssistantLaunchPage() {
   const navigate = useNavigate();
   const apiPrivate = useApiPrivate();
   const isMobile = useIsMobile();
+  const { handleTitle } = useOutletContext<any>();
+
+  useEffect(() => {
+    handleTitle('');
+  }, [handleTitle]);
 
   const handleSubmit = async () => {
     if (!message.trim()) return;
@@ -290,7 +295,7 @@ export default function AssistantLaunchPage() {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className='w-4xl flex flex-col self-center'
+            className='w-full md:w-4xl flex flex-col self-center'
           >
             <AssistantChatBar
               isLoading={isLoading}
