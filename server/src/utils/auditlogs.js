@@ -1,5 +1,6 @@
 //This is to log admin actions in the database
 const { PrismaClient } = require('../generated/prisma');
+const logger = require('./logger');
 const prisma = new PrismaClient();
 
 /**
@@ -30,7 +31,8 @@ module.exports.logAdminAudit = async function ({
         logText,
       },
     });
-    // TODO: Log info here too
+
+    logger.info(logText);
   } catch (error) {
     console.error('Error logging admin audit action:', error);
   }

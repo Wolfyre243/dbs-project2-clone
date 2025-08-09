@@ -120,8 +120,8 @@ export function MemberRegisterForm({
               className='flex flex-col items-center gap-2 font-medium'
             >
               <div className='flex gap-3 items-center justify-center rounded-md'>
-                {/* TODO: Replace with SDC logo */}
-                <GalleryVerticalEnd className='size-6' />
+                {/* <GalleryVerticalEnd className='size-6' /> */}
+                <img src='/sdc-logo.png' alt='' />
                 <h1 className='font-bold'>SDC</h1>
               </div>
             </a>

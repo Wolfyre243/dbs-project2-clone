@@ -9,7 +9,6 @@ const stream = {
 };
 
 // Custom token to capture response time in ms
-// TODO: Add more custom headers
 morgan.token('response-time-ms', (req, res) => {
   if (req.startTime) {
     const duration = Date.now() - req.startTime;

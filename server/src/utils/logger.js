@@ -2,7 +2,6 @@ const winston = require('winston');
 const { combine, timestamp, json, errors } = winston.format;
 
 // Custom format for console output
-// TODO: Improve format
 const consoleFormat = combine(
   winston.format.colorize(),
   winston.format.printf(({ level, message, timestamp, stack }) => {

@@ -742,7 +742,6 @@ export default function TourEditorCreateExhibitPage() {
 
                   {/* Subtitle Text & Language */}
                   <div className='space-y-4'>
-                    {/* TODO: Add checks to ensure language isnt repeated */}
                     <div className='space-y-2'>
                       <Label>Language *</Label>
                       <LanguageSelect
@@ -778,7 +777,6 @@ export default function TourEditorCreateExhibitPage() {
                         {subtitleFormData.text.length}/
                         {VALIDATION_LIMITS.SUBTITLE_TEXT_MAX} characters
                       </div>
-                      {/* TODO: LOW | Fix validation methods */}
                       {validationErrors[`subtitle-0`] && (
                         <div className='flex items-center gap-2 text-sm text-red-600'>
                           <AlertCircle className='h-4 w-4' />

@@ -10,7 +10,6 @@ const {
 } = require('../utils/echogardenHelper');
 const EventTypes = require('../configs/eventTypes');
 
-// TODO: Add back imageId
 module.exports.createExhibit = async ({
   title,
   description,

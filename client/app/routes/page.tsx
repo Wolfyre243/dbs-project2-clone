@@ -15,11 +15,12 @@ import { motion } from 'framer-motion';
 import api from '~/services/api';
 import useAuth from '~/hooks/useAuth';
 import { jwtDecode } from 'jwt-decode';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { useJWTDecode } from '~/hooks/useJWTDecode';
 import { isAxiosError } from 'axios';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
+import { RainbowButton } from '~/components/magicui/rainbow-button';
 
 export default function LandingPage() {
   const { setAccessToken, accessToken } = useAuth();
@@ -58,9 +59,10 @@ export default function LandingPage() {
           {/* Redesigned Background */}
           <div className='absolute inset-0'>
             {/* Subtle animated gradient overlay */}
-            <div className='absolute inset-0 bg-gradient-to-br from-red-100/90 dark:from-red-400 to-red-300/100 dark:to-red-300 animate-gradient-x' />
+            {/*  bg-gradient-to-br from-red-400 to-red-300/100 dark:to-red-300 animate-gradient-x  */}
+            <div className='absolute inset-0 bg-hero' />
             {/* Glassmorphism overlay */}
-            <div className='absolute inset-0 bg-white/5 backdrop-blur-[2px]' />
+            <div className='absolute inset-0 bg-white/30 dark:bg-white/5 backdrop-blur-[4px]' />
           </div>
 
           {/* Hero Content */}
@@ -82,7 +84,7 @@ export default function LandingPage() {
             >
               {t('mainHeading1')}
               <br />
-              <span className='bg-gradient-to-r from-red-400 dark:from-red-500 to-red-300 dark:to-red-400 bg-clip-text text-transparent'>
+              <span className='bg-gradient-to-r from-red-500 dark:from-red-500 to-red-600 dark:to-red-600 bg-clip-text text-transparent'>
                 {t('mainHeading2')}
               </span>
               <br />
@@ -142,10 +144,7 @@ export default function LandingPage() {
                   {t('beginningsDesc')}
                 </p>
                 <audio controls className='w-full'>
-                  <source
-                    src='/audio/beginnings-sample.mp3'
-                    type='audio/mpeg'
-                  />
+                  <source src='/sample-audio-1.wav' type='audio/wav' />
                   {t('supportError')}
                 </audio>
               </motion.div>
@@ -164,7 +163,7 @@ export default function LandingPage() {
                   {t('defendingDesc')}
                 </p>
                 <audio controls className='w-full'>
-                  <source src='/audio/defending-sample.mp3' type='audio/mpeg' />
+                  <source src='/sample-audio-2.wav' type='audio/wav' />
                   {t('supportError')}
                 </audio>
               </motion.div>
@@ -183,7 +182,7 @@ export default function LandingPage() {
                   {t('voicesDesc')}
                 </p>
                 <audio controls className='w-full'>
-                  <source src='/audio/voices-sample.mp3' type='audio/mpeg' />
+                  <source src='/sample-audio-3.wav' type='audio/wav' />
                   {t('supportError')}
                 </audio>
               </motion.div>
@@ -212,7 +211,9 @@ export default function LandingPage() {
                   <li>✔ {t('discounts')}</li>
                   <li>✔ {t('priorityBooking')}</li>
                 </ul>
-                <Button className='w-full max-w-xs'>{t('joinNow')}</Button>
+                <Button className='w-full max-w-xs' asChild>
+                  <Link to={'/membership-plans'}>{t('joinNow')}</Link>
+                </Button>
               </div>
               <div className='flex-1 rounded-2xl bg-card shadow-lg border border-border p-8 flex flex-col items-center'>
                 <h3 className='text-xl font-semibold mb-2 text-foreground'>
@@ -224,11 +225,23 @@ export default function LandingPage() {
                   <li>✔ {t('familyBirthday')}</li>
                   <li>✔ {t('earlyAccess')}</li>
                 </ul>
-                <Button className='w-full max-w-xs' variant='outline'>
-                  {t('learnMore')}
+                <Button className='w-full max-w-xs' variant='outline' asChild>
+                  <Link to={'/membership-plans'}>{t('learnMore')}</Link>
                 </Button>
               </div>
             </div>
+          </div>
+          <div className='flex flex-row w-full mt-10 justify-center'>
+            {/* <Button className=''>
+              <Link to={'/auth/register'}>Join as a FREE member</Link>
+            </Button> */}
+            <RainbowButton
+              asChild
+              variant={'outline'}
+              className='text-lg p-6 rounded-full'
+            >
+              <Link to={'/auth/register'}>Join as a FREE member</Link>
+            </RainbowButton>
           </div>
         </section>
 

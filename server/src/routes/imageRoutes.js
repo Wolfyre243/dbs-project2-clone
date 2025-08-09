@@ -414,5 +414,3 @@ imageRouter.delete('/:imageId', imageController.deleteImage);
 imageRouter.delete('/hard-delete/:imageId', imageController.hardDeleteImage);
 
 module.exports = imageRouter;
-
-// TODO: Audit log import & validations;

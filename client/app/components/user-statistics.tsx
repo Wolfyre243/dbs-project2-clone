@@ -12,6 +12,7 @@ import {
   PlayCircle,
   QrCode,
   Search,
+  Star,
   StarOff,
   Volume2,
 } from 'lucide-react';
@@ -410,6 +411,12 @@ export function UserActivityLogItem({ activity }: { activity: ActivityLog }) {
       break;
     case EventTypes.AUDIO_SEEKED:
       activityIcon = <AudioWaveform />;
+      break;
+    case EventTypes.EXHIBIT_FAVOURITED:
+      activityIcon = <Star />;
+      break;
+    case EventTypes.EXHIBIT_UNFAVOURITED:
+      activityIcon = <StarOff />;
       break;
     default:
       activityIcon = <CircleEllipsis />;

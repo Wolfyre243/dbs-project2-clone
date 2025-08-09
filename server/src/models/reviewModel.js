@@ -48,9 +48,10 @@ const reviewModel = {
             },
           },
         },
+        take: 10,
       });
     } catch (err) {
-      throw new AppError(`Failed to fetch reviews: ${err.message}`, 500);
+      throw err;
     }
   },
 
@@ -84,7 +85,7 @@ const reviewModel = {
 
       return { reviews, total };
     } catch (err) {
-      throw new AppError(`Failed to fetch reviews: ${err.message}`, 500);
+      throw err;
     }
   },
   disconnect: () => prisma.$disconnect(),

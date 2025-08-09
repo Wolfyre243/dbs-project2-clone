@@ -288,7 +288,6 @@ function generateComparativeInsights(metrics) {
 }
 
 /**
- * // TODO Review this
  * Suggests additional metrics or functions to call based on currently used ones.
  *
  * @param {Object[]} metrics - Array of function results.

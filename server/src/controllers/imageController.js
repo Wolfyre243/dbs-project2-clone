@@ -15,7 +15,6 @@ const { logAdminAudit } = require('../utils/auditlogs');
 const { uploadFile } = require('../utils/fileUploader');
 
 // Getting all images
-// TODO: Pagination
 module.exports.getAllImages = catchAsync(async (req, res, next) => {
   const {
     page = 1,

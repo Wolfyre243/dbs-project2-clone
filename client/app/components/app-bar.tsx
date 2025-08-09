@@ -22,6 +22,7 @@ import Roles from '~/rolesConfig';
 import ThemeSwitcher from './theme-switch';
 import LanguageSelector from '~/components/language-selector';
 import { useTranslation } from 'react-i18next';
+import { AspectRatio } from '@radix-ui/react-aspect-ratio';
 
 const links = [
   {
@@ -165,7 +166,6 @@ export function UserMenu() {
 export function MobileMenu({ isLoggedIn }: { isLoggedIn: boolean }) {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
-  // TODO: Add transitions (low priority)
   return (
     // Show on medium device
     <div className='z-50 md:hidden'>
@@ -225,9 +225,16 @@ export function AppBar({ ...props }: React.ComponentProps<any>) {
     >
       <div className='flex flex-row items-center gap-3 px-3'>
         <div className='flex h-full items-center'>
-          <Link to='/'>
-            {/* TODO: Replace with SDC logo */}
-            <h1 className='text-xl font-semibold'>SG Discovery Centre</h1>
+          <Link to='/' className='flex flex-row items-center'>
+            <div className='flex w-24'>
+              <AspectRatio ratio={16 / 9}>
+                <img
+                  src='/sdc-logo.png'
+                  alt='Image'
+                  className='rounded-md object-cover'
+                />
+              </AspectRatio>
+            </div>
           </Link>
         </div>
         <NavigationMenu viewport={false} className='hidden md:flex'>

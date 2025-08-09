@@ -19,11 +19,11 @@ export default function AudioStatisticsDashboard() {
   return (
     <div className='space-y-6'>
       <StartEndDatePicker
+        dateRange={dateRange}
         setDateRange={setDateRange}
         title={'Audio Analytics'}
       />
 
-      {/* TODO Audio Cards */}
       <section className='flex flex-col w-full gap-4 sm:flex-row sm:overflow-visible sm:flex-wrap'>
         <div className='w-full flex-1'>
           <AudioCompletionRateCard />

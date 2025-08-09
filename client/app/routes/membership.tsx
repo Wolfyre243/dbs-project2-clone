@@ -12,6 +12,7 @@ import { Button } from '~/components/ui/button';
 import { LucideCrown, LucideStar, LucideUser } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { AppBar } from '~/components/app-bar';
+import DarkVeil from '~/components/backgrounds/darkveil';
 
 const membershipTiers = [
   {
@@ -118,12 +119,12 @@ export default function MembershipPage() {
     <div className='flex flex-col items-center w-full min-h-screen'>
       <AppBar />
       {/* Hero Section */}
-      <section className='w-full bg-gradient-to-r from-red-600 via-white to-red-100 py-12 mb-8'>
+      <section className='w-full bg-gradient-to-r from-red-600 via-red-200 to-red-300 py-12 mb-8'>
         <div className='max-w-3xl mx-auto text-center px-4'>
-          <h1 className='text-4xl font-bold text-red-700 mb-4'>
+          <h1 className='text-4xl font-bold text-primary mb-4'>
             Membership Programme
           </h1>
-          <p className='text-lg mb-6 text-accent'>
+          <p className='text-lg mb-6 text-neutral-800 font-semibold'>
             Unlock exclusive benefits and experiences. Choose the membership
             that fits you best and be part of our vibrant community.
           </p>
@@ -138,7 +139,7 @@ export default function MembershipPage() {
               <CardHeader className='flex flex-col items-center'>
                 <div className='mb-2'>{tier.icon}</div>
                 <CardTitle className='text-2xl'>{tier.name}</CardTitle>
-                <CardDescription className='text-lg font-bold text-red-700'>
+                <CardDescription className='text-lg font-bold text-primary'>
                   {tier.price}
                 </CardDescription>
               </CardHeader>
@@ -164,7 +165,7 @@ export default function MembershipPage() {
 
       {/* Comparison Table */}
       <section className='w-full max-w-5xl px-4 mb-12'>
-        <h2 className='text-2xl font-semibold mb-4 text-red-700'>
+        <h2 className='text-2xl font-semibold mb-4 text-primary'>
           Compare Memberships
         </h2>
         <div className='overflow-x-auto rounded-xl border'>
@@ -213,7 +214,7 @@ export default function MembershipPage() {
 
       {/* FAQ Section */}
       <section className='w-full max-w-3xl px-4 mb-16'>
-        <h2 className='text-2xl font-semibold mb-4 text-red-700'>
+        <h2 className='text-2xl font-semibold mb-4 text-primary'>
           Frequently Asked Questions
         </h2>
         <div className='space-y-4'>

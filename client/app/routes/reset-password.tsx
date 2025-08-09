@@ -49,7 +49,7 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     if (!token) {
-      navigate('/'); // TODO: Create forbidden page
+      navigate('/forbidden');
     }
   }, [token, navigate]);
 

@@ -1,6 +1,7 @@
 const reviewModel = require('../models/reviewModel');
 const AppError = require('../utils/AppError');
 const catchAsync = require('../utils/catchAsync');
+const { convertDatesToStrings } = require('../utils/formatters');
 
 /**
  * Submit a user review (comment)
@@ -55,7 +56,7 @@ module.exports.getAllReviews = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
-    data: formatted,
+    data: convertDatesToStrings(formatted),
   });
 });
 

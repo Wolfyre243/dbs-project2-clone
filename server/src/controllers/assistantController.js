@@ -77,7 +77,6 @@ module.exports.createMessage = catchAsync(async (req, res, next) => {
   let { conversationId } = req.query;
   const { content } = req.body;
 
-  // TODO Send request to AI assistant (JSON)
   // Fetch conversation history for context
   let history;
   if (conversationId) {
