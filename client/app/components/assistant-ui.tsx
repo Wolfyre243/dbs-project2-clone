@@ -6,6 +6,7 @@ import {
   LoaderCircle,
   CornerDownLeft,
   ArrowBigUp,
+  Sparkles,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import type React from 'react';
@@ -35,7 +36,7 @@ export function GenerateSubtitleButton({
       <PopoverTrigger asChild>
         <Button
           disabled={isLoading}
-          className={`flex flex-row cursor-pointer rounded-2xl ${gradient}`}
+          className={`flex flex-row text-neutral-900 cursor-pointer rounded-2xl ${gradient}`}
         >
           {!isLoading ? (
             <>

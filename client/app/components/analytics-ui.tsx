@@ -1,5 +1,6 @@
 import { cn } from '~/lib/utils';
 import { DatePicker } from './date-picker';
+import { useIsMobile } from '~/hooks/use-mobile';
 
 export interface DateRange {
   startDate: Date | null;
@@ -15,6 +16,8 @@ export function StartEndDatePicker({
   title?: string;
   className?: string;
 }) {
+  const isMobile = useIsMobile();
+
   return (
     <div
       className={cn(
@@ -22,7 +25,7 @@ export function StartEndDatePicker({
         className,
       )}
     >
-      <h1 className='text-2xl font-bold'>{title}</h1>
+      {!isMobile && <h1 className='text-2xl font-bold'>{title}</h1>}
       {/* Date Pickers */}
       <div className='flex flex-row flex-wrap md:flex-nowrap gap-2 items-center'>
         <div className='flex flex-col gap-1 w-full'>

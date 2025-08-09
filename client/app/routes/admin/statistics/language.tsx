@@ -150,7 +150,7 @@ export function LanguageUsageCard() {
   };
 
   return (
-    <Card className='flex flex-col bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
+    <Card className='flex flex-col min-h-full bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
       <CardHeader className='items-center pb-0 gap-2'>
         <div className='flex items-center justify-between w-full'>
           <div>
@@ -237,7 +237,7 @@ export function LanguageDetailsCard() {
   if (languageData.length === 0) return <p>No language data available.</p>;
 
   return (
-    <Card className='bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
+    <Card className='flex flex-col h-full bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
       <CardHeader>
         <CardTitle>Language Details</CardTitle>
         <CardDescription>Detailed breakdown of language usage</CardDescription>
@@ -277,9 +277,13 @@ export function LanguageDetailsCard() {
 
 export function LanguageStatistics() {
   return (
-    <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
-      <LanguageUsageCard />
-      <LanguageDetailsCard />
+    <div className='flex xl:flex-row flex-col w-full gap-4 justify-between'>
+      <div className='w-full md:w-1/3 min-h-full'>
+        <LanguageUsageCard />
+      </div>
+      <div className='w-full min-h-full'>
+        <LanguageDetailsCard />
+      </div>
     </div>
   );
 }

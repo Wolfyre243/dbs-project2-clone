@@ -15,10 +15,18 @@ import { DataTable } from '~/components/ui/data-table';
 import useApiPrivate from '~/hooks/useApiPrivate';
 import useAuth from '~/hooks/useAuth';
 import { useSearchParams } from 'react-router';
+import { LoaderCircle } from 'lucide-react';
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from '~/components/ui/select';
+import { Input } from '~/components/ui/input';
+import { Label } from '~/components/ui/label';
 import { Button } from '~/components/ui/button';
 import { PaginationFilterDropdown } from '~/components/pagination-filters';
-import Roles from '~/rolesConfig';
-import { LoaderCircle } from 'lucide-react';
 
 export default function AdminUserPagination() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -28,6 +36,9 @@ export default function AdminUserPagination() {
   const [languageData, setLanguageData] = useState<any[]>([]);
   const [languageFilterValue, setLanguageFilterValue] = useState('');
   const [roleFilterValue, setRoleFilterValue] = useState(null);
+  const [genderFilterValue, setGenderFilterValue] = useState('');
+  const [ageMin, setAgeMin] = useState(0);
+  const [ageMax, setAgeMax] = useState(100);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -45,6 +56,29 @@ export default function AdminUserPagination() {
       });
     }
   }, [sorting]);
+
+  useEffect(() => {
+    // Update searchParams when genderFilterValue changes
+    if (genderFilterValue !== undefined) {
+      setSearchParams({
+        ...Object.fromEntries(searchParams),
+        genderFilter: genderFilterValue || '',
+        page: '1',
+      });
+    }
+  }, [genderFilterValue]);
+
+  useEffect(() => {
+    // Update searchParams when ageMin or ageMax changes
+    if (ageMin !== undefined || ageMax !== undefined) {
+      setSearchParams({
+        ...Object.fromEntries(searchParams),
+        ageMin: ageMin.toString() || '',
+        ageMax: ageMax.toString() || '',
+        page: '1',
+      });
+    }
+  }, [ageMin, ageMax]);
 
   useEffect(() => {
     // Update searchParams when languageFilterValue changes
@@ -83,6 +117,9 @@ export default function AdminUserPagination() {
             search: searchParams.get('search') || null,
             languageCodeFilter: searchParams.get('languageCode') || null,
             roleFilter: searchParams.get('roleFilter') || null,
+            genderFilter: searchParams.get('genderFilter') || null,
+            ageMin: searchParams.get('ageMin') || undefined,
+            ageMax: searchParams.get('ageMax') || undefined,
           },
         });
         // Only update if data has changed to prevent table flashing
@@ -175,7 +212,7 @@ export default function AdminUserPagination() {
     <div className='flex flex-col p-6'>
       <h1 className='text-3xl font-bold mb-4'>User Management</h1>
       <div className='flex flex-col gap-3'>
-        <div className='flex flex-col md:flex-row w-full gap-3 h-fit'>
+        <div className='flex flex-col md:flex-row w-full gap-3 h-fit items-end'>
           <input
             type='text'
             placeholder='Search users...'
@@ -183,19 +220,90 @@ export default function AdminUserPagination() {
             defaultValue={searchParams.get('search') || ''}
             onChange={(e) => handleSearchChange(e.target.value)}
           />
-          {/* <div className='flex flex-row items-center gap-3'>
+          <div className='flex flex-row items-end gap-3'>
+            {/* Gender Filter */}
             <PaginationFilterDropdown
-              filterTitle={'Role'}
-              filterOptionList={Object.entries(Roles).map(([key, value]) => ({
-                [key]: value.toString(),
-              }))}
-              valueAccessor='roleValue'
-              nameAccessor='roleName'
-              selectedValue={roleFilterValue ?? ''}
-              setSelectedValue={setRoleFilterValue}
-              placeholder='Filter Role'
+              filterTitle={'Gender'}
+              filterOptionList={[
+                { gender: 'All', value: 'All' },
+                { gender: 'Male', value: 'M' },
+                { gender: 'Female', value: 'F' },
+              ]}
+              valueAccessor='value'
+              nameAccessor='gender'
+              selectedValue={genderFilterValue}
+              setSelectedValue={setGenderFilterValue}
+              placeholder='Gender'
             />
-          </div> */}
+
+            {/* Language Code Filter */}
+            <PaginationFilterDropdown
+              filterTitle={'Language'}
+              filterOptionList={languageData}
+              valueAccessor='languageCode'
+              nameAccessor='languageCode'
+              selectedValue={languageFilterValue}
+              setSelectedValue={setLanguageFilterValue}
+              placeholder='Language'
+            />
+            {/* Age Range Inputs */}
+            <div className='flex flex-row gap-3 text-nowrap'>
+              <div>
+                <Label className='text-xs'>Age Min</Label>
+                <Input
+                  type='number'
+                  min={0}
+                  value={ageMin}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    setAgeMin(val);
+                    setSearchParams({
+                      ...Object.fromEntries(searchParams),
+                      ageMin: String(val),
+                      page: '1',
+                    });
+                  }}
+                  className='border rounded-md w-24'
+                />
+              </div>
+              <div>
+                <Label className='text-xs'>Age Max</Label>
+                <Input
+                  type='number'
+                  min={0}
+                  value={ageMax}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    setAgeMax(val);
+                    setSearchParams({
+                      ...Object.fromEntries(searchParams),
+                      ageMax: String(val),
+                      page: '1',
+                    });
+                  }}
+                  className='border rounded-md w-24'
+                />
+              </div>
+            </div>
+            {/* Reset Filters Button */}
+            {languageFilterValue !== '' ||
+            genderFilterValue !== '' ||
+            ageMin !== 0 ||
+            ageMax !== 100 ? (
+              <Button
+                onClick={() => {
+                  setGenderFilterValue('');
+                  setLanguageFilterValue('');
+                  setAgeMin(0);
+                  setAgeMax(100);
+                }}
+              >
+                Reset Filters
+              </Button>
+            ) : (
+              ''
+            )}
+          </div>
         </div>
         {isLoading ? (
           <div className='flex flex-row gap-2 w-full justify-center items-center'>

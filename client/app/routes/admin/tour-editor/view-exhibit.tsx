@@ -42,6 +42,7 @@ import { Link } from 'react-router';
 import useApiPrivate from '~/hooks/useApiPrivate';
 import { toast } from 'sonner';
 import { isAxiosError } from 'axios';
+import { GenerateSubtitleButton } from '~/components/assistant-ui';
 
 interface Subtitle {
   subtitleId: string;
@@ -813,6 +814,26 @@ function SubtitleManagementSection({
     }
   };
 
+  const handleGenerateSubtitleAdd = async (text: string) => {
+    const { data: responseData } = await apiPrivate.post(
+      '/assistant/generate-content',
+      {
+        prompt: text,
+      },
+    );
+    setAddFormData({ ...addFormData, text: responseData.content });
+  };
+
+  const handleGenerateSubtitleEdit = async (text: string) => {
+    const { data: responseData } = await apiPrivate.post(
+      '/assistant/generate-content',
+      {
+        prompt: text,
+      },
+    );
+    setEditFormData({ ...editFormData, text: responseData.content });
+  };
+
   const handleDeleteSubtitle = async (subtitleId: string) => {
     if (subtitles.length <= 1) {
       toast.error(
@@ -951,9 +972,14 @@ function SubtitleManagementSection({
                 }
                 className='min-h-[100px]'
               />
-              <div className='text-xs text-muted-foreground'>
-                {editFormData.text.length}/{VALIDATION_LIMITS.SUBTITLE_TEXT_MAX}{' '}
-                characters
+              <div className='flex flex-row justify-between'>
+                <span className='text-xs text-muted-foreground'>
+                  {editFormData.text.length}/
+                  {VALIDATION_LIMITS.SUBTITLE_TEXT_MAX} characters
+                </span>
+                <GenerateSubtitleButton
+                  handleSubmit={handleGenerateSubtitleEdit}
+                />
               </div>
               {validationErrors.text && (
                 <div className='flex items-center gap-2 text-sm text-red-600'>
@@ -1099,9 +1125,14 @@ function SubtitleManagementSection({
                 }
                 className='min-h-[100px]'
               />
-              <div className='text-xs text-muted-foreground'>
-                {addFormData.text.length}/{VALIDATION_LIMITS.SUBTITLE_TEXT_MAX}{' '}
-                characters
+              <div className='flex flex-row justify-between w-full'>
+                <span className='text-xs text-muted-foreground'>
+                  {addFormData.text.length}/
+                  {VALIDATION_LIMITS.SUBTITLE_TEXT_MAX} characters
+                </span>
+                <GenerateSubtitleButton
+                  handleSubmit={handleGenerateSubtitleAdd}
+                />
               </div>
               {validationErrors.text && (
                 <div className='flex items-center gap-2 text-sm text-red-600'>

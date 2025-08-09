@@ -23,6 +23,11 @@ import {
 import useApiPrivate from '~/hooks/useApiPrivate';
 import { toast } from 'sonner';
 import { Badge } from '~/components/ui/badge';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '~/components/ui/tooltip';
 
 export type EventLog = {
   eventId: string;
@@ -73,8 +78,8 @@ export const columns: ColumnDef<EventLog>[] = [
       <DataTableColumnHeader column={column} title='Event Type' />
     ),
     cell: ({ row }) => (
-      <Badge className='bg-neutral-700/30' variant={'outline'}>
-        {row.original.eventType.eventType}
+      <Badge variant={'secondary'}>
+        {row.original.eventType.eventType.replace('_', ' ')}
       </Badge>
     ),
   },
@@ -91,7 +96,16 @@ export const columns: ColumnDef<EventLog>[] = [
     ),
     cell: ({ row }) => {
       const value = row.original.details;
-      return value.length > 50 ? value.slice(0, 50) + '...' : value;
+      return (
+        <Tooltip>
+          <TooltipTrigger>
+            {value.length > 50 ? value.slice(0, 50) + '...' : value}
+          </TooltipTrigger>
+          <TooltipContent className='max-w-xs break-words'>
+            <p>{value}</p>
+          </TooltipContent>
+        </Tooltip>
+      );
     },
   },
   {
@@ -127,6 +141,7 @@ export const columns: ColumnDef<EventLog>[] = [
     cell: ({ row }) => {
       const eventLog = row.original;
       const [eventData, setEventData] = useState<any>(null);
+      const [isOpen, setIsOpen] = useState<boolean>(false);
       const apiPrivate = useApiPrivate();
 
       useEffect(() => {
@@ -141,13 +156,12 @@ export const columns: ColumnDef<EventLog>[] = [
             setEventData(null);
           }
         };
-        if (eventData === null) {
-          fetchEventData();
-        }
-      }, [apiPrivate, eventLog.eventId, eventData]);
+
+        fetchEventData();
+      }, [apiPrivate, isOpen]);
 
       return (
-        <Dialog>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant='ghost' className='h-8 w-8 p-0'>
@@ -167,7 +181,9 @@ export const columns: ColumnDef<EventLog>[] = [
                 Copy Event ID
               </DropdownMenuItem>
               <DialogTrigger asChild>
-                <DropdownMenuItem>View Details</DropdownMenuItem>
+                <DropdownMenuItem>
+                  View Details {eventLog.eventId}
+                </DropdownMenuItem>
               </DialogTrigger>
             </DropdownMenuContent>
           </DropdownMenu>

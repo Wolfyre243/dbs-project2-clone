@@ -155,7 +155,7 @@ export function QRScanDashboard() {
 
   return (
     <div className='grid grid-cols-1 gap-6'>
-      <div className='sticky z-50 top-15 bg-background/70 backdrop-blur-xl px-2 py-6 rounded-md shadow-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
+      <div className='sticky z-50 top-12 bg-background/70 backdrop-blur-xl px-2 py-6 rounded-md shadow-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
         <h1 className='text-2xl font-bold'>QR Scans Analytics</h1>
         <div className='flex flex-row flex-wrap md:flex-nowrap gap-2 items-end'>
           <div className='flex flex-col gap-1'>
@@ -191,8 +191,6 @@ export function QRScanDashboard() {
           </Button>
         </div>
       </div>
-
-      {/* Date Pickers */}
 
       {/* TOP ROW: Bar Chart + Table */}
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>

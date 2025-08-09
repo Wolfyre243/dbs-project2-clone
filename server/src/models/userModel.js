@@ -440,6 +440,7 @@ module.exports.getAllUsers = async ({
   ageMin,
   ageMax,
   gender,
+  languageCode,
 }) => {
   let where = {
     ...filter,
@@ -452,10 +453,18 @@ module.exports.getAllUsers = async ({
   };
 
   // Gender filter
-  if (gender) {
+  if (gender && ['M', 'F'].includes(gender)) {
     where.userProfile = {
       ...where.userProfile,
       gender: gender,
+    };
+  }
+
+  // Language Code filter
+  if (languageCode) {
+    where.userProfile = {
+      ...where.userProfile,
+      languageCode: languageCode,
     };
   }
 

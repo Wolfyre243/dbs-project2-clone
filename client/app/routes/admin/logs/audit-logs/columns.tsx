@@ -23,6 +23,11 @@ import {
 } from '~/components/ui/dialog';
 import useApiPrivate from '~/hooks/useApiPrivate';
 import { toast } from 'sonner';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '~/components/ui/tooltip';
 
 export type AuditLog = {
   auditLogId: string;
@@ -118,7 +123,16 @@ export const columns: ColumnDef<AuditLog>[] = [
     ),
     cell: ({ row }) => {
       const value = row.original.logText;
-      return value.length > 50 ? value.slice(0, 50) + '...' : value;
+      return (
+        <Tooltip>
+          <TooltipTrigger>
+            {value.length > 50 ? value.slice(0, 50) + '...' : value}
+          </TooltipTrigger>
+          <TooltipContent className='max-w-xs break-words'>
+            <p>{value}</p>
+          </TooltipContent>
+        </Tooltip>
+      );
     },
   },
   {
@@ -154,6 +168,7 @@ export const columns: ColumnDef<AuditLog>[] = [
     cell: ({ row }) => {
       const auditLog = row.original;
       const [auditData, setAuditData] = useState<any>(null);
+      const [isOpen, setIsOpen] = useState<boolean>(false);
       const apiPrivate = useApiPrivate();
 
       useEffect(() => {
@@ -168,13 +183,11 @@ export const columns: ColumnDef<AuditLog>[] = [
             setAuditData(null);
           }
         };
-        if (auditData === null) {
-          fetchAuditData();
-        }
-      }, [apiPrivate, auditLog.auditLogId, auditData]);
+        fetchAuditData();
+      }, [apiPrivate, isOpen]);
 
       return (
-        <Dialog>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant='ghost' className='h-8 w-8 p-0'>
