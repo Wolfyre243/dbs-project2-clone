@@ -62,7 +62,7 @@ export default function LandingPage() {
             {/*  bg-gradient-to-br from-red-400 to-red-300/100 dark:to-red-300 animate-gradient-x  */}
             <div className='absolute inset-0 bg-hero' />
             {/* Glassmorphism overlay */}
-            <div className='absolute inset-0 bg-white/30 dark:bg-white/5 backdrop-blur-[4px]' />
+            <div className='absolute inset-0 bg-white/20 dark:bg-white/5 backdrop-blur-[4px]' />
           </div>
 
           {/* Hero Content */}
@@ -84,7 +84,7 @@ export default function LandingPage() {
             >
               {t('mainHeading1')}
               <br />
-              <span className='bg-gradient-to-r from-red-500 dark:from-red-500 to-red-600 dark:to-red-600 bg-clip-text text-transparent'>
+              <span className='bg-gradient-to-br from-red-500 dark:from-red-500 to-red-600 dark:to-red-700 bg-clip-text text-transparent'>
                 {t('mainHeading2')}
               </span>
               <br />
@@ -232,16 +232,20 @@ export default function LandingPage() {
             </div>
           </div>
           <div className='flex flex-row w-full mt-10 justify-center'>
-            {/* <Button className=''>
+            <Button
+              className='text-lg p-6 rounded-full shadow-md'
+              asChild
+              variant={'secondary'}
+            >
               <Link to={'/auth/register'}>Join as a FREE member</Link>
-            </Button> */}
-            <RainbowButton
+            </Button>
+            {/* <RainbowButton
               asChild
               variant={'outline'}
               className='text-lg p-6 rounded-full'
             >
               <Link to={'/auth/register'}>Join as a FREE member</Link>
-            </RainbowButton>
+            </RainbowButton> */}
           </div>
         </section>
 

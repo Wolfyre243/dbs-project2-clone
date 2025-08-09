@@ -303,7 +303,7 @@ p {
 
 .bg-hero {
   background:
-    linear-gradient(rgba(255, 157, 157, 0.5), rgba(255, 25, 25, 0.4)),
+    linear-gradient(rgba(255, 213, 213, 0.8), rgba(255, 25, 25, 0.6)),
     url('../public/sdc-scenery.jpg');
   background-size: cover;
   background-position: center;
