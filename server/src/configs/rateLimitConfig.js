@@ -13,6 +13,10 @@ const RateLimits = {
     cooldown: 60 * 1000, // 1 min, in milliseconds
     maxAttempts: 5,
   },
+  CHAT: {
+    cooldown: 60 * 1000,
+    maxAttempts: 5,
+  },
 };
 
 module.exports = RateLimits;

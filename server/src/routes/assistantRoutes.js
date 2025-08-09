@@ -5,7 +5,7 @@ const authMiddleware = require('../middlewares/authMiddleware');
 const jwtMiddleware = require('../middlewares/jwtMiddleware');
 const { promptValidation } = require('../validators/assistantValidators');
 const { validate } = require('../middlewares/validators');
-
+const { createRateLimiter } = require('../middlewares/rateLimiter');
 const assistantRouter = express.Router();
 
 assistantRouter.use(jwtMiddleware.verifyToken);
@@ -92,6 +92,7 @@ assistantRouter.get(
 
 assistantRouter.post(
   '/chat',
+  createRateLimiter('CHAT'),
   authMiddleware.verifyIsAdmin,
   assistantController.createMessage,
 );
