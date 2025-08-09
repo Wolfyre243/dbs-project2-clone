@@ -46,7 +46,13 @@ type ExhibitSubtitle = {
   modifiedAt: string;
   statusId: number;
   audio: ExhibitAudio;
-  wordTimings: { word: string; start: number; end: number }[];
+  wordTimings: {
+    word: string;
+    start: number;
+    end: number;
+    source?: string;
+    type?: string;
+  }[];
 };
 
 type ExhibitData = {
@@ -79,7 +85,7 @@ function Subtitle({
   selectedLanguage,
   currentWordIndices,
   audioRefs,
-  handleTimeUpdate,
+  debouncedHandleTimeUpdate,
   handleAudioEnded,
   exhibitId,
 }: {
@@ -87,7 +93,7 @@ function Subtitle({
   selectedLanguage: string;
   currentWordIndices: Record<string, number[]>;
   audioRefs: React.MutableRefObject<Record<string, HTMLAudioElement | null>>;
-  handleTimeUpdate: (subtitleId: string) => void;
+  debouncedHandleTimeUpdate: (subtitleId: string) => void;
   handleAudioEnded: (subtitleId: string) => void;
   exhibitId: string;
 }) {
@@ -167,101 +173,164 @@ function Subtitle({
     'hi-IN',
   ].includes(subtitle.languageCode);
 
-  const units = useMemo(() => {
-    const normalizedText = subtitle.subtitleText.replace(/\s+/g, ' ').trim();
-    const textWords = isSpaceSeparated
-      ? normalizedText.split(/\s+/).filter((w) => w)
-      : normalizedText.split('');
+  const isCJK = ['cmn-CN', 'zh-CN', 'cmn-Hans-CN', 'ja-JP', 'ko-KR'].includes(
+    subtitle.languageCode,
+  );
 
-    let units = textWords.map((word, index) => {
-      const timing = subtitle.wordTimings[index];
+  // Language-specific highlighting configuration
+  const getHighlightingConfig = useCallback(() => {
+    if (isCJK) {
       return {
-        word,
-        start: timing?.start ?? index * 0.2,
-        end: timing?.end ?? (index + 1) * 0.2,
+        maxGroupSize: 6, // Larger character groups for better readability
+        lookAheadTime: 1.0, // Longer look-ahead for phrase context
+        minHighlightDuration: 0.6, // Minimum highlight time for readability
+        transitionDuration: 500, // Smoother transitions
+        debounceMs: 60, // Slower updates to reduce flickering
       };
-    });
+    } else {
+      return {
+        maxGroupSize: 3, // Current word grouping works well
+        lookAheadTime: 0.5, // Current look-ahead timing
+        minHighlightDuration: 0.3, // Current minimum time
+        transitionDuration: 300, // Current transitions
+        debounceMs: 25, // Current fast updates for responsiveness
+      };
+    }
+  }, [isCJK]);
 
-    if (subtitle.languageCode === 'cmn-CN') {
-      units = units.reduce(
-        (acc, timing, index) => {
-          if (index % 3 === 0) {
-            acc.push({ word: '', start: timing.start, end: timing.end });
-          }
-          acc[acc.length - 1].word += timing.word;
-          if (index % 2 !== 2 && index < units.length - 1) {
-            acc[acc.length - 1].end = units[index + 1].end;
-          }
-          return acc;
-        },
-        [] as { word: string; start: number; end: number }[],
-      );
+  const highlightConfig = getHighlightingConfig();
+
+  const units = useMemo(() => {
+    // Enhanced: Use complete word timings from backend (now includes all original words)
+    if (!subtitle.wordTimings || subtitle.wordTimings.length === 0) {
+      // Fallback: create basic timing structure from subtitle text with punctuation preservation
+      const words = subtitle.subtitleText
+        .split(/\s+/)
+        .filter((word) => word.length > 0);
+      return words.map((word, index) => ({
+        word: word, // Preserve original word including punctuation
+        start: index * 0.6,
+        end: (index + 1) * 0.6,
+        source: 'frontend-fallback',
+        type: 'word', // Default type for fallback
+      }));
     }
 
-    return units;
-  }, [subtitle.wordTimings, subtitle.subtitleText, subtitle.languageCode]);
+    return subtitle.wordTimings.map((timing) => ({
+      word: timing.word || '',
+      start: timing.start || 0,
+      end: timing.end || 0,
+      source: timing.source || 'legacy',
+      type: timing.type || 'word', // Preserve type information from backend
+    }));
+  }, [subtitle.wordTimings, subtitle.subtitleText]);
 
   const renderWords = () => {
     const highlightedIndices = currentWordIndices[subtitle.subtitleId] || [];
-    const elements = [];
-    let i = 0;
+    const elements: React.ReactNode[] = [];
 
+    // Enhanced rendering with language-specific grouping and spacing
+    let i = 0;
     while (i < units.length) {
       if (highlightedIndices.includes(i)) {
-        let groupWords = [units[i].word];
+        // Start of a highlighted group - use language-specific grouping
         let groupStart = i;
+        let groupWords = [units[i].word];
         let j = i + 1;
 
-        while (
-          j < units.length &&
-          highlightedIndices.includes(j) &&
-          j < groupStart + 3
-        ) {
-          groupWords.push(units[j].word);
-          j++;
+        // Language-specific grouping logic
+        const maxGroupSize = highlightConfig.maxGroupSize;
+
+        if (isCJK) {
+          // For Chinese: Group characters intelligently, respecting punctuation boundaries
+          while (
+            j < units.length &&
+            highlightedIndices.includes(j) &&
+            j < groupStart + maxGroupSize
+          ) {
+            // Stop at punctuation for natural phrase boundaries
+            if (units[j].type === 'punctuation') break;
+            groupWords.push(units[j].word);
+            j++;
+          }
+        } else {
+          // For space-separated languages: Use current word-based grouping
+          while (
+            j < units.length &&
+            highlightedIndices.includes(j) &&
+            j < groupStart + maxGroupSize
+          ) {
+            groupWords.push(units[j].word);
+            j++;
+          }
         }
 
+        // Enhanced highlighting style with language-specific transitions
         elements.push(
           <span
-            key={i}
-            className='p-0'
+            key={`highlight-${groupStart}`}
+            className='p-0 transition-all ease-in-out'
             style={{
               borderRadius: '3px',
               background: 'linear-gradient(90deg, #ffeb3b, #ffca28)',
               fontWeight: '400',
-              transition: 'all 0.3s ease',
-              boxShadow: '0 2px 2px rgba(255, 215, 0, 0.4)',
+              boxShadow: '0 2px 4px rgba(255, 215, 0, 0.3)',
               color: '#1a1a1a',
+              display: 'inline',
+              wordBreak: 'break-word',
+              whiteSpace: 'normal',
+              transitionDuration: `${highlightConfig.transitionDuration}ms`,
             }}
           >
             {groupWords.join(isSpaceSeparated ? ' ' : '')}
           </span>,
         );
 
+        // Add space after highlighted group if needed
         if (isSpaceSeparated && j < units.length) {
-          elements.push(' ');
+          elements.push(
+            <span key={`space-after-${groupStart}`} className='inline'>
+              {' '}
+            </span>,
+          );
         }
-
         i = j;
       } else {
+        // Render non-highlighted words with subtle styling
+        let nonHighlightStart = i;
+        let nonHighlightWords = [];
+
+        // Group non-highlighted words for better performance
+        while (i < units.length && !highlightedIndices.includes(i)) {
+          nonHighlightWords.push(units[i].word);
+          i++;
+        }
+
         elements.push(
           <span
-            key={i}
+            key={`normal-${nonHighlightStart}`}
             className='p-0'
             style={{
-              borderRadius: '3px',
               fontWeight: '400',
+              color: 'inherit',
+              transition: `all ${highlightConfig.transitionDuration * 0.6}ms ease`,
             }}
           >
-            {units[i].word}
+            {nonHighlightWords.join(isSpaceSeparated ? ' ' : '')}
           </span>,
         );
 
-        if (isSpaceSeparated && i < units.length - 1) {
-          elements.push(' ');
+        // Add space after non-highlighted group if needed
+        if (isSpaceSeparated && i < units.length) {
+          elements.push(
+            <span
+              key={`space-after-normal-${nonHighlightStart}`}
+              className='inline'
+            >
+              {' '}
+            </span>,
+          );
         }
-
-        i++;
       }
     }
 
@@ -281,7 +350,7 @@ function Subtitle({
         controls
         src={subtitle.audio.fileLink}
         className='w-full mb-4 sm:mb-5'
-        onTimeUpdate={() => handleTimeUpdate(subtitle.subtitleId)}
+        onTimeUpdate={() => debouncedHandleTimeUpdate(subtitle.subtitleId)}
         onEnded={() => handleAudioEnded(subtitle.subtitleId)}
       >
         Your browser does not support the audio element.
@@ -401,43 +470,138 @@ export default function SingleExhibit() {
   }, [exhibit]);
 
   const handleTimeUpdate = useCallback(
-    debounce((subtitleId: string) => {
+    (subtitleId: string) => {
       const audioElement = audioRefs.current[subtitleId];
       if (audioElement && subtitles) {
         const subtitle = subtitles.find((s) => s.subtitleId === subtitleId);
         if (subtitle && subtitle.wordTimings?.length) {
           const currentTime = audioElement.currentTime;
-          const duration = audioElement.duration || Infinity;
-          const maxWordsToHighlight = 3;
-          let activeIndices = subtitle.wordTimings
-            .map((timing, index) =>
-              currentTime >= timing.start - 0.8 &&
-              currentTime <= timing.end + 0.8
-                ? index
-                : -1,
-            )
-            .filter((index) => index >= -1)
-            .sort((a, b) => b - a)
-            .slice(0, maxWordsToHighlight);
+          const timings = subtitle.wordTimings;
 
-          const lastWordIndex = subtitle.wordTimings.length;
-          if (
-            activeIndices.length === 0 &&
-            currentTime >= subtitle.wordTimings[lastWordIndex].start - 0.8 &&
-            currentTime <= duration + 0.8
-          ) {
-            activeIndices = [lastWordIndex];
+          // Get language-specific configuration
+          const isCJKLanguage = [
+            'cmn-CN',
+            'zh-CN',
+            'cmn-Hans-CN',
+            'ja-JP',
+            'ko-KR',
+          ].includes(subtitle.languageCode);
+
+          const config = isCJKLanguage
+            ? {
+                lookAheadTime: 1.0,
+                minHighlightDuration: 0.6,
+                maxGroupSize: 6,
+              }
+            : {
+                lookAheadTime: 0.5,
+                minHighlightDuration: 0.3,
+                maxGroupSize: 3,
+              };
+
+          // Enhanced word finding logic
+          let currentIdx = timings.findIndex(
+            (timing) => currentTime >= timing.start && currentTime < timing.end,
+          );
+
+          // Improved fallback logic for edge cases
+          if (currentIdx === -1) {
+            // Find the closest word based on time
+            if (currentTime < timings[0].start) {
+              // Before first word - don't highlight anything
+              setCurrentWordIndices((prev) => ({
+                ...prev,
+                [subtitleId]: [],
+              }));
+              return;
+            } else if (currentTime >= timings[timings.length - 1].end) {
+              // After last word - highlight last few words briefly
+              const lastIndices = Math.max(0, timings.length - 2);
+              setCurrentWordIndices((prev) => ({
+                ...prev,
+                [subtitleId]: [lastIndices, timings.length - 1].filter(
+                  (i) => i >= 0,
+                ),
+              }));
+              return;
+            } else {
+              // Find the closest word by checking gaps between words
+              for (let i = 0; i < timings.length - 1; i++) {
+                if (
+                  currentTime >= timings[i].end &&
+                  currentTime < timings[i + 1].start
+                ) {
+                  // In a gap between words - highlight the previous word briefly
+                  currentIdx = i;
+                  break;
+                }
+              }
+            }
           }
 
-          setCurrentWordIndices((prev) => ({
-            ...prev,
-            [subtitleId]: activeIndices,
-          }));
+          if (currentIdx >= 0) {
+            // Enhanced highlighting with language-specific logic
+            const highlightIndices: number[] = [];
+
+            // Always include current word
+            highlightIndices.push(currentIdx);
+
+            // Add next words based on language-specific timing and grouping
+            const currentWord = timings[currentIdx];
+            const timeToEnd = currentWord.end - currentTime;
+
+            // Use language-specific look-ahead timing and duration
+            if (
+              timeToEnd < config.lookAheadTime &&
+              currentIdx < timings.length - 1
+            ) {
+              // Look ahead to next words for smooth reading
+              for (
+                let i = currentIdx + 1;
+                i < Math.min(currentIdx + config.maxGroupSize, timings.length);
+                i++
+              ) {
+                const nextWord = timings[i];
+                // Only highlight if the next word starts soon (language-specific timing)
+                if (nextWord.start - currentTime < config.lookAheadTime) {
+                  highlightIndices.push(i);
+                } else {
+                  break;
+                }
+              }
+            }
+
+            setCurrentWordIndices((prev) => ({
+              ...prev,
+              [subtitleId]: highlightIndices,
+            }));
+          }
         }
       }
-    }, 30),
+    },
     [subtitles],
   );
+
+  // Create language-specific debounced handlers
+  const debouncedHandleTimeUpdate = useMemo(() => {
+    const handlers: Record<string, (subtitleId: string) => void> = {};
+
+    return (subtitleId: string) => {
+      if (!handlers[subtitleId]) {
+        const subtitle = subtitles?.find((s) => s.subtitleId === subtitleId);
+        const isCJKLanguage =
+          subtitle &&
+          ['cmn-CN', 'zh-CN', 'cmn-Hans-CN', 'ja-JP', 'ko-KR'].includes(
+            subtitle.languageCode,
+          );
+
+        const debounceMs = isCJKLanguage ? 60 : 25; // Slower for CJK languages
+        handlers[subtitleId] = debounce(handleTimeUpdate, debounceMs);
+      }
+
+      handlers[subtitleId](subtitleId);
+    };
+  }, [handleTimeUpdate, subtitles]);
 
   const handleAudioEnded = useCallback((subtitleId: string) => {
     setCurrentWordIndices((prev) => ({
@@ -562,7 +726,7 @@ export default function SingleExhibit() {
               selectedLanguage={selectedLanguage}
               currentWordIndices={currentWordIndices}
               audioRefs={audioRefs}
-              handleTimeUpdate={handleTimeUpdate}
+              debouncedHandleTimeUpdate={debouncedHandleTimeUpdate}
               handleAudioEnded={handleAudioEnded}
               exhibitId={exhibit.exhibitId}
             />

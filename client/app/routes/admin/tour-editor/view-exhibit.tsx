@@ -64,7 +64,7 @@ interface Subtitle {
     fileName: string;
     languageCode: string;
   };
-  wordTimings: { word: string; start: number; end: number }[];
+  wordTimings: { word: string; start: number; end: number; source?: string }[];
 }
 
 interface Exhibit {

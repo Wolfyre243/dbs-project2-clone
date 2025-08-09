@@ -1,13 +1,18 @@
 const speech = require('@google-cloud/speech');
 const axios = require('axios'); // Add axios to dependencies if not already present
 const levenshtein = require('fast-levenshtein');
+const { enhanceWordTimings } = require('./wordAlignmentHelper');
 
 const client = new speech.SpeechClient();
 
-// OLD CODE
+// ENHANCED CODE with word alignment and interpolation
 const generateWordTimings = async (audioUrl, text, languageCode) => {
   try {
-    console.log('Starting to generate word timings...');
+    console.log('Starting to generate enhanced word timings...', {
+      textLength: text?.length,
+      languageCode,
+      audioUrl: audioUrl?.substring(0, 50) + '...',
+    });
 
     const audioResponse = await axios.get(audioUrl, {
       responseType: 'arraybuffer',
@@ -30,7 +35,8 @@ const generateWordTimings = async (audioUrl, text, languageCode) => {
     const [sttResponse] = await operation.promise();
     const results = sttResponse.results || [];
 
-    const wordTimings = results
+    // Extract raw word timings from Google Speech-to-Text
+    const rawWordTimings = results
       .flatMap((result) => result.alternatives[0]?.words || [])
       .map((wordInfo) => ({
         word: wordInfo.word,
@@ -42,20 +48,57 @@ const generateWordTimings = async (audioUrl, text, languageCode) => {
           (wordInfo.endTime?.nanos || 0) / 1e9,
       }));
 
-    // console.log('Google Speech-to-Text result:', wordTimings);
-    return wordTimings;
+    console.log('Raw Speech-to-Text result:', {
+      detectedWords: rawWordTimings.length,
+      firstFew: rawWordTimings.slice(0, 3),
+    });
+
+    // NEW: Enhance word timings with alignment and interpolation
+    const enhancedTimings = enhanceWordTimings(
+      text,
+      rawWordTimings,
+      languageCode,
+    );
+
+    console.log('Enhanced word timings generated:', {
+      originalWords: text?.split(/\s+/).length || 0,
+      detectedWords: rawWordTimings.length,
+      enhancedWords: enhancedTimings.length,
+    });
+
+    return enhancedTimings;
   } catch (error) {
-    console.error('Google Speech-to-Text error:', error.message, error.stack);
+    console.error(
+      'Enhanced word timing generation error:',
+      error.message,
+      error.stack,
+    );
+
+    // Enhanced fallback: create timing for every word in original text
     const normalizedText = text ? text.replace(/\s+/g, ' ').trim() : '';
-    return normalizedText
-      ? normalizedText.split(/\s+/).map((word) => ({ word, start: 0, end: 0 }))
-      : [];
+    if (!normalizedText) return [];
+
+    const words = normalizedText.split(/\s+/);
+    const avgWordDuration = 0.6; // seconds per word fallback
+
+    console.log('Using fallback word timings for', words.length, 'words');
+
+    return words.map((word, index) => ({
+      word: word.replace(/[^\w\s'-]/g, ''), // remove punctuation but keep apostrophes/hyphens
+      start: index * avgWordDuration,
+      end: (index + 1) * avgWordDuration,
+      source: 'fallback',
+    }));
   }
 };
 
 const generateWordTimingsBatch = async (subtitles) => {
   try {
-    console.log('Starting batch processing for', subtitles.length, 'subtitles');
+    console.log(
+      'Starting enhanced batch processing for',
+      subtitles.length,
+      'subtitles',
+    );
 
     // Download audio files in parallel
     const startDownload = Date.now();
@@ -95,28 +138,36 @@ const generateWordTimingsBatch = async (subtitles) => {
       {},
     );
 
-    // Process Speech-to-Text requests in parallel
+    // Process Speech-to-Text requests in parallel with enhanced word timing
     const startApi = Date.now();
     const resultsSettled = await Promise.allSettled(
-      subtitles.map(async ({ subtitleId, text, languageCode }) => {
+      subtitles.map(async ({ subtitleId, text, languageCode, audioUrl }) => {
         const audioContent = audioMap[subtitleId];
         const normalizedText = text ? text.replace(/\s+/g, ' ').trim() : '';
 
         if (!audioContent) {
-          console.warn(`No audio content for subtitle ${subtitleId}`);
+          console.warn(
+            `No audio content for subtitle ${subtitleId}, using text-based fallback`,
+          );
+          // Enhanced fallback using original text
+          const words = normalizedText ? normalizedText.split(/\s+/) : [];
+          const avgWordDuration = 0.6;
+
           return {
             subtitleId,
-            wordTimings: normalizedText
-              ? normalizedText
-                  .split(/\s+/)
-                  .map((word) => ({ word, start: 0, end: 0 }))
-              : [],
+            wordTimings: words.map((word, index) => ({
+              word: word.replace(/[^\w\s'-]/g, ''),
+              start: index * avgWordDuration,
+              end: (index + 1) * avgWordDuration,
+              source: 'fallback',
+            })),
           };
         }
 
         try {
+          // Use the enhanced generateWordTimings function
           const wordTimings = await generateWordTimings(
-            `data:audio/wav;base64,${audioContent}`,
+            audioUrl, // Use original URL instead of base64 data
             normalizedText,
             languageCode,
           );
@@ -126,13 +177,18 @@ const generateWordTimingsBatch = async (subtitles) => {
             `Error processing subtitle ${subtitleId}:`,
             error.message,
           );
+          // Enhanced fallback
+          const words = normalizedText ? normalizedText.split(/\s+/) : [];
+          const avgWordDuration = 0.6;
+
           return {
             subtitleId,
-            wordTimings: normalizedText
-              ? normalizedText
-                  .split(/\s+/)
-                  .map((word) => ({ word, start: 0, end: 0 }))
-              : [],
+            wordTimings: words.map((word, index) => ({
+              word: word.replace(/[^\w\s'-]/g, ''),
+              start: index * avgWordDuration,
+              end: (index + 1) * avgWordDuration,
+              source: 'fallback',
+            })),
           };
         }
       }),
@@ -148,28 +204,43 @@ const generateWordTimingsBatch = async (subtitles) => {
                   .replace(/\s+/g, ' ')
                   .trim()
                   .split(/\s+/)
-                  .map((word) => ({ word, start: 0, end: 0 }))
+                  .map((word, index) => ({
+                    word: word.replace(/[^\w\s'-]/g, ''),
+                    start: index * 0.6,
+                    end: (index + 1) * 0.6,
+                    source: 'fallback',
+                  }))
               : [],
           },
     );
-    console.log(`Batch Speech-to-Text took ${Date.now() - startApi}ms`);
+
+    console.log(
+      `Enhanced batch Speech-to-Text took ${Date.now() - startApi}ms`,
+    );
+    console.log('Batch processing summary:', {
+      totalSubtitles: results.length,
+      enhancedWords: results.reduce((sum, r) => sum + r.wordTimings.length, 0),
+    });
 
     return results;
   } catch (error) {
-    console.error('Batch processing error:', {
+    console.error('Enhanced batch processing error:', {
       message: error.message,
       stack: error.stack,
     });
-    return subtitles.map(({ subtitleId, text }) => ({
-      subtitleId,
-      wordTimings: text
-        ? text
-            .replace(/\s+/g, ' ')
-            .trim()
-            .split(/\s+/)
-            .map((word) => ({ word, start: 0, end: 0 }))
-        : [],
-    }));
+    // Enhanced fallback for entire batch
+    return subtitles.map(({ subtitleId, text }) => {
+      const words = text ? text.replace(/\s+/g, ' ').trim().split(/\s+/) : [];
+      return {
+        subtitleId,
+        wordTimings: words.map((word, index) => ({
+          word: word.replace(/[^\w\s'-]/g, ''),
+          start: index * 0.6,
+          end: (index + 1) * 0.6,
+          source: 'fallback',
+        })),
+      };
+    });
   }
 };
 
