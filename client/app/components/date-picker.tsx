@@ -14,7 +14,7 @@ function formatDate(date: Date | undefined) {
   if (!date) {
     return '';
   }
-  return date.toLocaleDateString('en-US', {
+  return date.toLocaleDateString('en-SG', {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
@@ -38,29 +38,31 @@ export function DatePicker({
   fieldName: string;
   label?: string;
   required?: boolean;
-  value?: string;
+  value?: string | null;
   onValueChange?: (val: string) => void;
   onChange?: (val: string) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [date, setDate] = useState<Date | undefined>(new Date(Date.now()));
-  const [month, setMonth] = useState<Date | undefined>(date);
-  const [internalValue, setInternalValue] = useState(formatDate(date));
-  const controlled = value !== undefined && onValueChange !== undefined;
+  const [date, setDate] = useState<Date | null>(null);
+  const [month, setMonth] = useState<Date | null>(null);
+  const [internalValue, setInternalValue] = useState<string>('');
+  const controlled = value !== undefined;
   const inputValue = controlled ? value : internalValue;
-  const inputOnChange = controlled
-    ? onValueChange
-    : (val: string) => {
-        setInternalValue(val);
-        if (onChange) onChange(val);
-      };
+  const inputOnChange = (val: string | null) => {
+    setInternalValue(val ?? '');
+    if (onChange) onChange(val ?? '');
+  };
 
   const handleChange = (val: string) => {
     if (controlled) {
       inputOnChange(val);
     } else {
       setInternalValue(val);
-      if (isValidDate(new Date(val))) {
+      if (!val) {
+        setDate(null);
+        setMonth(null);
+        if (onChange) onChange('');
+      } else if (isValidDate(new Date(val))) {
         setDate(new Date(val));
         setMonth(new Date(val));
         if (onChange) onChange(val);
@@ -73,14 +75,22 @@ export function DatePicker({
       <Label htmlFor={fieldName} className='px-1'>
         {label ?? 'Date'}
       </Label>
-      <div className='relative flex gap-2'>
+      <div className='relative flex gap-2 items-center'>
         <Input
           id={fieldName}
           name={fieldName}
-          value={inputValue}
-          placeholder=''
-          className='bg-background pr-10'
-          onChange={(e) => inputOnChange(e.target.value)}
+          value={
+            inputValue && isValidDate(new Date(inputValue))
+              ? new Date(inputValue).toLocaleDateString('en-SG', {
+                  day: '2-digit',
+                  month: 'long',
+                  year: 'numeric',
+                })
+              : ''
+          }
+          placeholder='Select a Date'
+          className='bg-background pr-10 border-primary/50'
+          onChange={(e) => handleChange(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'ArrowDown') {
               e.preventDefault();
@@ -89,6 +99,35 @@ export function DatePicker({
           }}
           required={required}
         />
+        {inputValue && (
+          <Button
+            variant='ghost'
+            type='button'
+            className='absolute top-1/2 right-8 size-6 -translate-y-1/2'
+            onClick={() => {
+              if (controlled) {
+                onValueChange && onValueChange('');
+              } else {
+                setInternalValue('');
+                setDate(null);
+                setMonth(null);
+                if (onChange) onChange('');
+              }
+            }}
+            tabIndex={0}
+            aria-label='Clear date'
+          >
+            {/* Simple X icon for clear */}
+            <svg width='16' height='16' viewBox='0 0 16 16' fill='none'>
+              <path
+                d='M4 4L12 12M12 4L4 12'
+                stroke='currentColor'
+                strokeWidth='2'
+                strokeLinecap='round'
+              />
+            </svg>
+          </Button>
+        )}
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <Button
@@ -108,13 +147,13 @@ export function DatePicker({
           >
             <Calendar
               mode='single'
-              selected={date}
+              selected={date ?? undefined}
               captionLayout='dropdown'
-              month={month}
+              month={month ?? undefined}
               onMonthChange={setMonth}
               onSelect={(date) => {
-                setDate(date);
-                const formatted = formatDate(date);
+                setDate(date ?? null);
+                const formatted = formatDate(date ?? undefined);
                 if (controlled) {
                   onValueChange && onValueChange(formatted);
                 } else {

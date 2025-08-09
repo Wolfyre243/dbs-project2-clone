@@ -23,7 +23,11 @@ export default function AdminHomePage() {
       </div>
 
       {/* Charts */}
-      <StartEndDatePicker setDateRange={setDateRange} title='All Statistics' />
+      <StartEndDatePicker
+        dateRange={dateRange}
+        setDateRange={setDateRange}
+        title='All Statistics'
+      />
 
       {/* Cards */}
       <section className='w-full flex lg:flex-row flex-col gap-4 justify-between'>

@@ -664,7 +664,11 @@ export function UserAnalyticsDashboard() {
 
   return (
     <section className='flex flex-col gap-3'>
-      <StartEndDatePicker setDateRange={setDateRange} title='User Analytics' />
+      <StartEndDatePicker
+        dateRange={dateRange}
+        setDateRange={setDateRange}
+        title='User Analytics'
+      />
       <SectionCards />
       <UserSignUpChart dateRange={dateRange} />
     </section>
