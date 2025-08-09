@@ -210,6 +210,14 @@ async function main() {
           eventType: 'AUDIO_UNMUTED',
           description: 'User unmuted the audio',
         },
+        {
+          eventType: 'EXHIBIT_FAVOURITED',
+          description: 'User favourited an exhibit',
+        },
+        {
+          eventType: 'EXHIBIT_UNFAVOURITED',
+          description: 'User unfavourited an exhibit',
+        },
       ];
 
       if (eventTypeData.length > 0) {
