@@ -42,9 +42,28 @@ module.exports.submitReview = catchAsync(async (req, res, next) => {
  * Get all reviews (public)
  */
 module.exports.getAllReviews = catchAsync(async (req, res, next) => {
+  const reviews = await reviewModel.getAllReviews();
+
+  const formatted = reviews.map((r) => ({
+    reviewId: r.reviewId,
+    rating: r.rating,
+    reviewText: r.reviewText,
+    username: r.user?.username || 'Anonymous',
+    avatar: r.user?.userProfile?.avatarUrl || null,
+    date: r.createdAt,
+  }));
+
+  res.status(200).json({
+    status: 'success',
+    data: formatted,
+  });
+});
+
+// paginated reviews
+module.exports.getAllPaginatedReviews = catchAsync(async (req, res, next) => {
   const { page = 1, pageSize = 10 } = req.query;
 
-  const reviewsResult = await reviewModel.getAllReviews({
+  const reviewsResult = await reviewModel.getAllPaginatedReviews({
     page: parseInt(page),
     pageSize: parseInt(pageSize),
   });

@@ -31,7 +31,31 @@ const reviewModel = {
    * Get all reviews, newest first
    * @public
    */
-  getAllReviews: async ({ page = 1, pageSize = 10 } = {}) => {
+  getAllReviews: async () => {
+    try {
+      return await prisma.review.findMany({
+        orderBy: { createdAt: 'desc' },
+        select: {
+          reviewId: true,
+          rating: true,
+          reviewText: true,
+          createdAt: true,
+          user: {
+            select: {
+              userId: true,
+              username: true,
+              // avatarUrl: true,
+            },
+          },
+        },
+      });
+    } catch (err) {
+      throw new AppError(`Failed to fetch reviews: ${err.message}`, 500);
+    }
+  },
+
+  //pagination
+  getAllPaginatedReviews: async ({ page = 1, pageSize = 10 } = {}) => {
     try {
       const total = await prisma.review.count();
 
@@ -63,7 +87,6 @@ const reviewModel = {
       throw new AppError(`Failed to fetch reviews: ${err.message}`, 500);
     }
   },
-
   disconnect: () => prisma.$disconnect(),
 };
 
