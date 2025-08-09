@@ -4,7 +4,6 @@ const levenshtein = require('fast-levenshtein');
 
 const client = new speech.SpeechClient();
 
-// OLD CODE
 const generateWordTimings = async (audioUrl, text, languageCode) => {
   try {
     console.log('Starting to generate word timings...');

@@ -407,32 +407,95 @@ export default function SingleExhibit() {
         const subtitle = subtitles.find((s) => s.subtitleId === subtitleId);
         if (subtitle && subtitle.wordTimings?.length) {
           const currentTime = audioElement.currentTime;
-          const duration = audioElement.duration || Infinity;
-          const maxWordsToHighlight = 3;
-          let activeIndices = subtitle.wordTimings
-            .map((timing, index) =>
-              currentTime >= timing.start - 0.8 &&
-              currentTime <= timing.end + 0.8
-                ? index
-                : -1,
-            )
-            .filter((index) => index >= -1)
-            .sort((a, b) => b - a)
-            .slice(0, maxWordsToHighlight);
+          const timings = subtitle.wordTimings;
 
-          const lastWordIndex = subtitle.wordTimings.length;
-          if (
-            activeIndices.length === 0 &&
-            currentTime >= subtitle.wordTimings[lastWordIndex].start - 0.8 &&
-            currentTime <= duration + 0.8
-          ) {
-            activeIndices = [lastWordIndex];
+          // Language-specific config
+          const isCJKLanguage = [
+            'cmn-CN',
+            'zh-CN',
+            'cmn-Hans-CN',
+            'ja-JP',
+            'ko-KR',
+          ].includes(subtitle.languageCode);
+
+          const config = isCJKLanguage
+            ? {
+                lookAheadTime: 1.0,
+                minHighlightDuration: 0.6,
+                maxGroupSize: 6,
+              }
+            : {
+                lookAheadTime: 0.5,
+                minHighlightDuration: 0.3,
+                maxGroupSize: 3,
+              };
+
+          // Find current word index
+          let currentIdx = timings.findIndex(
+            (timing) => currentTime >= timing.start && currentTime < timing.end,
+          );
+
+          // Edge cases and fallback logic
+          if (currentIdx === -1) {
+            // if (currentTime < timings[0].start) {
+            //   setCurrentWordIndices((prev) => ({
+            //     ...prev,
+            //     [subtitleId]: [],
+            //   }));
+            //   return;
+            // } else if (currentTime >= timings[timings.length - 1].end) {
+            //   const lastIndices = Math.max(0, timings.length - 2);
+            //   setCurrentWordIndices((prev) => ({
+            //     ...prev,
+            //     [subtitleId]: [lastIndices, timings.length - 1].filter(
+            //       (i) => i >= 0,
+            //     ),
+            //   }));
+            //   return;
+            // } else {
+            //   for (let i = 0; i < timings.length - 1; i++) {
+            //     if (
+            //       currentTime >= timings[i].end &&
+            //       currentTime < timings[i + 1].start
+            //     ) {
+            //       currentIdx = i;
+            //       break;
+            //     }
+            //   }
+            // }
+            return;
           }
 
-          setCurrentWordIndices((prev) => ({
-            ...prev,
-            [subtitleId]: activeIndices,
-          }));
+          if (currentIdx >= 0) {
+            const highlightIndices: number[] = [];
+            highlightIndices.push(currentIdx);
+
+            const currentWord = timings[currentIdx];
+            const timeToEnd = currentWord.end - currentTime;
+
+            if (
+              timeToEnd < config.lookAheadTime &&
+              currentIdx < timings.length - 1
+            ) {
+              for (
+                let i = currentIdx + 1;
+                i < Math.min(currentIdx + config.maxGroupSize, timings.length);
+                i++
+              ) {
+                const nextWord = timings[i];
+                if (nextWord.start - currentTime < config.lookAheadTime) {
+                  highlightIndices.push(i);
+                } else {
+                  break;
+                }
+              }
+            }
+
+            setCurrentWordIndices((prev) => ({
+              ...prev,
+              [subtitleId]: highlightIndices,
+            }));
+          }
         }
       }
     }, 30),
