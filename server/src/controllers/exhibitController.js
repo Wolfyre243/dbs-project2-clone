@@ -295,6 +295,14 @@ module.exports.addFavorite = catchAsync(async (req, res, next) => {
   const { exhibitId } = req.params;
 
   await exhibitModel.addFavoriteExhibit(userId, exhibitId);
+  // event log for user favoriting an exhibit
+  await logUserEvent({
+    userId,
+    entityId: exhibitId,
+    entityName: 'exhibit',
+    eventTypeId: EventTypes.EXHIBIT_FAVOURITED,
+    details: `User ${userId} favorited exhibit ${exhibitId}`,
+  });
 
   res.status(201).json({ status: 'success', message: 'Exhibit favorited!' });
 });
@@ -305,6 +313,14 @@ module.exports.removeFavorite = catchAsync(async (req, res, next) => {
   const { exhibitId } = req.params;
 
   await exhibitModel.removeFavoriteExhibit(userId, exhibitId);
+  // event log for user unfavoriting an exhibit
+  await logUserEvent({
+    userId,
+    entityId: exhibitId,
+    entityName: 'exhibit',
+    eventTypeId: EventTypes.EXHIBIT_UNFAVOURITED,
+    details: `User ${userId} unfavorited exhibit ${exhibitId}`,
+  });
 
   res
     .status(200)
