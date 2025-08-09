@@ -6,7 +6,7 @@
 
 @theme {
   --font-sans:
-    'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+    'Urbanist', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
     'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
@@ -17,6 +17,14 @@ body {
   @media (prefers-color-scheme: dark) {
     color-scheme: dark;
   }
+}
+
+h1 {
+  font-family: 'Urbanist';
+}
+
+p {
+  font-family: 'Urbanist';
 }
 
 @theme inline {

@@ -8,6 +8,8 @@ const EventTypes = {
   AUDIO_VOLUME_CHANGED: 7,
   AUDIO_MUTED: 8,
   AUDIO_UNMUTED: 9,
+  EXHIBIT_FAVOURITED: 10,
+  EXHIBIT_UNFAVOURITED: 11,
 };
 
 export default EventTypes;

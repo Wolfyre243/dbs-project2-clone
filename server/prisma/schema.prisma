@@ -336,7 +336,7 @@ model password {
 
 model senderType {
   senderTypeId Int       @id @default(autoincrement()) @map("sender_type_id")
-  senderType   String    @map("sender_type") @db.VarChar(30)
+  senderType   String    @unique @map("sender_type") @db.VarChar(30)
   message      message[]
 
   @@map("sender_type")

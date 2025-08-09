@@ -7,6 +7,7 @@ import useAuth from '~/hooks/useAuth';
 import { useSearchParams } from 'react-router';
 import { Button } from '~/components/ui/button';
 import { PaginationFilterDropdown } from '~/components/pagination-filters';
+import { X } from 'lucide-react';
 
 export default function EventLogPagination() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -70,7 +71,9 @@ export default function EventLogPagination() {
   useEffect(() => {
     (async () => {
       try {
-        const { data: responseData } = await apiPrivate.get('/event-log/log-types');
+        const { data: responseData } = await apiPrivate.get(
+          '/event-log/log-types',
+        );
         setEventTypeData(responseData.data);
       } catch (error: any) {
         setEventTypeData([]);
@@ -153,6 +156,7 @@ export default function EventLogPagination() {
           />
           {eventTypeFilterValue !== '' ? (
             <Button onClick={() => setEventTypeFilterValue('')}>
+              <X />
               Reset Filters
             </Button>
           ) : (

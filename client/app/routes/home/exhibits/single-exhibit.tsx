@@ -408,11 +408,11 @@ export default function SingleExhibit() {
         if (subtitle && subtitle.wordTimings?.length) {
           const currentTime = audioElement.currentTime;
           const duration = audioElement.duration || Infinity;
-          const maxWordsToHighlight = 2;
+          const maxWordsToHighlight = 3;
           let activeIndices = subtitle.wordTimings
             .map((timing, index) =>
-              currentTime >= timing.start - 0.3 &&
-              currentTime <= timing.end + 0.5
+              currentTime >= timing.start - 0.8 &&
+              currentTime <= timing.end + 0.8
                 ? index
                 : -1,
             )
@@ -423,8 +423,8 @@ export default function SingleExhibit() {
           const lastWordIndex = subtitle.wordTimings.length;
           if (
             activeIndices.length === 0 &&
-            currentTime >= subtitle.wordTimings[lastWordIndex].start - 0.3 &&
-            currentTime <= duration
+            currentTime >= subtitle.wordTimings[lastWordIndex].start - 0.8 &&
+            currentTime <= duration + 0.8
           ) {
             activeIndices = [lastWordIndex];
           }

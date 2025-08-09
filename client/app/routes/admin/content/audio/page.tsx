@@ -7,6 +7,7 @@ import useAuth from '~/hooks/useAuth';
 import { useSearchParams } from 'react-router';
 import { Button } from '~/components/ui/button';
 import { PaginationFilterDropdown } from '~/components/pagination-filters';
+import { X } from 'lucide-react';
 
 export default function AdminAudioPagination() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -154,6 +155,7 @@ export default function AdminAudioPagination() {
           />
           {languageFilterValue !== '' ? (
             <Button onClick={() => setLanguageFilterValue('')}>
+              <X />
               Reset Filters
             </Button>
           ) : (

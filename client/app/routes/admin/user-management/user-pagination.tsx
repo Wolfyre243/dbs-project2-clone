@@ -15,7 +15,7 @@ import { DataTable } from '~/components/ui/data-table';
 import useApiPrivate from '~/hooks/useApiPrivate';
 import useAuth from '~/hooks/useAuth';
 import { useSearchParams } from 'react-router';
-import { LoaderCircle } from 'lucide-react';
+import { LoaderCircle, X } from 'lucide-react';
 import {
   Select,
   SelectTrigger,
@@ -298,6 +298,7 @@ export default function AdminUserPagination() {
                   setAgeMax(100);
                 }}
               >
+                <X />
                 Reset Filters
               </Button>
             ) : (
