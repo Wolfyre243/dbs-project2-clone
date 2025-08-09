@@ -1,15 +1,19 @@
 import { Progress } from './ui/progress';
 import {
   AudioLines,
+  AudioWaveform,
   CircleEllipsis,
+  CirclePause,
   ExternalLink,
   Frown,
   Headphones,
   Landmark,
   Loader2,
+  PlayCircle,
   QrCode,
   Search,
   StarOff,
+  Volume2,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import useApiPrivate from '~/hooks/useApiPrivate';
@@ -328,8 +332,10 @@ export function UserFavouriteExhibits() {
         if (!deepEqualArray(responseData.data, exhibits)) {
           setExhibits(responseData.data);
         }
+        // console.log("datA", responseData, exhibits, deepEqualArray(responseData.data, exhibits))
         setCount(responseData.data.length);
       } catch (error: any) {
+        setExhibits([]);
         setError(error.response?.data.message);
       } finally {
         // setIsLoading(false);
@@ -342,7 +348,7 @@ export function UserFavouriteExhibits() {
     return () => {
       clearInterval(intervalId);
     };
-  }, [apiPrivate]);
+  }, [apiPrivate, exhibits.length]);
 
   useEffect(() => {
     if (!api) {
@@ -386,10 +392,24 @@ export function UserFavouriteExhibits() {
 
 export function UserActivityLogItem({ activity }: { activity: ActivityLog }) {
   let activityIcon;
-  console.log(activity);
   switch (activity.eventTypeId) {
     case EventTypes.QR_SCANNED:
       activityIcon = <QrCode />;
+      break;
+    case EventTypes.AUDIO_COMPLETED:
+      activityIcon = <Headphones />;
+      break;
+    case EventTypes.AUDIO_PAUSED:
+      activityIcon = <CirclePause />;
+      break;
+    case EventTypes.AUDIO_STARTED:
+      activityIcon = <PlayCircle />;
+      break;
+    case EventTypes.AUDIO_VOLUME_CHANGED:
+      activityIcon = <Volume2 />;
+      break;
+    case EventTypes.AUDIO_SEEKED:
+      activityIcon = <AudioWaveform />;
       break;
     default:
       activityIcon = <CircleEllipsis />;
@@ -397,11 +417,12 @@ export function UserActivityLogItem({ activity }: { activity: ActivityLog }) {
   }
 
   return (
-    <div className='flex flex-row items-center gap-2 p-2 bg-accent rounded-md shadow'>
+    <div className='flex flex-row items-center gap-2 px-2 py-4 bg-accent rounded-md shadow'>
       {activityIcon}
       <div className='flex flex-col'>
-        <h1 className='font-semibold'>{activity.entityName}</h1>
-        <p className='text-sm text-muted-foreground'>{activity.eventType}</p>
+        <h1 className='font-semibold'>
+          {activity.eventType.replace('_', ' ')}
+        </h1>
       </div>
       <div className='flex-1 text-right text-xs text-muted-foreground'>
         {new Date(activity.timestamp).toLocaleString()}

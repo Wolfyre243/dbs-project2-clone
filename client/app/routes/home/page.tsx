@@ -58,10 +58,10 @@ export default function HomePage() {
       </section>
 
       {/* Latest Events */}
-      <section className='w-full flex flex-row gap-5'>
+      {/* <section className='w-full flex flex-row gap-5'>
         <h1 className='text-2xl font-bold'>Latest Happenings</h1>
         <div></div>
-      </section>
+      </section> */}
     </main>
   );
 }

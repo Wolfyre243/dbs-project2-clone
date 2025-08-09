@@ -298,7 +298,7 @@ export default function UserSettings() {
   const statusVariant =
     user.status?.statusId === StatusCodes.VERIFIED ||
     user.status?.statusId === StatusCodes.ACTIVE
-      ? 'default'
+      ? 'secondary'
       : 'destructive';
 
   return (
