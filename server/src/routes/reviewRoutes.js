@@ -8,6 +8,7 @@
 const express = require('express');
 const router = express.Router();
 const reviewController = require('../controllers/reviewController');
+const authMiddleware = require('../middlewares/authMiddleware');
 const jwtMiddleware = require('../middlewares/jwtMiddleware');
 
 /**
@@ -132,6 +133,14 @@ router.post(
   '/submit',
   jwtMiddleware.verifyToken,
   reviewController.submitReview,
+);
+
+// pagination for reviews
+router.get(
+  '/admin/paginated',
+  jwtMiddleware.verifyToken,
+  authMiddleware.verifyIsAdmin,
+  reviewController.getAllPaginatedReviews,
 );
 
 module.exports = router;
