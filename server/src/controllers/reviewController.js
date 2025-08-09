@@ -42,9 +42,14 @@ module.exports.submitReview = catchAsync(async (req, res, next) => {
  * Get all reviews (public)
  */
 module.exports.getAllReviews = catchAsync(async (req, res, next) => {
-  const reviews = await reviewModel.getAllReviews();
+  const { page = 1, pageSize = 10 } = req.query;
 
-  const formatted = reviews.map((r) => ({
+  const reviewsResult = await reviewModel.getAllReviews({
+    page: parseInt(page),
+    pageSize: parseInt(pageSize),
+  });
+
+  const formatted = reviewsResult.reviews.map((r) => ({
     reviewId: r.reviewId,
     rating: r.rating,
     reviewText: r.reviewText,
@@ -55,6 +60,7 @@ module.exports.getAllReviews = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: 'success',
+    pageCount: Math.ceil(reviewsResult.total / pageSize),
     data: formatted,
   });
 });
