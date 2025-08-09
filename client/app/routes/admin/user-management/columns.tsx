@@ -1,5 +1,6 @@
 import { type ColumnDef } from '@tanstack/react-table';
 import { MoreHorizontal } from 'lucide-react';
+import { Link } from 'react-router';
 
 import { Button } from '~/components/ui/button';
 import { Checkbox } from '~/components/ui/checkbox';
@@ -155,8 +156,9 @@ export const columns: ColumnDef<User>[] = [
             >
               Copy User ID
             </DropdownMenuItem>
-            {/* TODO Turn into redirect buttons */}
-            <DropdownMenuItem>View user</DropdownMenuItem>
+            <DropdownMenuItem>
+              <Link to={`/admin/users/${user.userId}`}>View User</Link>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );

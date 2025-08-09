@@ -510,13 +510,18 @@ export function UserSignUpChart({ dateRange }: { dateRange: DateRange }) {
     );
   }
   return (
-    <Card className='h-full bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
+    <Card className='h-full gap-2 bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card'>
       <CardHeader>
         <div className='flex flex-row justify-between'>
           <div>
             <CardTitle>Member Sign-Ups Over Time</CardTitle>
             <CardDescription>
-              Total: {totalMembers.toLocaleString()} members
+              <span className='flex flex-row gap-1'>
+                Total: {totalMembers.toLocaleString()} members{' '}
+                <p className='text-muted-foreground/50'>
+                  (excluding guests & admin users)
+                </p>
+              </span>
             </CardDescription>
           </div>
           <Button
@@ -529,7 +534,8 @@ export function UserSignUpChart({ dateRange }: { dateRange: DateRange }) {
           </Button>
         </div>
       </CardHeader>
-      <CardContent className='px-2 pt-4 sm:px-6 sm:pt-6'>
+      <CardContent className='px-2 pt-2 sm:px-6'>
+        {/* Filters */}
         <div className='flex gap-2 mb-4'>
           <Select
             value={filters.gender}
@@ -579,76 +585,83 @@ export function UserSignUpChart({ dateRange }: { dateRange: DateRange }) {
             </SelectContent>
           </Select>
         </div>
+        {/* Chart */}
         <ChartContainer config={chartConfig} className='h-[300px] w-full'>
           <ResponsiveContainer width='100%' height='100%'>
-            <LineChart data={chartData}>
-              <defs>
-                <linearGradient id='fillDaily' x1='0' y1='0' x2='0' y2='1'>
-                  <stop
-                    offset='5%'
-                    stopColor='var(--chart-2)'
-                    stopOpacity={0.8}
-                  />
-                  <stop
-                    offset='95%'
-                    stopColor='var(--chart-2)'
-                    stopOpacity={0.1}
-                  />
-                </linearGradient>
-              </defs>
-              <CartesianGrid vertical={false} strokeDasharray='3 3' />
-              <XAxis
-                dataKey='date'
-                tickLine={false}
-                axisLine={false}
-                tickMargin={10}
-                minTickGap={32}
-                tickFormatter={(value) => {
-                  const date = new Date(value);
-                  return date.toLocaleDateString('en-SG', {
-                    month: 'short',
-                    day: filters.granularity === 'day' ? 'numeric' : undefined,
-                    year: filters.granularity !== 'day' ? 'numeric' : undefined,
-                  });
-                }}
-              />
-              <YAxis
-                tickLine={false}
-                axisLine={false}
-                tickMargin={10}
-                allowDecimals={false}
-              />
-              <ChartTooltip
-                content={
-                  <ChartTooltipContent
-                    labelFormatter={(value) =>
-                      new Date(value).toLocaleDateString('en-SG', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                      })
-                    }
-                    indicator='dot'
-                  />
-                }
-              />
-              <Line
-                type='monotone'
-                dataKey='dailySignups'
-                stroke='var(--chart-2)'
-                strokeWidth={2}
-                dot={{
-                  fill: 'var(--chart-2)',
-                  strokeWidth: 2,
-                  r: 4,
-                }}
-                activeDot={{
-                  r: 6,
-                  stroke: 'var(--chart-2)',
-                  strokeWidth: 2,
-                }}
-              />
-            </LineChart>
+            {chartData.length !== 0 ? (
+              <LineChart data={chartData}>
+                <defs>
+                  <linearGradient id='fillDaily' x1='0' y1='0' x2='0' y2='1'>
+                    <stop
+                      offset='5%'
+                      stopColor='var(--chart-2)'
+                      stopOpacity={0.8}
+                    />
+                    <stop
+                      offset='95%'
+                      stopColor='var(--chart-2)'
+                      stopOpacity={0.1}
+                    />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid vertical={false} strokeDasharray='3 3' />
+                <XAxis
+                  dataKey='date'
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={10}
+                  minTickGap={32}
+                  tickFormatter={(value) => {
+                    const date = new Date(value);
+                    return date.toLocaleDateString('en-SG', {
+                      month: 'short',
+                      day:
+                        filters.granularity === 'day' ? 'numeric' : undefined,
+                      year:
+                        filters.granularity !== 'day' ? 'numeric' : undefined,
+                    });
+                  }}
+                />
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={10}
+                  allowDecimals={false}
+                />
+                <ChartTooltip
+                  content={
+                    <ChartTooltipContent
+                      labelFormatter={(value) =>
+                        new Date(value).toLocaleDateString('en-SG', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        })
+                      }
+                      indicator='dot'
+                    />
+                  }
+                />
+                <Line
+                  type='monotone'
+                  dataKey='dailySignups'
+                  stroke='var(--chart-2)'
+                  strokeWidth={2}
+                  dot={{
+                    fill: 'var(--chart-2)',
+                    strokeWidth: 2,
+                    r: 4,
+                  }}
+                  activeDot={{
+                    r: 6,
+                    stroke: 'var(--chart-2)',
+                    strokeWidth: 2,
+                  }}
+                />
+              </LineChart>
+            ) : (
+              <h1 className='text-sm'>No Data Found...</h1>
+            )}
           </ResponsiveContainer>
         </ChartContainer>
       </CardContent>

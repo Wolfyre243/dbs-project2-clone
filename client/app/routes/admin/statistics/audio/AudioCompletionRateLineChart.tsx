@@ -99,7 +99,7 @@ export default function AudioCompletionRateLineChart({
           <div>
             <CardTitle>Audio Completion Rate Trends</CardTitle>
             <CardDescription>
-              Cumulative completion rate over time
+              Cumulative audio completion rate of users over time
             </CardDescription>
           </div>
           <Button

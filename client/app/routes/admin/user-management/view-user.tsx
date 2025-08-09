@@ -7,12 +7,20 @@ import {
   CardContent,
   CardDescription,
 } from '~/components/ui/card';
-import { Loader2, FileQuestion, User } from 'lucide-react';
+import {
+  Loader2,
+  FileQuestion,
+  User,
+  Car,
+  UserLock,
+  History,
+} from 'lucide-react';
 import { apiPrivate } from '~/services/api';
 import { Button } from '~/components/ui/button';
 import useApiPrivate from '~/hooks/useApiPrivate';
 import { toast } from 'sonner';
 import { isAxiosError } from 'axios';
+import { Badge } from '~/components/ui/badge';
 
 interface UserRole {
   role: {
@@ -22,7 +30,7 @@ interface UserRole {
 }
 
 interface UserProfile {
-  age?: number;
+  dob?: number;
   gender?: string;
   languageCode?: string;
 }
@@ -49,7 +57,7 @@ interface User {
   createdAt: string;
   modifiedAt: string;
   status?: UserStatus;
-  userRoles: UserRole[];
+  userRoles: UserRole;
   userProfile?: UserProfile;
   emails: Email[];
   phoneNumbers: PhoneNumber[];
@@ -66,32 +74,56 @@ function formatDate(dateString: string) {
   });
 }
 
+function calculateAge(dob?: string): number | null {
+  if (!dob) return null;
+  const birthDate = new Date(dob);
+  if (isNaN(birthDate.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age >= 0 ? age : null;
+}
+
 function UserDetails({ user }: { user: User }) {
   return (
-    <Card className='w-full'>
-      <CardHeader>
-        <CardTitle className='flex items-center gap-2'>
-          <User className='h-5 w-5' />
-          User Details
-        </CardTitle>
-        <CardDescription>
-          View user information and profile details
-        </CardDescription>
-      </CardHeader>
-      <CardContent className='space-y-4'>
-        <div className='space-y-2'>
-          <h3 className='font-semibold'>Basic Information</h3>
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+    <div className='flex flex-row gap-4'>
+      <Card className='w-full gap-2'>
+        <CardHeader>
+          <CardTitle className='flex items-center gap-2 text-xl'>
+            <User className='h-5 w-5' />
+            Basic Information
+          </CardTitle>
+        </CardHeader>
+        <CardContent className='space-y-4'>
+          <div className='flex flex-col gap-4'>
+            <div className='flex flex-row gap-2 items-center'>
+              <span className='font-medium'>
+                Username:{' '}
+                {user.username || (
+                  <span className='text-muted-foreground'>N/A</span>
+                )}
+              </span>
+
+              {user.userRoles.role && (
+                <Badge variant={'outline'}>
+                  {user.userRoles.role.roleName.toUpperCase()}
+                </Badge>
+              )}
+
+              {user.status?.statusName && (
+                <Badge variant={'outline'}>
+                  {user.status?.statusName.toUpperCase()}
+                </Badge>
+              )}
+            </div>
             <div>
               <span className='font-medium'>User ID: </span>
               {user.userId}
             </div>
-            <div>
-              <span className='font-medium'>Username: </span>
-              {user.username || (
-                <span className='text-muted-foreground'>N/A</span>
-              )}
-            </div>
+
             <div>
               <span className='font-medium'>Created At: </span>
               {formatDate(user.createdAt)}
@@ -100,22 +132,41 @@ function UserDetails({ user }: { user: User }) {
               <span className='font-medium'>Last Modified: </span>
               {formatDate(user.modifiedAt)}
             </div>
-            <div>
-              <span className='font-medium'>Status: </span>
-              {user.status?.statusName || (
-                <span className='text-muted-foreground'>N/A</span>
-              )}
-            </div>
           </div>
-        </div>
+        </CardContent>
+      </Card>
 
-        <div className='space-y-2'>
-          <h3 className='font-semibold'>Profile</h3>
+      <Card className='w-full gap-2'>
+        <CardHeader>
+          <CardTitle className='flex items-center gap-2 text-xl'>
+            <UserLock className='h-5 w-5' />
+            Personal Information
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
           {user.userProfile ? (
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+            <div className='flex flex-col gap-4'>
               <div>
                 <span className='font-medium'>Age: </span>
-                {user.userProfile.age || (
+                {calculateAge(
+                  typeof user.userProfile.dob === 'string'
+                    ? user.userProfile.dob
+                    : user.userProfile.dob
+                      ? new Date(user.userProfile.dob)
+                          .toISOString()
+                          .slice(0, 10)
+                      : undefined,
+                ) !== null ? (
+                  calculateAge(
+                    typeof user.userProfile.dob === 'string'
+                      ? user.userProfile.dob
+                      : user.userProfile.dob
+                        ? new Date(user.userProfile.dob)
+                            .toISOString()
+                            .slice(0, 10)
+                        : undefined,
+                  )
+                ) : (
                   <span className='text-muted-foreground'>N/A</span>
                 )}
               </div>
@@ -137,74 +188,129 @@ function UserDetails({ user }: { user: User }) {
               No profile information available
             </div>
           )}
-        </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
 
-        <div className='space-y-2'>
-          <h3 className='font-semibold'>Roles</h3>
-          {user.userRoles.length > 0 ? (
-            <div className='flex flex-wrap gap-2'>
-              {user.userRoles.map((userRole) => (
-                <span
-                  key={userRole.role.roleId}
-                  className='px-2 py-1 bg-muted rounded text-sm'
-                >
-                  {userRole.role.roleName}
-                </span>
-              ))}
-            </div>
-          ) : (
-            <div className='text-muted-foreground'>No roles assigned</div>
-          )}
-        </div>
+// RecentActivity component (inline for this file)
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-        <div className='space-y-2'>
-          <h3 className='font-semibold'>Emails</h3>
-          {user.emails.length > 0 ? (
-            <div className='space-y-2'>
-              {user.emails.map((email) => (
-                <div key={email.emailId} className='flex items-center gap-2'>
-                  <span>{email.email}</span>
-                  {email.isPrimary && (
-                    <span className='px-2 py-1 bg-primary text-primary-foreground text-xs rounded'>
-                      Primary
+interface Activity {
+  eventId: string;
+  eventType: string;
+  eventTypeDescription?: string;
+  timestamp: string;
+  entityName?: string;
+  entityId?: string;
+  metadata?: any;
+}
+
+function RecentActivity({ userId }: { userId: string }) {
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(10);
+  const [pageCount, setPageCount] = useState(1);
+
+  const apiPrivate = useApiPrivate();
+
+  useEffect(() => {
+    async function fetchActivity() {
+      setLoading(true);
+      setError(null);
+      try {
+        const { data } = await apiPrivate.get(
+          `/user/recent-activity/${userId}?page=${page}&pageSize=${pageSize}`,
+        );
+        setActivities(data.data.activities);
+        setPageCount(data.data.pageCount || 1);
+      } catch (err) {
+        setError('Failed to fetch recent activity');
+      } finally {
+        setLoading(false);
+      }
+    }
+    if (userId) fetchActivity();
+  }, [userId, page, pageSize, apiPrivate]);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className='flex items-center gap-2 text-xl'>
+          <History className='h-5 w-5' />
+          Recent Activity
+        </CardTitle>
+        <CardDescription>
+          Latest actions performed by this user.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className='flex items-center gap-2'>
+            <Loader2 className='h-5 w-5 animate-spin' />
+            <span>Loading activity...</span>
+          </div>
+        ) : error ? (
+          <div className='text-red-500'>{error}</div>
+        ) : activities.length === 0 ? (
+          <div className='text-muted-foreground'>No recent activity found.</div>
+        ) : (
+          <div>
+            <ul className='space-y-2'>
+              {activities.map((activity) => (
+                <li key={activity.eventId} className='border-b pb-2'>
+                  <div className='flex flex-col'>
+                    <span>
+                      <b>
+                        {activity.eventTypeDescription || activity.eventType}
+                      </b>
                     </span>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className='text-muted-foreground'>
-              No email addresses available
-            </div>
-          )}
-        </div>
-
-        <div className='space-y-2'>
-          <h3 className='font-semibold'>Phone Numbers</h3>
-          {user.phoneNumbers.length > 0 ? (
-            <div className='space-y-2'>
-              {user.phoneNumbers.map((phone) => (
-                <div key={phone.phoneId} className='flex items-center gap-2'>
-                  <span>{phone.phoneNumber}</span>
-                  {phone.isPrimary && (
-                    <span className='px-2 py-1 bg-primary text-primary-foreground text-xs rounded'>
-                      Primary
+                    <span className='text-xs text-muted-foreground'>
+                      {formatDate(activity.timestamp)}
                     </span>
-                  )}
-                </div>
+                    {activity.entityId && (
+                      <span className='text-xs text-muted-foreground/50'>
+                        Entity: {activity.entityName} {activity.entityId}
+                      </span>
+                    )}
+                  </div>
+                </li>
               ))}
+            </ul>
+            <div className='flex items-center justify-end gap-2 mt-4'>
+              <Button
+                variant='outline'
+                size='sm'
+                disabled={page === 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                <ChevronLeft className='h-4 w-4' />
+                Prev
+              </Button>
+              <span>
+                Page {page} of {pageCount}
+              </span>
+              <Button
+                variant='outline'
+                size='sm'
+                disabled={page === pageCount}
+                onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+              >
+                Next
+                <ChevronRight className='h-4 w-4' />
+              </Button>
             </div>
-          ) : (
-            <div className='text-muted-foreground'>
-              No phone numbers available
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
 }
 
+// Integrate RecentActivity into AdminViewUserPage
 export default function AdminViewUserPage() {
   const { userId } = useParams();
   const [user, setUser] = useState<User | null>(null);
@@ -253,11 +359,13 @@ export default function AdminViewUserPage() {
   }
 
   return (
-    <div className='w-full p-6'>
-      <div className='flex flex-col gap-8'>
-        <div className='w-full'>
-          <UserDetails user={user} />
-        </div>
+    <div className='flex flex-col gap-4 w-full p-6'>
+      <h1 className='text-3xl font-bold mb-4'>User Details</h1>
+      <div className='w-full'>
+        <UserDetails user={user} />
+      </div>
+      <div className='w-full'>
+        <RecentActivity userId={user.userId} />
       </div>
     </div>
   );

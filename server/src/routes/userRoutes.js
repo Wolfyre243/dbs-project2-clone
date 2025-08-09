@@ -52,4 +52,10 @@ userRouter.get(
   userController.getSingleUser,
 );
 
+userRouter.get(
+  '/recent-activity/:userId',
+  authMiddleware.verifyIsAdmin,
+  userController.getRecentActivityByAdmin,
+);
+
 module.exports = userRouter;

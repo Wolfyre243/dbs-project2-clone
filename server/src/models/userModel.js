@@ -702,6 +702,41 @@ module.exports.getRecentActivity = async (userId, limit = 10) => {
     throw error;
   }
 };
+// Paginated recent activity for admin
+module.exports.getRecentActivityPaginated = async (
+  userId,
+  page = 1,
+  pageSize = 10,
+) => {
+  try {
+    const totalCount = await prisma.event.count({
+      where: { userId },
+    });
+
+    const activities = await prisma.event.findMany({
+      where: { userId },
+      orderBy: { timestamp: 'desc' },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      include: {
+        eventType: { select: { eventType: true, description: true } },
+      },
+    });
+
+    return {
+      activities: convertDatesToStrings(
+        activities.map((a) => ({
+          ...a,
+          eventType: a.eventType.eventType,
+          eventTypeDescription: a.eventType.description,
+        })),
+      ),
+      totalCount,
+    };
+  } catch (error) {
+    throw error;
+  }
+};
 
 module.exports.updateUserPassword = async (userId, passwordHash) => {
   try {

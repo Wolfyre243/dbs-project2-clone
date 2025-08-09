@@ -228,3 +228,30 @@ module.exports.getSingleUser = catchAsync(async (req, res, next) => {
     data: user,
   });
 });
+
+/**
+ * Admin: Get paginated recent activity for any user
+ */
+module.exports.getRecentActivityByAdmin = catchAsync(async (req, res, next) => {
+  const userId = req.params.userId;
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.pageSize) || 10;
+
+  // Get total count and paginated activities
+  const { activities, totalCount } = await userModel.getRecentActivityPaginated(
+    userId,
+    page,
+    pageSize,
+  );
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      activities,
+      totalCount,
+      page,
+      pageSize,
+      pageCount: Math.ceil(totalCount / pageSize),
+    },
+  });
+});
