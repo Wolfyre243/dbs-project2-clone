@@ -72,10 +72,21 @@ export function QRScanDashboard() {
       });
 
       const data = res.data.data;
-      const bar = data.map((ex: any) => ({
-        exhibit: ex.title,
-        scans: ex.scanCount,
-      }));
+      // Utility to truncate exhibit names
+      function truncateLabel(label: string, maxLength = 16) {
+        return label.length > maxLength
+          ? label.slice(0, maxLength) + '...'
+          : label;
+      }
+
+      // Prepare top 10 exhibits and truncate names
+      const bar = data
+        .map((ex: any) => ({
+          exhibit: truncateLabel(ex.title),
+          scans: ex.scanCount,
+        }))
+        .sort((a: { scans: number }, b: { scans: number }) => b.scans - a.scans)
+        .slice(0, 10);
 
       const line: any[] = [];
       data.forEach((ex: any) => {
@@ -165,15 +176,15 @@ export function QRScanDashboard() {
 
       {/* TOP ROW: Bar Chart + Table */}
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
-        <Card className='flex flex-col bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card '>
+        <Card className='flex flex-col min-h-full bg-gradient-to-t from-primary/5 to-card shadow-xs dark:bg-card '>
           <CardHeader>
             <CardTitle>QR Scans by Exhibit</CardTitle>
             <CardDescription>Top scanned exhibits</CardDescription>
           </CardHeader>
-          <CardContent className='overflow-x-auto sm:overflow-x-visible'>
-            <div className='min-w-[450px] sm:min-w-0'>
-              <ChartContainer config={chartConfig}>
-                <ResponsiveContainer width='100%' height={250}>
+          <CardContent className='flex flex-col overflow-x-auto sm:overflow-x-visible h-full'>
+            <div className='flex flex-col h-full min-w-[450px] sm:min-w-0'>
+              <ChartContainer config={chartConfig} className='h-full'>
+                <ResponsiveContainer width='100%' height='100%'>
                   <BarChart
                     data={barData}
                     layout='vertical'
@@ -196,6 +207,7 @@ export function QRScanDashboard() {
                       width={120}
                       axisLine={true}
                       label={{ value: 'Exhibit', position: 'top' }}
+                      tickFormatter={(label: string) => label}
                     />
                     <ChartTooltip
                       cursor={false}

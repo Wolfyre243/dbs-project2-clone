@@ -16,7 +16,7 @@ export function StartEndDatePicker({
   className,
   children,
 }: {
-  dateRange: DateRange;
+  dateRange?: DateRange;
   setDateRange: (prev: any) => void;
   title?: string;
   className?: string;
