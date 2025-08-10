@@ -7,6 +7,7 @@ import {
   CornerDownLeft,
   ArrowBigUp,
   Sparkles,
+  Languages,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import type React from 'react';
@@ -36,7 +37,7 @@ export function GenerateSubtitleButton({
       <PopoverTrigger asChild>
         <Button
           disabled={isLoading}
-          className={`flex flex-row text-neutral-900 cursor-pointer rounded-2xl ${gradient}`}
+          className={`flex flex-row text-neutral-900 cursor-pointer rounded-2xl shadow-md transition-all duration-200 ease-in-out hover:scale-105 hover:shadow-lg ${gradient}`}
         >
           {!isLoading ? (
             <>
@@ -64,6 +65,90 @@ export function GenerateSubtitleButton({
         <Button
           size={'icon'}
           variant={'ghost'}
+          disabled={Boolean(text === '')}
+          className='hover:bg-transparent'
+          onClick={async () => {
+            if (text === '') return;
+            setIsOpen(false);
+            setIsLoading(true);
+            handleSubmit(text).then(() => setIsLoading(false));
+            setText('');
+          }}
+        >
+          {' '}
+          <SendHorizonal />{' '}
+        </Button>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+export function TranslateSubtitleButton({
+  handleSubmit,
+  languageCode,
+}: {
+  handleSubmit: any;
+  languageCode: string;
+}) {
+  const gradient = 'bg-gradient-to-br from-red-300 to-orange-300';
+
+  const [text, setText] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  return (
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          disabled={isLoading}
+          className={`flex flex-row text-neutral-900 cursor-pointer rounded-2xl shadow-md transition-all duration-200 ease-in-out hover:scale-105 hover:shadow-lg ${gradient}`}
+        >
+          {!isLoading ? (
+            <>
+              <Languages />
+              Translate
+            </>
+          ) : (
+            <>
+              <LoaderCircle className='animate-spin' />
+              Translating...
+            </>
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        className='flex flex-row items-center gap-2 w-xs md:w-xl mt-2 -ms-4 p-4'
+        align='start'
+      >
+        <div className='flex flex-col justify-center gap-2 w-full'>
+          <h1 className='text-sm flex flex-row items-center gap-1'>
+            Translating from{' '}
+            <Badge
+              variant={'secondary'}
+              className='outline outline-primary mx-0.5'
+            >
+              en-GB
+            </Badge>{' '}
+            to{' '}
+            <Badge
+              variant={'secondary'}
+              className='outline outline-primary mx-0.5'
+            >
+              {languageCode || 'No language selected'}
+            </Badge>
+          </h1>
+          <Textarea
+            className='text-sm w-full'
+            value={text}
+            placeholder='Translate subtitles...'
+            onChange={(e) => setText(e.target.value)}
+          />
+        </div>
+        <Button
+          size={'icon'}
+          variant={'ghost'}
+          disabled={Boolean(languageCode === '')}
+          className='hover:bg-transparent'
           onClick={async () => {
             if (text === '') return;
             setIsOpen(false);
@@ -130,7 +215,7 @@ export function AssistantChatBar({
         <Button
           onClick={handleSubmit}
           disabled={!message.trim() || isLoading}
-          className='self-end md:self-auto px-6 bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
+          className='self-end md:self-auto px-6 bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed'
         >
           {isLoading ? (
             <div className='flex items-center gap-2'>

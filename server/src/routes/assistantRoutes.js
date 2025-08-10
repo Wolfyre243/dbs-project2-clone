@@ -97,6 +97,13 @@ assistantRouter.post(
   assistantController.createMessage,
 );
 
+assistantRouter.post(
+  '/translate',
+  createRateLimiter('CHAT'),
+  authMiddleware.verifyIsAdmin,
+  assistantController.translateContent,
+);
+
 assistantRouter.get('/conversations', assistantController.getAllConversations);
 
 /**

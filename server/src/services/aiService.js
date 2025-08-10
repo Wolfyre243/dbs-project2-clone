@@ -647,6 +647,26 @@ async function generateTitle(request) {
     .trim(); // Remove leading/trailing spaces
 }
 
+async function translateContent(request) {
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.5-flash',
+    contents: request,
+    config: {
+      systemInstruction: `
+      You are a translation system.
+      Translate the following paragraph from English into the language specified by the given ISO language code.
+      Output only the translated text, with no explanations, extra formatting, or additional commentary.`,
+
+      tools: [groundingTool],
+    },
+  });
+  return response.text
+    .replace(/[\n\r]+/g, ' ') // Replace newlines with spaces
+    .replace(/["']|\\"|\\'|"/g, '') // Remove single/double quotes and escaped quotes
+    .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+    .trim(); // Remove leading/trailing spaces
+}
+
 /**
  * Orchestrates a full AI analysis session: interprets request, triggers function calls, collects insights, and returns a final result.
  *
@@ -802,6 +822,7 @@ async function generateResponseWithFeedback(request, history = []) {
 module.exports = {
   generateContent,
   generateTitle,
+  translateContent,
   generateResponse: generateResponseWithFeedback,
   FunctionExecutionContext,
   executeFunction,

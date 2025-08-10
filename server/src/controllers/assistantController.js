@@ -15,6 +15,21 @@ module.exports.generateContent = catchAsync(async (req, res, next) => {
 });
 
 /**
+ * POST /assistant/translate
+ */
+module.exports.translateContent = catchAsync(async (req, res, next) => {
+  const { prompt, languageCode } = req.body;
+
+  if (!prompt || !languageCode) {
+    throw new AppError('Invalid request, missing prompt or languageCode.', 400);
+  }
+
+  const fullPrompt = `Target language code: ${languageCode}\nText: ${prompt}`;
+  const aiResponse = await aiService.translateContent(fullPrompt);
+  res.status(200).json({ content: aiResponse });
+});
+
+/**
  * GET /assistant/conversations
  * List all conversations for the current admin/user.
  */

@@ -23,7 +23,10 @@ import {
   LoaderCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { GenerateSubtitleButton } from '~/components/assistant-ui';
+import {
+  GenerateSubtitleButton,
+  TranslateSubtitleButton,
+} from '~/components/assistant-ui';
 
 interface SubtitleItem {
   text: string;
@@ -428,6 +431,18 @@ export default function TourEditorCreateExhibitPage() {
     setSubtitleFormData({ ...subtitleFormData, text: responseData.content });
   };
 
+  const handleTranslateSubtitle = async (text: string) => {
+    const { data: responseData } = await apiPrivate.post(
+      '/assistant/translate',
+      {
+        prompt: text,
+        languageCode: subtitleFormData.languageCode,
+      },
+    );
+
+    setSubtitleFormData({ ...subtitleFormData, text: responseData.content });
+  };
+
   // Generate TTS audio for a subtitle
   const generateAudio = async () => {
     // let subtitle = subtitles.find((s) => s.id === subtitleId);
@@ -749,6 +764,10 @@ export default function TourEditorCreateExhibitPage() {
                     <h1 className='text-md font-semibold'>Add Subtitle</h1>
                     <GenerateSubtitleButton
                       handleSubmit={handleGenerateSubtitle}
+                    />
+                    <TranslateSubtitleButton
+                      handleSubmit={handleTranslateSubtitle}
+                      languageCode={subtitleFormData.languageCode}
                     />
                   </div>
 
