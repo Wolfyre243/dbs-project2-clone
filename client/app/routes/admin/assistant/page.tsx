@@ -108,14 +108,14 @@ export default function AssistantLaunchPage() {
       label: 'Popular Exhibits',
     },
     {
-      text: 'Generate a report on staff performance',
-      emoji: '👥',
-      label: 'Staff Report',
+      text: 'Generate a report on the audio engagement of users for exhibits',
+      emoji: '🔊',
+      label: 'Audio Engagement',
     },
     {
-      text: 'Help me manage user accounts',
-      emoji: '👤',
-      label: 'User Management',
+      text: 'Summarise recent audits by admins',
+      emoji: '📃',
+      label: 'Summarise Logs',
     },
   ];
 

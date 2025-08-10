@@ -9,20 +9,44 @@ import {
   UserTopVisitedExhibit,
 } from '~/components/user-statistics';
 
+import { motion, useReducedMotion } from 'framer-motion';
+import {
+  fadeUpContainer,
+  fadeUpItem,
+  marqueeCard,
+} from '~/components/animations/motionVariants';
+
 export default function HomePage() {
+  const prefersReducedMotion = useReducedMotion();
+  const heroAnimationProps = prefersReducedMotion
+    ? {}
+    : { initial: 'hidden', animate: 'visible' };
+
   return (
-    <main className='flex flex-col min-h-full w-full items-center justify-start gap-10 py-8 px-6'>
-      <section className='w-full flex flex-col md:flex-row gap-5'>
+    <motion.main
+      className='flex flex-col min-h-full w-full items-center justify-start gap-10 py-8 px-6'
+      variants={fadeUpContainer}
+      {...heroAnimationProps}
+    >
+      <motion.section
+        className='w-full flex flex-col md:flex-row gap-5'
+        variants={fadeUpContainer}
+      >
         <div className='flex flex-col justify-between h-90 w-full md:w-2/3 p-6 rounded-xl bg-scenery-dimmed shadow-lg'>
-          <div className='flex flex-col gap-2 text-white'>
-            <h1 className='text-5xl font-bold'>Welcome!</h1>
-            <p className='text-2xl font-semibold'>
+          <motion.div
+            className='flex flex-col gap-2 text-white'
+            variants={fadeUpContainer}
+          >
+            <motion.h1 variants={fadeUpItem} className='text-5xl font-bold'>
+              Welcome!
+            </motion.h1>
+            <motion.p variants={fadeUpItem} className='text-2xl font-semibold'>
               Take a look at your SDC journey so far!
-            </p>
-          </div>
-          <div className='text-white'>
+            </motion.p>
+          </motion.div>
+          <motion.div className='text-white' variants={fadeUpItem}>
             <UserTopVisitedExhibit />
-          </div>
+          </motion.div>
         </div>
 
         <div className='flex flex-col w-full md:w-1/3 gap-5 justify-between'>
@@ -43,25 +67,36 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Favourites */}
-      <section className='w-full flex flex-col md:flex-row gap-5'>
+      <motion.section
+        className='w-full flex flex-col md:flex-row gap-5'
+        variants={fadeUpContainer}
+      >
         <div className='flex flex-col gap-3 w-full md:w-1/4'>
-          <h1 className='text-2xl font-bold'>Your Activity</h1>
-          <UserRecentActivity />
+          <motion.h1 variants={fadeUpItem} className='text-2xl font-bold'>
+            Your Activity
+          </motion.h1>
+          <motion.div variants={fadeUpItem}>
+            <UserRecentActivity />
+          </motion.div>
         </div>
         <div className='flex flex-col gap-3 w-full md:w-3/4'>
-          <h1 className='text-2xl font-bold'>Favourite Exhibits</h1>
-          <UserFavouriteExhibits />
+          <motion.h1 variants={fadeUpItem} className='text-2xl font-bold'>
+            Favourite Exhibits
+          </motion.h1>
+          <motion.div variants={fadeUpItem}>
+            <UserFavouriteExhibits />
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Latest Events */}
       {/* <section className='w-full flex flex-row gap-5'>
         <h1 className='text-2xl font-bold'>Latest Happenings</h1>
         <div></div>
       </section> */}
-    </main>
+    </motion.main>
   );
 }

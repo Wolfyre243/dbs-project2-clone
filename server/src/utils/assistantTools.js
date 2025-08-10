@@ -1,4 +1,6 @@
 const { Type } = require('@google/genai');
+const AuditActions = require('../configs/auditActionConfig');
+const EventTypes = require('../configs/eventTypes');
 
 // Enhanced tools that support context-aware operations
 const analyzeExhibitPerformance = {
@@ -121,13 +123,14 @@ const makeContextAwareChart = {
 const getUserCountStatistics = {
   name: 'get_user_count_statistics',
   description:
-    'Retrieve total user counts and registration statistics for regular users (Guests and Members).',
+    'Retrieves aggregate statistics about registered users, including total counts and breakdowns by type (Guests and Members). Optionally accepts filter parameters to refine results by date range, demographics, or other criteria.',
   parameters: {
     type: Type.OBJECT,
     properties: {
       filter: {
         type: Type.OBJECT,
-        description: 'Optional filter object to refine user statistics.',
+        description:
+          'Optional filtering rules to narrow the statistics. Example fields: date range, user type (Guest or Member), or registration source.',
       },
     },
     required: [],
@@ -137,26 +140,193 @@ const getUserCountStatistics = {
 const enhancedTools = [
   getUserCountStatistics,
   {
-    name: 'get_member_sign_ups',
+    name: 'get_all_users',
     description:
-      'Get member sign-ups with filtering by date, gender, age group, and granularity. Dates must be in 2025 or later.',
+      'Retrieve all users with pagination, sorting, and advanced filtering.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        page: { type: Type.INTEGER, description: 'Page number (default: 1)' },
+        pageSize: {
+          type: Type.INTEGER,
+          description: 'Users per page (default: 10)',
+        },
+        sortBy: {
+          type: Type.STRING,
+          description: 'Field to sort by (e.g., createdAt, age)',
+        },
+        order: {
+          type: Type.STRING,
+          enum: ['asc', 'desc'],
+          description: 'Sort order',
+        },
+        search: {
+          type: Type.STRING,
+          description: 'Search term for username, first/last name',
+        },
+        // statusId: { type: Type.INTEGER, description: 'Filter by statusId' },
+        // roleId: { type: Type.INTEGER, description: 'Filter by roleId' },
+        ageMin: { type: Type.INTEGER, description: 'Minimum age filter' },
+        ageMax: { type: Type.INTEGER, description: 'Maximum age filter' },
+        gender: {
+          type: Type.STRING,
+          enum: ['M', 'F'],
+          description: 'Gender filter',
+        },
+        languageCode: {
+          type: Type.STRING,
+          description: 'Language code filter',
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'get_display_member_signups',
+    description:
+      'Get member sign-up statistics with filtering by date, gender, age group, and granularity.',
     parameters: {
       type: Type.OBJECT,
       properties: {
         startDate: {
           type: Type.STRING,
-          description: 'Start date (YYYY-MM-DD, must be 2025 or later)',
+          description: 'Start date (YYYY-MM-DD)',
         },
-        endDate: {
+        endDate: { type: Type.STRING, description: 'End date (YYYY-MM-DD)' },
+        gender: {
           type: Type.STRING,
-          description: 'End date (YYYY-MM-DD, must be 2025 or later)',
+          enum: ['All', 'M', 'F'],
+          description: 'Gender filter (All, M, F)',
         },
-        gender: { type: Type.STRING, enum: ['M', 'F', 'All'] },
         ageGroup: {
           type: Type.STRING,
-          enum: ['Children', 'Youth', 'Adults', 'Seniors', 'All'],
+          enum: ['All', 'Children', 'Youth', 'Adults', 'Seniors'],
+          description: 'Age group filter',
         },
-        granularity: { type: Type.STRING, enum: ['day', 'month', 'year'] },
+        granularity: {
+          type: Type.STRING,
+          enum: ['day', 'month', 'year'],
+          description: 'Time granularity for time series data',
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'get_all_audit_logs',
+    description:
+      'Retrieve all admin audit logs with pagination, sorting, and optional filtering.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        page: { type: Type.INTEGER, description: 'Page number (default: 1)' },
+        pageSize: {
+          type: Type.INTEGER,
+          description: 'Logs per page (default: 10)',
+        },
+        sortBy: {
+          type: Type.STRING,
+          description: 'Field to sort by (e.g., timestamp)',
+        },
+        order: {
+          type: Type.STRING,
+          enum: ['asc', 'desc'],
+          description: 'Sort order',
+        },
+        // actionTypeId: {
+        //   type: Type.INTEGER,
+        //   enum: [...Object.values(AuditActions).map(v => parseInt(v))],
+        //   description: 'Filter by actionTypeId',
+        // },
+        search: {
+          type: Type.STRING,
+          description: 'Search term for entityName or logText',
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'get_all_event_logs',
+    description:
+      'Retrieve all event logs with pagination, sorting, and optional filtering.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        page: { type: Type.INTEGER, description: 'Page number (default: 1)' },
+        pageSize: {
+          type: Type.INTEGER,
+          description: 'Logs per page (default: 10)',
+        },
+        sortBy: {
+          type: Type.STRING,
+          description: 'Field to sort by (e.g., timestamp)',
+        },
+        order: {
+          type: Type.STRING,
+          enum: ['asc', 'desc'],
+          description: 'Sort order',
+        },
+        // eventTypeId: {
+        //   type: Type.INTEGER,
+        //   // enum: [...Object.values(EventTypes).map(v => parseInt(v))],
+        //   description: 'Filter by eventTypeId',
+        // },
+        search: {
+          type: Type.STRING,
+          description: 'Search term for entityName or details',
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'get_exhibit_by_id',
+    description: 'Retrieve an exhibit by its ID.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        exhibitId: { type: Type.STRING, description: 'Exhibit ID (UUID)' },
+      },
+      required: ['exhibitId'],
+    },
+  },
+  {
+    name: 'get_all_reviews',
+    description:
+      'Retrieve all user reviews with pagination, sorting, and optional search/filter.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        page: { type: Type.INTEGER, description: 'Page number (default: 1)' },
+        pageSize: {
+          type: Type.INTEGER,
+          description: 'Reviews per page (default: 10)',
+        },
+        sortBy: {
+          type: Type.STRING,
+          description: 'Field to sort by (e.g., createdAt)',
+        },
+        order: {
+          type: Type.STRING,
+          enum: ['asc', 'desc'],
+          description: 'Sort order',
+        },
+        search: {
+          type: Type.STRING,
+          description: 'Search term for review text',
+        },
+        filter: {
+          type: Type.OBJECT,
+          description: 'Optional filter object for advanced queries',
+          properties: {
+            statusId: {
+              type: Type.INTEGER,
+              description:
+                'Filter exhibits by statusId (e.g., ACTIVE, ARCHIVED)',
+            },
+          },
+        },
       },
       required: [],
     },
@@ -170,6 +340,50 @@ const enhancedTools = [
         limit: {
           type: Type.INTEGER,
           description: 'Maximum languages to return',
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'get_all_exhibits',
+    description:
+      'Retrieve a paginated, sortable list of exhibits with optional search and status filter.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        page: {
+          type: Type.INTEGER,
+          description: 'Page number (default: 1)',
+        },
+        pageSize: {
+          type: Type.INTEGER,
+          description: 'Number of exhibits per page (default: 10)',
+        },
+        sortBy: {
+          type: Type.STRING,
+          description: 'Field to sort by (e.g., title, createdAt)',
+        },
+        order: {
+          type: Type.STRING,
+          enum: ['asc', 'desc'],
+          description: 'Sort order (asc or desc)',
+        },
+        search: {
+          type: Type.STRING,
+          description: 'Search term for exhibit title or description',
+        },
+        // Filter
+        filter: {
+          type: Type.OBJECT,
+          description: 'Filter exhibits by various fields, such as statusId',
+          properties: {
+            statusId: {
+              type: Type.INTEGER,
+              description:
+                'Filter exhibits by statusId (e.g., ACTIVE, ARCHIVED)',
+            },
+          },
         },
       },
       required: [],
@@ -245,9 +459,9 @@ const enhancedTools = [
     },
   },
   analyzeExhibitPerformance,
-  generateInsightReport,
-  optimizeDataRetrieval,
-  makeContextAwareChart,
+  // generateInsightReport,
+  // optimizeDataRetrieval,
+  // makeContextAwareChart,
 ];
 
 function createContextAwareChartConfig(data, chartType, context = null) {

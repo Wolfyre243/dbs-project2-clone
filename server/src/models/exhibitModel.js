@@ -209,8 +209,8 @@ module.exports.bulkSoftDeleteExhibits = async (exhibitIds) => {
 
 // Get all exhibits with pagination, sorting, and search
 module.exports.getAllExhibits = async ({
-  page,
-  pageSize,
+  page = 1,
+  pageSize = 10,
   sortBy,
   order,
   search,

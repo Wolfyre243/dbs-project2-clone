@@ -362,7 +362,7 @@ export default function AssistantConversationPage() {
           ) : (
             ''
           )}
-          <div className='sticky bottom-0 h-40 bg-gradient-to-b from-transparent to-background shadow blur-xs z-10'>
+          <div className='sticky bottom-0 flex flex-row min-h-20 bg-gradient-to-b from-transparent to-background shadow blur-xs z-10'>
             &nbsp;
           </div>
         </div>

@@ -431,16 +431,16 @@ function calculateAge(dob) {
 
 //get all users for admin
 module.exports.getAllUsers = async ({
-  page,
-  pageSize,
-  sortBy,
-  order,
-  search,
+  page = 1,
+  pageSize = 10,
+  sortBy = 'createdAt',
+  order = 'desc',
+  search = '',
   filter = {},
-  ageMin,
-  ageMax,
-  gender,
-  languageCode,
+  ageMin = 0,
+  ageMax = 100,
+  gender = null,
+  languageCode = null,
 }) => {
   let where = {
     ...filter,

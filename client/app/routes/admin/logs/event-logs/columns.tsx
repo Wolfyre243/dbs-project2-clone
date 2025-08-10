@@ -28,6 +28,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '~/components/ui/tooltip';
+import { formatDistanceToNow } from 'date-fns';
 
 export type EventLog = {
   eventId: string;
@@ -127,13 +128,21 @@ export const columns: ColumnDef<EventLog>[] = [
       const value = row.original.timestamp;
       if (!value) return '';
       const date = typeof value === 'string' ? new Date(value) : value;
-      return date.toLocaleString('en-SG', {
-        year: 'numeric',
-        month: 'short',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
+      const timeAgo = formatDistanceToNow(date.toISOString(), {
+        addSuffix: true,
       });
+      return (
+        <span>
+          {date.toLocaleString('en-SG', {
+            year: 'numeric',
+            month: 'short',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+          })}{' '}
+          <span className='text-muted-foreground/50'>({timeAgo})</span>
+        </span>
+      );
     },
   },
   {
@@ -181,9 +190,7 @@ export const columns: ColumnDef<EventLog>[] = [
                 Copy Event ID
               </DropdownMenuItem>
               <DialogTrigger asChild>
-                <DropdownMenuItem>
-                  View Details {eventLog.eventId}
-                </DropdownMenuItem>
+                <DropdownMenuItem>View Details</DropdownMenuItem>
               </DialogTrigger>
             </DropdownMenuContent>
           </DropdownMenu>

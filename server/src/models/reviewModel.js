@@ -56,14 +56,28 @@ const reviewModel = {
   },
 
   //pagination
-  getAllPaginatedReviews: async ({ page = 1, pageSize = 10 } = {}) => {
+  getAllPaginatedReviews: async ({
+    page = 1,
+    pageSize = 10,
+    sortBy = 'createdAt',
+    order = 'desc',
+    search = '',
+    filter = {},
+  } = {}) => {
+    let where = { ...filter };
+
+    if (search && search.trim() !== '') {
+      where.OR = [{ reviewText: { contains: search, mode: 'insensitive' } }];
+    }
+
     try {
-      const total = await prisma.review.count();
+      const total = await prisma.review.count({ where });
 
       const reviews = await prisma.review.findMany({
         skip: (page - 1) * pageSize,
         take: pageSize,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { [sortBy]: order },
+        where,
         select: {
           reviewId: true,
           rating: true,
@@ -73,11 +87,7 @@ const reviewModel = {
             select: {
               userId: true,
               username: true,
-              userProfile: {
-                select: {
-                  avatarUrl: true,
-                },
-              },
+              userProfile: true,
             },
           },
         },
@@ -88,7 +98,6 @@ const reviewModel = {
       throw err;
     }
   },
-  disconnect: () => prisma.$disconnect(),
 };
 
 module.exports = reviewModel;

@@ -62,11 +62,27 @@ module.exports.getAllReviews = catchAsync(async (req, res, next) => {
 
 // paginated reviews
 module.exports.getAllPaginatedReviews = catchAsync(async (req, res, next) => {
-  const { page = 1, pageSize = 10 } = req.query;
+  const {
+    page = 1,
+    pageSize = 10,
+    sortBy = 'createdAt',
+    order = 'desc',
+    search = '',
+    statusFilter = null,
+  } = req.query;
+
+  const filter = {};
+  if (statusFilter) {
+    filter.statusId = parseInt(statusFilter);
+  }
 
   const reviewsResult = await reviewModel.getAllPaginatedReviews({
     page: parseInt(page),
     pageSize: parseInt(pageSize),
+    sortBy,
+    order,
+    search,
+    filter,
   });
 
   const formatted = reviewsResult.reviews.map((r) => ({

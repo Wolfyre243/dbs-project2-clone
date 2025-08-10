@@ -20,6 +20,12 @@ const {
   getAudioCompletionRatesTimeSeries,
   getAverageListenDurationTimeSeries,
 } = require('../models/statisticsModel');
+const { getAllExhibits, getExhibitById } = require('../models/exhibitModel');
+const { getPaginatedAuditLogs } = require('../models/adminAuditModel');
+const { getPaginatedEventLogs } = require('../models/eventLogModel');
+const { getAllPaginatedReviews } = require('../models/reviewModel');
+// Add user model import
+const { getAllUsers } = require('../models/userModel');
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -28,25 +34,93 @@ const groundingTool = {
 };
 
 // MAIN SYS PROMPT //
+// const systemInstruction = `
+// You are Omnie, a highly skilled data analyst at the Singapore Discovery Centre. You can execute functions and analyze their results to provide comprehensive insights.
+
+// IMPORTANT CONTEXT AWARENESS RULES:
+// 1. You have access to previously executed functions and their results
+// 2. Avoid calling the same function with identical parameters, unless the user explicitly tells you to
+// 3. Use composite analysis when multiple related data points are available
+// 4. Build upon previous function results to provide richer insights
+// 5. If you need additional data that complements existing results, call appropriate functions
+// 6. All responses including data should be backed and proven using only verified data from the database. Do not hallucinate or make up false data in the absence of real data.
+
+// FORMAT:
+// 1. Format responses as plain text with newlines for readability, suitable for frontend parsing.
+// 2. For trends (e.g., sign-ups), include total counts and breakdowns (e.g., by age group) with clear headings and newlines.
+// 3. Bold text by surrounding it in asterisks (*), and surround in double asterisks (**) to mark out important and big headers. You should only use this to section out content.
+// 4. Please prioritise readability for the user, and use line breaks (\n) where appropriate, to improve user readability.
+// 5. Do not combine formatting rules for bullet points and headers.
+
+// Extra Information:
+// Current Date: ${new Date().toLocaleString('en-SG', { timeZone: 'UTC' })}
+// `;
+
 const systemInstruction = `
-You are Omnie, a highly skilled data analyst at the Singapore Discovery Centre. You can execute functions and analyze their results to provide comprehensive insights.
+You are Omnie — a friendly, highly skilled data analyst at the Singapore Discovery Centre 🇸🇬. You can execute functions and analyze their results to provide clear, accurate, and engaging insights.
 
 IMPORTANT CONTEXT AWARENESS RULES:
-1. You have access to previously executed functions and their results
-2. Avoid calling the same function with identical parameters, unless the user explicitly tells you to
-3. Use composite analysis when multiple related data points are available
-4. Build upon previous function results to provide richer insights
-5. If you need additional data that complements existing results, call appropriate functions
-6. All responses including data should be backed and proven using only verified data from the database. Do not hallucinate or make up false data in the absence of real data.
 
-FORMAT:
-1. Format responses as plain text with newlines for readability, suitable for frontend parsing. 
-2. For trends (e.g., sign-ups), include total counts and breakdowns (e.g., by age group) with clear headings and newlines.
-3. Bold text by surrounding it in asterisks (*), and surround in double asterisks (**) to mark out important and big headers. You should only use this to section out content.
-4. Please prioritise readability for the user, and use line breaks (\n) where appropriate, to improve user readability.
-5. Do not combine formatting rules for bullet points and headers.
+You can access previously executed functions and their results — use them to avoid redundant work.
 
-Extra Information:
+Never call the same function with identical parameters unless the user explicitly requests it.
+
+Combine related datasets for richer composite analysis.
+
+Build upon past function results to provide more in-depth insights.
+
+If extra data is needed to complement existing results, call the most relevant functions.
+
+All insights must be backed by real, verified database data — do not guess or fabricate data.
+
+RESPONSE FORMATTING RULES:
+
+Use plain text with line breaks (\n) for readability — suitable for frontend parsing.
+
+Use bold text (single asterisks) for emphasis within sentences.
+
+Use double asterisks only for section headings — never inside bullet points.
+
+For trends or breakdowns, include totals and category breakdowns with clear headings.
+
+Bullet points: use a single * followed by a space for items. Do not wrap bullet labels in extra asterisks unless absolutely necessary.
+
+Avoid unnecessary asterisk patterns like * *Label:*.
+
+Use friendly language and appropriate emojis to make responses approachable, while keeping data clear and professional.
+
+TONE TEMPLATES (you may use them as a guideline, but do not have to strictly abide by them.):
+
+1. Statistics Summary Template
+📊 [Section Title]
+
+[Category]: X value (Y additional detail)
+
+[Category]: X value (Y additional detail)
+
+2. Trend Analysis Template
+📈 [Trend Title]
+Here’s what I found:
+
+[Category]: X this period → Y last period (Z% change) 📉/📈
+
+[Category]: X this period → Y last period (Z% change)
+Overall, this shows [summary of insight].
+
+3. Comparison Template
+⚖️ [Comparison Title]
+
+Winner: [name] 🏆 because [reason].
+
+4. Recommendation Template
+💡 My Recommendation
+Based on the data, I suggest:
+
+[Action 1] – because [reason]
+
+[Action 2] – because [reason]
+
+ADDITIONAL INFORMATION:
 Current Date: ${new Date().toLocaleString('en-SG', { timeZone: 'UTC' })}
 `;
 
@@ -114,10 +188,6 @@ async function executeFunction(funcCall, context = null) {
         result = await getUserCountStatistics();
         break;
 
-      case 'get_member_sign_ups':
-        result = await getDisplayMemberSignUps(args);
-        break;
-
       case 'get_common_languages':
         result = await getDisplayCommonLanguagesUsed(args);
         break;
@@ -138,6 +208,10 @@ async function executeFunction(funcCall, context = null) {
         result = await getScansPerExhibitStats(args);
         break;
 
+      case 'get_all_exhibits':
+        result = await getAllExhibits(args);
+        break;
+
       case 'get_time_series':
         if (args.metric === 'completion_rate') {
           result = await getAudioCompletionRatesTimeSeries(args);
@@ -148,27 +222,50 @@ async function executeFunction(funcCall, context = null) {
         }
         break;
 
-      case 'make_chart':
-        // Enhanced chart making with context awareness
-        const dataSource = args.dataSource;
-        let chartData;
-
-        // Check if we already have the data in context
-        if (context && context.toolOutputs.has(dataSource)) {
-          chartData = context.toolOutputs.get(dataSource);
-        } else {
-          // Execute the data source function
-          chartData = await executeFunction(
-            {
-              name: dataSource,
-              args: args.filters,
-            },
-            context,
-          );
-        }
-
-        result = createChartJsConfig(chartData, args.chartType);
+      case 'get_all_audit_logs':
+        result = await getPaginatedAuditLogs(args);
         break;
+
+      case 'get_all_event_logs':
+        result = await getPaginatedEventLogs(args);
+        break;
+
+      case 'get_exhibit_by_id':
+        result = await getExhibitById(args.exhibitId);
+        break;
+
+      case 'get_all_reviews':
+        result = await getAllPaginatedReviews(args);
+        break;
+
+      case 'get_all_users':
+        result = await getAllUsers(args);
+        break;
+
+      case 'get_display_member_signups':
+        result = await getDisplayMemberSignUps();
+        break;
+      // case 'make_chart':
+      //   // Enhanced chart making with context awareness
+      //   const dataSource = args.dataSource;
+      //   let chartData;
+
+      //   // Check if we already have the data in context
+      //   if (context && context.toolOutputs.has(dataSource)) {
+      //     chartData = context.toolOutputs.get(dataSource);
+      //   } else {
+      //     // Execute the data source function
+      //     chartData = await executeFunction(
+      //       {
+      //         name: dataSource,
+      //         args: args.filters,
+      //       },
+      //       context,
+      //     );
+      //   }
+
+      //   result = createChartJsConfig(chartData, args.chartType);
+      //   break;
 
       // New composite function that leverages multiple data sources
       case 'analyze_exhibit_performance':
@@ -567,41 +664,41 @@ async function generateResponseWithFeedback(request, history = []) {
       history: history,
       config: {
         systemInstruction: buildContextAwareSystemInstruction(context),
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            status: {
-              type: Type.STRING,
-              enum: ['success', 'error'],
-              description: 'Status of the response',
-            },
-            message: {
-              type: Type.STRING,
-              description: 'Human-readable response with insights',
-            },
-            data: {
-              type: Type.TYPE_UNSPECIFIED,
-              description: 'Structured data, charts, or analysis results',
-            },
-            functionCalls: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  function: { type: Type.STRING },
-                  purpose: { type: Type.STRING },
-                },
-              },
-              description: 'List of functions that were called and why',
-            },
-            insights: {
-              type: Type.ARRAY,
-              items: { type: Type.STRING },
-              description: 'Key insights derived from the analysis',
-            },
-          },
-          required: ['status', 'message'],
-        },
+        // responseSchema: {
+        //   type: Type.OBJECT,
+        //   properties: {
+        //     status: {
+        //       type: Type.STRING,
+        //       enum: ['success', 'error'],
+        //       description: 'Status of the response',
+        //     },
+        //     message: {
+        //       type: Type.STRING,
+        //       description: 'Human-readable response with insights',
+        //     },
+        //     data: {
+        //       type: Type.TYPE_UNSPECIFIED,
+        //       description: 'Structured data, charts, or analysis results',
+        //     },
+        //     functionCalls: {
+        //       type: Type.ARRAY,
+        //       items: {
+        //         type: Type.OBJECT,
+        //         properties: {
+        //           function: { type: Type.STRING },
+        //           purpose: { type: Type.STRING },
+        //         },
+        //       },
+        //       description: 'List of functions that were called and why',
+        //     },
+        //     insights: {
+        //       type: Type.ARRAY,
+        //       items: { type: Type.STRING },
+        //       description: 'Key insights derived from the analysis',
+        //     },
+        //   },
+        //   required: ['status', 'message'],
+        // },
         tools: [{ functionDeclarations: tools }],
         toolConfig: { functionCallingConfig: { mode: 'AUTO' } },
         safetySettings: [
@@ -610,6 +707,10 @@ async function generateResponseWithFeedback(request, history = []) {
             threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
           },
         ],
+        thinkingConfig: {
+          thinkingBudget: 1024,
+        },
+        temperature: 0.1,
       },
     });
 
