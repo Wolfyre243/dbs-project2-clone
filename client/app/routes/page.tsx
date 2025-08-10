@@ -233,7 +233,7 @@ export default function LandingPage() {
           </div>
           <div className='flex flex-row w-full mt-10 justify-center'>
             <Button
-              className='text-lg p-6 rounded-full shadow-md'
+              className='text-lg p-6 rounded-full hover:ring-4 ring-primary transition-all duration-200 ease-in-out hover:scale-105 shadow-xl'
               asChild
               variant={'secondary'}
             >

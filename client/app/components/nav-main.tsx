@@ -58,7 +58,7 @@ export function NavMain({
           <Collapsible key={item.title} asChild defaultOpen={item.isActive}>
             <SidebarMenuItem>
               <SidebarMenuButton
-                className='hover:bg-accent/20'
+                className='hover:bg-accent'
                 asChild
                 tooltip={item.title}
                 isActive={i === activeIndex}
@@ -82,7 +82,7 @@ export function NavMain({
                         <SidebarMenuSubItem key={subItem.title}>
                           <SidebarMenuSubButton
                             asChild
-                            className='hover:bg-accent/20'
+                            className='hover:bg-accent'
                           >
                             <Link to={subItem.url}>
                               {subItem.icon && <item.icon />}

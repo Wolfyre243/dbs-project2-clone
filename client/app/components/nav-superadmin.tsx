@@ -26,7 +26,7 @@ export function NavSuperAdmin({
         <SidebarMenu>
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton asChild className='hover:bg-accent/20'>
+              <SidebarMenuButton asChild className='hover:bg-accent'>
                 <a href={item.url}>
                   <item.icon />
                   <span>{item.title}</span>

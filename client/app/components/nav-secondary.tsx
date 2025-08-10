@@ -25,11 +25,7 @@ export function NavSecondary({
         <SidebarMenu>
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton
-                asChild
-                size='sm'
-                className='hover:bg-accent/20'
-              >
+              <SidebarMenuButton asChild size='sm' className='hover:bg-accent'>
                 <a href={item.url}>
                   <item.icon />
                   <span>{item.title}</span>
