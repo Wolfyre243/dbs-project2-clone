@@ -33,7 +33,7 @@ RUN npx prisma generate
 COPY . .
 
 # Run the application as a non-root user.
-USER node
+# USER node
 
 # Expose the port that the application listens on.
 EXPOSE 3000

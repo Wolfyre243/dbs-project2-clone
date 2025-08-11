@@ -1,122 +1,115 @@
-[![Open in Codespaces](https://classroom.github.com/assets/launch-codespace-2972f46106e565e64193e422d61a12cf1da4916b45550586e14ef0a7c637dd04.svg)](https://classroom.github.com/open-in-codespaces?assignment_repo_id=19914745)
-# Backend Setup Instructions
+# SDC Client
 
-## 1. Create a `.env` File
-Create a `.env` file in the `backend` directory with the following content:
-```
-DATABASE_URL=postgres://username:password@host:port/database
-PORT=5000
-```
-- Replace `username`, `password`, `host`, `port`, and `database` with your PostgreSQL credentials.
+This is the frontend React application for the SDC project.  
+It is built with [Vite](https://vitejs.dev/), [React](https://react.dev/), and
+[TypeScript](https://www.typescriptlang.org/).
 
-## 2. Start the Backend
-Run the following commands to start the backend server:
-```bash
-cd backend
-npm install
-node server.js or npm start
-```
-The backend will start on `http://localhost:5000`.
+---
 
-## 3. Start the Frontend
-Navigate to the `react-user-dashboard` directory and run:
-```bash
-cd react-user-dashboard
-npm install
-npm run dev
-```
-The frontend will start on `http://localhost:5173`.
+## Folder Structure
 
-## 4. Database Table Creation
-The backend automatically creates the `users` table and populates it with a default user if the table does not exist. The default user is:
-- **Email**: `admin@example.com`
-- **Password**: `admin123`
+client/ │ ├── .env # Environment variables ├── package.json # Project
+dependencies and scripts ├── tsconfig.json # TypeScript configuration ├──
+vite.config.ts # Vite configuration ├── netlify.toml # Netlify deployment config
+│ ├── app/ # Main application source code │ ├── app.css # Global styles │ ├──
+root.tsx # Root React component │ ├── routes.ts # Route definitions │ ├──
+components/ # Reusable UI components │ ├── context/ # React context providers │
+├── hooks/ # Custom React hooks │ ├── lib/ # Utility libraries │ ├── routes/ #
+Route-specific components/pages │ ├── services/ # API and other service logic │
+├── actionTypeConfig.ts │ ├── eventTypeConfig.ts │ ├── rolesConfig.ts │ ├──
+statusConfig.ts │ └── ... │ ├── public/ # Static assets │ ├── favicon.ico │ ├──
+sdc-logo.png │ ├── sdc-scenery.jpg │ ├── sample-audio-1.wav │ ├──
+sample-audio-2.wav │ ├── sample-audio-3.wav │ └── ... │ ├── .react-router/ #
+React Router build artifacts/types │ └── types/ │ └── ... │ └── ...
 
-## 5. Sign-Up and Sign-In Instructions
-### Sign-Up
-1. Navigate to `http://localhost:5173/signup`.
-2. Enter your email and password to create a new account.
+---
 
-### Sign-In
-1. Navigate to `http://localhost:5173/login`.
-2. Enter your email and password to log in.
+## Getting Started
 
-If you encounter any issues, please check the backend logs for errors.
+### 1. _Install dependencies_
 
+bash npm install
 
+### 2. _Run the development server_
 
-## 6. Axios and apiClient Usage
+bash npm run dev
 
-### apiClient
-The `apiClient` is a pre-configured instance of Axios with a base URL (`http://localhost:5000`) and default headers like `Content-Type: application/json`. It simplifies making HTTP requests to the backend API.
+The app will be available at [http://localhost:5173](http://localhost:5173)
+(default Vite port).
 
-### SignUp
-To register a user, you can use:
-```javascript
-apiClient.post('/signup', { username, password });
-```
-This sends a POST request to the `/signup` endpoint with the user data.
+### 3. _Build for production_
 
-### Login
-To log in a user, you can use:
-```javascript
-apiClient.post('/login', { username, password });
-```
-This sends a POST request to the `/login` endpoint with the credentials.
+bash npm run build
 
-Both operations return promises, allowing you to handle responses and errors using `.then()` and `.catch()` or `async/await`.
+### 4. _Preview production build_
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+bash npm run preview
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Configuration
 
-## Expanding the ESLint configuration
+- _Environment variables:_  
+  Set up your .env file for API endpoints and other secrets.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- _Routing:_  
+  Routes are defined in app/routes.ts and react-router.config.ts.
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+- _Styling:_  
+  Global styles are in app/app.css.  
+  Uses [Tailwind CSS](https://tailwindcss.com/) via @apply and custom
+  properties.
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Key Features
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+- _Admin Dashboard:_  
+  Analytics, statistics, and management tools for users, exhibits, audio, QR
+  codes, and more.
 
+- _User Pages:_  
+  User statistics, favorites, and activity logs.
 
+- _Reusable Components:_  
+  Cards, charts, tables, forms, and more in app/components.
+
+- _API Services:_  
+  API logic in app/services.
+
+- _Localization:_  
+  Language and status configs in app/languageConfig.ts and app/statusConfig.ts.
+
+---
+
+## Deployment
+
+- _Netlify:_  
+  Configured via netlify.toml for easy deployment.
+
+---
+
+## Contributing
+
+1. Fork the repo
+2. Create your feature branch (git checkout -b feature/my-feature)
+3. Commit your changes
+4. Push to the branch
+5. Open a pull request
+
+---
+
+## License
+
+This project is for educational use at Singapore Polytechnic.
+
+---
+
+## Credits
+
+- Built by Group 3-1 for DBSP-CA2
+- Uses [React](https://react.dev/), [Vite](https://vitejs.dev/),
+  [Tailwind CSS](https://tailwindcss.com/), [Recharts](https://recharts.org/),
+  [Lucide Icons](https://lucide.dev/), and more.
+
+---

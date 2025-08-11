@@ -1,9 +1,0 @@
-- Set up husky
-- Add server folders
-- middleware
-- prisma
-- controllers, models, routes
-- utils
-- validators
-- client structure
-- shadcn
