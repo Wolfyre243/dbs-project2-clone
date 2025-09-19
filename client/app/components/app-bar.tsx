@@ -30,11 +30,11 @@ const links = [
     name: 'Home',
     auth: true,
   },
-  {
-    to: '/membership-plans',
-    name: 'Membership',
-    auth: false,
-  },
+  // {
+  //   to: '/membership-plans',
+  //   name: 'Membership',
+  //   auth: false,
+  // },
   {
     to: '/review',
     name: 'Review',

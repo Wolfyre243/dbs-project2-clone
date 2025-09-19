@@ -21,6 +21,8 @@ import { isAxiosError } from 'axios';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { RainbowButton } from '~/components/magicui/rainbow-button';
+import HomepageFAQSection from '~/components/faq-section';
+import CourseDisplaySection from '~/components/course-display-sect';
 
 export default function LandingPage() {
   const { setAccessToken, accessToken } = useAuth();
@@ -82,13 +84,12 @@ export default function LandingPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: 'easeOut' }}
             >
-              {t('mainHeading1')}
-              <br />
+              {t('mainHeading1')}{' '}
               <span className='bg-gradient-to-br from-red-500 dark:from-red-500 to-red-600 dark:to-red-700 bg-clip-text text-transparent'>
                 {t('mainHeading2')}
               </span>
-              <br />
-              {t('mainHeading3')}
+              {/* <br />
+              {t('mainHeading3')} */}
             </motion.h1>
 
             {/* Subheading */}
@@ -191,7 +192,7 @@ export default function LandingPage() {
         </section>
 
         {/* Membership & Benefits Section */}
-        <section className='w-full bg-gradient-to-b from-background/90 to-red-500/80 py-30 px-4'>
+        {/* <section className='w-full bg-gradient-to-b from-background/90 to-red-500/80 py-30 px-4'>
           <div className='max-w-5xl mx-auto'>
             <h2 className='text-3xl md:text-4xl font-bold text-center mb-4 text-foreground'>
               {t('becomeMember')}
@@ -239,18 +240,12 @@ export default function LandingPage() {
             >
               <Link to={'/auth/register'}>Join as a FREE member</Link>
             </Button>
-            {/* <RainbowButton
-              asChild
-              variant={'outline'}
-              className='text-lg p-6 rounded-full'
-            >
-              <Link to={'/auth/register'}>Join as a FREE member</Link>
-            </RainbowButton> */}
           </div>
-        </section>
+        </section> */}
+        <CourseDisplaySection />
 
         {/* FAQ Section */}
-        <section className='w-full bg-background py-20 px-4 border-t border-border'>
+        {/* <section className='w-full bg-background py-20 px-4 border-t border-border'>
           <div className='max-w-4xl mx-auto'>
             <h2 className='text-3xl md:text-4xl font-bold text-center mb-4 text-foreground'>
               {t('faqTitle')}
@@ -290,7 +285,8 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
-        </section>
+        </section> */}
+        <HomepageFAQSection />
 
         {/* Address & Location Section */}
         <section className='w-full bg-red-400 dark:bg-red-400 py-16 px-4 border-t border-border'>

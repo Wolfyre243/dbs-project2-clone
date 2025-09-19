@@ -13,7 +13,6 @@ import { motion, useReducedMotion } from 'framer-motion';
 import {
   fadeUpContainer,
   fadeUpItem,
-  marqueeCard,
 } from '~/components/animations/motionVariants';
 
 export default function HomePage() {
