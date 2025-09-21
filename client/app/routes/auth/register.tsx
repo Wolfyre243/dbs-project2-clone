@@ -94,7 +94,7 @@ export default function MemberRegisterPage() {
           <img src='/sdc-logo.png' alt='SDC Logo' className='' />
         </AspectRatio>
         <span className='text-2xl font-semibold'>
-          Singapore Discovery Centre
+          Singapore Polytechnic Tour
         </span>
       </a>
       <div className='flex flex-col gap-5 w-full'>

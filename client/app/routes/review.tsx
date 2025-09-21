@@ -167,7 +167,7 @@ export default function ReviewPage() {
             Leave a Review!
           </motion.h1>
           <motion.h1 variants={fadeUpItem} className='text-4xl font-bold mb-4'>
-            Enjoyed your time at Singapore Discovery Centre?
+            Enjoyed your time at Singapore Polytechnic?
           </motion.h1>
           <motion.p variants={fadeUpItem} className='text-lg mb-6 text-white'>
             We'd appreciate if you could take a minute to give us a review!
@@ -223,7 +223,7 @@ export default function ReviewPage() {
             How was your experience?
           </h1>
           <p className='text-xl font-semibold'>
-            Here at SDC, we'd love to hear from you!
+            Here at SP, we'd love to hear from you!
           </p>
         </div>
         <motion.div
