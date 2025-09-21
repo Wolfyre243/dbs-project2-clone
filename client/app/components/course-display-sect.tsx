@@ -35,13 +35,8 @@ export default function CourseDisplaySection() {
             <p className='text-sm'>
               If you aspire to use data analytics and AI to transform the way we
               live, work and communicate, the Diploma in Applied AI & Analytics
-              is your best choice.
-              <br />
-              <br />
-              Explore new fields like Generative AI, Graph Analytics, and Big
-              Data Technology. Gain hands-on experience in industry projects and
-              leverage SP's partnerships with top tech companies to stay ahead
-              in AI advancements.
+              is your best choice. Explore new fields like Generative AI, Graph
+              Analytics, and Big Data Technology.
             </p>
           </CardContent>
         </Card>
@@ -64,10 +59,7 @@ export default function CourseDisplaySection() {
               challenges your cognitive skills, the Diploma in Cybersecurity and
               Digital Forensics is ideal for you. This course appeals to
               students who enjoy brain-teasing problems and the thrill of
-              defending against cyber threats. SP provides an industry-aligned
-              curriculum, advanced facilities, and real-world projects,
-              empowering you to become a confident cybersecurity professional.
-              Start your journey with SP today.
+              defending against cyber threats.
             </p>
           </CardContent>
         </Card>
@@ -88,11 +80,7 @@ export default function CourseDisplaySection() {
               process-driven problem-solving, or interested in computer science,
               the Diploma in Computer Science is perfect for you. Your strengths
               in requirements analysis and attention to detail are ideal for
-              mastering full-stack development. At DCS, you can earn
-              industry-recognized certifications and gain hands-on experience
-              through the Industry Now Curriculum. Start your journey in
-              computing with DCS and be at the forefront of digital
-              transformations.
+              mastering full-stack development.
             </p>
           </CardContent>
         </Card>
@@ -113,10 +101,6 @@ export default function CourseDisplaySection() {
               explore diverse computing fields in SP's SoC. You'll build a
               strong foundation in programming and IT fundamentals in Year 1,
               which will guide you in choosing your specialization in Year 2.
-              Learn about the technologies you use daily, and combine your
-              skills and insights to create innovative solutions. This journey
-              empowers you to make a well-informed decision that you can truly
-              own and be proud of. Start your tech journey with SP today.
             </p>
           </CardContent>
         </Card>

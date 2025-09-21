@@ -294,7 +294,7 @@ export default function LandingPage() {
             <div className='flex-1 space-y-4'>
               <h2 className='text-2xl font-bold mb-2'>{t('ourLocation')}</h2>
               <div className=''>
-                {t('SDC')}
+                Singapore Polytechnic
                 <br />
                 {t('ourLocationDesc')}
               </div>
@@ -302,13 +302,12 @@ export default function LandingPage() {
               <div className=''>
                 {t('openingHoursDesc')}
                 <br />
-                {t('closedDates')}
+                {/* {t('closedDates')} */}
               </div>
             </div>
             <div className='flex-1 w-full h-48 md:h-56 rounded-xl overflow-hidden shadow-lg border border-border'>
               <iframe
-                title='SDC Location'
-                src='https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3977.024818572769!2d103.6767545!3d1.3326904!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31da0f7edafeb3ab%3A0xf41100151646f9a1!2sSingapore%20Discovery%20Centre!5e0!3m2!1sen!2ssg!4v1653648000000!5m2!1sen!2ssg'
+                src='https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3988.7758676394114!2d103.77497457588531!3d1.3097810617014318!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31da1a602ff17c15%3A0xa9545dd23993859e!2sSingapore%20Polytechnic!5e0!3m2!1sen!2ssg!4v1758465770370!5m2!1sen!2ssg'
                 width='100%'
                 height='100%'
                 style={{ border: 0 }}
@@ -324,7 +323,7 @@ export default function LandingPage() {
       <footer className='w-full bg-background py-20 border-t border-border'>
         <div className='container mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-8 px-4'>
           <div className='flex-1 flex flex-col gap-2 mb-6 md:mb-0'>
-            <span className='font-semibold text-lg'>{t('SDC')}</span>
+            <span className='font-semibold text-lg'>Singapore Polytechnic</span>
             <span className='text-xs text-muted-foreground'>
               &copy; {new Date().getFullYear()} {t('allRightsReserved')}
             </span>
@@ -332,25 +331,25 @@ export default function LandingPage() {
               <div className='font-semibold mb-1'>{t('contact')}</div>
               <div className='text-sm text-muted-foreground'>
                 {t('email')}{' '}
-                <a href='mailto:info@sdc.com.sg' className='underline'>
-                  info@sdc.com.sg
+                <a href='mailto:qsm@sp.edu.sg' className='underline'>
+                  qsm@sp.edu.sg
                 </a>
                 <br />
                 {t('phone')}{' '}
-                <a href='tel:+6567996100' className='underline'>
-                  +65 6799 6100
+                <a href='tel:+6567751133' className='underline'>
+                  +65 6775 1133
                 </a>
                 <br />
               </div>
             </div>
           </div>
           <div className='flex flex-col items-center gap-4'>
-            <Button className='bg-red-400 dark:bg-red-500 text-white cursor-pointer'>
+            {/* <Button className='bg-red-400 dark:bg-red-500 text-white cursor-pointer'>
               {t('subscribe')}
-            </Button>
+            </Button> */}
             <div className='flex flex-row gap-4 mt-2'>
               <a
-                href='https://facebook.com/'
+                href='https://www.facebook.com/singaporepolytechnic'
                 target='_blank'
                 rel='noopener noreferrer'
                 aria-label='Facebook'
@@ -359,7 +358,7 @@ export default function LandingPage() {
                 <Facebook className='w-5 h-5' />
               </a>
               <a
-                href='https://instagram.com/'
+                href='https://www.instagram.com/singaporepoly'
                 target='_blank'
                 rel='noopener noreferrer'
                 aria-label='Instagram'
@@ -368,7 +367,7 @@ export default function LandingPage() {
                 <Instagram className='w-5 h-5' />
               </a>
               <a
-                href='https://linkedin.com/'
+                href='https://www.linkedin.com/school/singapore-polytechnic/?originalSubdomain=sg'
                 target='_blank'
                 rel='noopener noreferrer'
                 aria-label='LinkedIn'
@@ -377,7 +376,7 @@ export default function LandingPage() {
                 <Linkedin className='w-5 h-5' />
               </a>
               <a
-                href='mailto:info@sdc.com.sg'
+                href='mailto:qsm@sp.edu.sg'
                 aria-label='Email'
                 className='hover:text-green-600 transition-colors'
               >
