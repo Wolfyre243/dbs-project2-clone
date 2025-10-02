@@ -227,13 +227,11 @@ export function AppBar({ ...props }: React.ComponentProps<any>) {
         <div className='flex h-full items-center'>
           <Link to='/' className='flex flex-row items-center'>
             <div className='flex w-24'>
-              <AspectRatio ratio={16 / 9}>
-                <img
-                  src='/sdc-logo.png'
-                  alt='Image'
-                  className='rounded-md object-cover'
-                />
-              </AspectRatio>
+              <img
+                src='/soc-logo.png'
+                alt='Image'
+                className='rounded-md object-cover scale-150'
+              />
             </div>
           </Link>
         </div>

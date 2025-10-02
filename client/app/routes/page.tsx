@@ -139,10 +139,14 @@ export default function LandingPage() {
                 transition={{ duration: 0.7, delay: 0.1 }}
               >
                 <h3 className='text-xl font-semibold mb-2 text-foreground'>
-                  {t('beginningsTitle')}
+                  Innovative Student Projects
                 </h3>
                 <p className='text-sm text-muted-foreground mb-4 text-center'>
-                  {t('beginningsDesc')}
+                  Oculis is an innovative product created by a group of students
+                  and alumni from the Diploma in Applied AI &amp; Analytics
+                  (DAAA) course.
+                  <br />
+                  <br />
                 </p>
                 <audio controls className='w-full'>
                   <source src='/sample-audio-1.wav' type='audio/wav' />
@@ -158,10 +162,12 @@ export default function LandingPage() {
                 transition={{ duration: 0.7, delay: 0.3 }}
               >
                 <h3 className='text-xl font-semibold mb-2 text-foreground'>
-                  {t('defendingTitle')}
+                  Scholarship Opportunities
                 </h3>
                 <p className='text-sm text-muted-foreground mb-4 text-center'>
-                  {t('defendingDesc')}
+                  6 School of Computing (SoC) students received the prestigious
+                  CSIT Diploma Scholarship at the CSIT Scholarship Award
+                  Ceremony on 27 Sep 2024.
                 </p>
                 <audio controls className='w-full'>
                   <source src='/sample-audio-2.wav' type='audio/wav' />
@@ -177,10 +183,12 @@ export default function LandingPage() {
                 transition={{ duration: 0.7, delay: 0.5 }}
               >
                 <h3 className='text-xl font-semibold mb-2 text-foreground'>
-                  {t('voicesTitle')}
+                  Graduation Ceremony
                 </h3>
                 <p className='text-sm text-muted-foreground mb-4 text-center'>
-                  {t('voicesDesc')}
+                  On 22 January 2025, we proudly celebrate the achievements of
+                  our outstanding students and alumna at the SP Scholarships
+                  Award Presentation Ceremony, held at the SPCC.
                 </p>
                 <audio controls className='w-full'>
                   <source src='/sample-audio-3.wav' type='audio/wav' />

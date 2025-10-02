@@ -91,7 +91,7 @@ export default function MemberRegisterPage() {
       <a href='/' className='mb-2 flex gap-2 items-center justify-center'>
         {/* SDC Logo */}
         <AspectRatio ratio={16 / 9} className='flex flex-col justify-center'>
-          <img src='/sdc-logo.png' alt='SDC Logo' className='' />
+          <img src='/soc-logo.png' alt='SDC Logo' className='scale-150' />
         </AspectRatio>
         <span className='text-2xl font-semibold'>
           Singapore Polytechnic Tour
