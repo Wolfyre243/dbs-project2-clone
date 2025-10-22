@@ -122,7 +122,7 @@ export function MemberRegisterForm({
               <div className='flex gap-3 items-center justify-center rounded-md'>
                 {/* <GalleryVerticalEnd className='size-6' /> */}
                 <img src='/soc-logo.png' alt='' className='scale-150' />
-                <h1 className='font-bold'>SDC</h1>
+                <h1 className='font-bold'>SOC</h1>
               </div>
             </a>
             <h1 className='text-xl font-bold'>Membership Registration</h1>

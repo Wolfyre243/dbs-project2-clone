@@ -18,7 +18,7 @@ export default function QRCodeScannerPage() {
   if (!isMobile) {
     return (
       <div className='flex flex-col min-h-full w-full items-center justify-start gap-10 py-8 px-6'>
-        <h1 className='text-2xl font-bold'>SDC QR Scanner</h1>
+        <h1 className='text-2xl font-bold'>QR Scanner</h1>
         <CameraOff className='size-10' />
         <h1 className='text-2xl font-bold'>
           Please use your mobile device instead!
@@ -33,7 +33,7 @@ export default function QRCodeScannerPage() {
 
   return (
     <div className='flex flex-col min-h-full w-full items-center justify-start gap-10 py-8 px-6'>
-      <h1 className='text-2xl font-bold'>SDC QR Scanner</h1>
+      <h1 className='text-2xl font-bold'>QR Scanner</h1>
 
       <QRScanner />
 

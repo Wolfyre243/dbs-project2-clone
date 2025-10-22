@@ -79,7 +79,7 @@ export default function ResetPasswordPage() {
         <Link to='/' className='flex flex-col items-center gap-2 font-medium'>
           <div className='flex gap-3 items-center justify-center rounded-md'>
             <GalleryVerticalEnd className='size-6' />
-            <h1 className='font-bold'>SDC</h1>
+            <h1 className='font-bold'>SOC</h1>
           </div>
         </Link>
         <h1 className='text-xl font-bold'>Reset Password</h1>

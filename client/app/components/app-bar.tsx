@@ -256,7 +256,7 @@ export function AppBar({ ...props }: React.ComponentProps<any>) {
       </div>
       <div className='hidden md:flex items-center gap-4'>
         <ThemeSwitcher />
-        <LanguageSelector />
+        {/* <LanguageSelector /> */}
         {isLoggedIn ? (
           <UserMenu />
         ) : (

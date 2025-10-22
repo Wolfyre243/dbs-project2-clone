@@ -86,7 +86,7 @@ export default function AssistantLaunchPage() {
     hover: {
       scale: 1.05,
       y: -2,
-      boxShadow: '0 10px 25px rgba(239, 68, 68, 0.15)',
+      boxShadow: '0 10px 25px rgba(123, 186, 219, 0.15)',
       transition: {
         type: 'spring' as const,
         stiffness: 400,
@@ -129,7 +129,7 @@ export default function AssistantLaunchPage() {
       {/* Animated background elements */}
       <div className='absolute inset-0 overflow-hidden pointer-events-none'>
         <motion.div
-          className='absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-red-500/20 to-pink-500/20 rounded-full blur-3xl'
+          className='absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-primary/20 to-pink-500/20 rounded-full blur-3xl'
           animate={{
             y: [-10, 10, -10],
             rotate: [-2, 2, -2],
@@ -159,7 +159,7 @@ export default function AssistantLaunchPage() {
         {/* Header Section */}
         <motion.div className='text-center mb-16' variants={itemVariants}>
           <motion.div
-            className='inline-flex items-center gap-3 mb-6 px-4 py-2 bg-gradient-to-br from-red-500/30 to-pink-600/10 rounded-full border border-red-200/50 dark:border-red-800/50 backdrop-blur-sm'
+            className='inline-flex items-center gap-3 mb-6 px-4 py-2 bg-gradient-to-br from-primary/30 to-primary/10 rounded-full border border-primary/50 backdrop-blur-sm'
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -174,15 +174,15 @@ export default function AssistantLaunchPage() {
                 ease: 'easeInOut',
               }}
             >
-              <Sparkles className='h-5 w-5 text-red-500' />
+              <Sparkles className='h-4 w-4 text-primary' />
             </motion.div>
-            <span className='text-sm font-medium text-red-700 dark:text-red-300'>
+            <span className='text-sm font-medium text-primary'>
               AI-Powered Assistant
             </span>
           </motion.div>
 
           <motion.h1
-            className='text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-gray-900 via-red-600 to-pink-600 bg-clip-text text-transparent dark:from-red-200 dark:via-red-400 dark:to-pink-400'
+            className='text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-gray-900 via-primary to-blue-900 bg-clip-text text-transparent'
             style={{ backgroundSize: '200% 200%' }}
             animate={{
               backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
@@ -222,8 +222,8 @@ export default function AssistantLaunchPage() {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
           >
-            Omnie is your intelligent AI companion for Singapore Discovery
-            Centre. <br />
+            Omnie is your intelligent AI companion for the Smart Exhibitions in
+            SOC. <br />
             {!isMobile && (
               <p>
                 Get instant insights, manage data, and streamline administrative
@@ -233,7 +233,10 @@ export default function AssistantLaunchPage() {
           </motion.p>
         </motion.div>
 
-        <motion.div className='flex flex-col min-w-ful' variants={itemVariants}>
+        <motion.div
+          className='flex flex-col min-w-full'
+          variants={itemVariants}
+        >
           {/* Quick action suggestions */}
           <motion.div
             className='mt-3 flex flex-wrap gap-2 justify-center mb-8'
@@ -275,7 +278,7 @@ export default function AssistantLaunchPage() {
                     variant='outline'
                     size='sm'
                     onClick={() => setMessage(action.text)}
-                    className='text-xs border-gray-200 dark:border-zinc-700 hover:border-red-300 dark:hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 text-gray-700 dark:text-zinc-300 backdrop-blur-sm'
+                    className='text-xs border-gray-200 dark:border-zinc-700 hover:border-blue-300 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950/20 text-gray-700 dark:text-zinc-300 backdrop-blur-sm'
                   >
                     <motion.span
                       className='mr-2'

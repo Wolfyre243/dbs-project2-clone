@@ -185,7 +185,7 @@ const AudioPlayer: React.FC = () => {
           color: '#a0dfff',
         }}
       >
-        Welcome to SDC!
+        Welcome to SOC!
       </h3>
       <div
         style={{

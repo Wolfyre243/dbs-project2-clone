@@ -10,6 +10,7 @@ import {
   Instagram,
   Linkedin,
   Mail,
+  Sparkle,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import api from '~/services/api';
@@ -70,8 +71,8 @@ export default function LandingPage() {
           {/* Hero Content */}
           <div className='relative z-10 h-screen flex flex-col justify-center text-center px-6 max-w-6xl mx-auto'>
             {/* Welcome Badge */}
-            <div className='w-fit self-center inline-flex items-center px-4 py-2 rounded-full border border-red-400 dark:border-red-500 bg-red-400/80 dark:bg-red-500/80 backdrop-blur-sm mb-8'>
-              <Shield className='w-4 h-4 mr-2 text-white' />
+            <div className='w-fit self-center inline-flex items-center px-4 py-2 rounded-full border-2 border-primary bg-primary backdrop-blur-sm mb-8'>
+              <Sparkle className='w-4 h-4 mr-2 text-white' />
               <span className='text-sm font-medium tracking-wide text-white'>
                 {t('welcome')}
               </span>
@@ -79,15 +80,12 @@ export default function LandingPage() {
 
             {/* Main Heading */}
             <motion.h1
-              className='text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-tight'
+              className='text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-tight text-shadow-lg'
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: 'easeOut' }}
             >
-              {t('mainHeading1')}{' '}
-              <span className='bg-gradient-to-br from-red-500 dark:from-red-500 to-red-600 dark:to-red-700 bg-clip-text text-transparent'>
-                {t('mainHeading2')}
-              </span>
+              {t('mainHeading1')} <span className=''>{t('mainHeading2')}</span>
               {/* <br />
               {t('mainHeading3')} */}
             </motion.h1>
@@ -297,7 +295,7 @@ export default function LandingPage() {
         <HomepageFAQSection />
 
         {/* Address & Location Section */}
-        <section className='w-full bg-red-400 dark:bg-red-400 py-16 px-4 border-t border-border'>
+        <section className='w-full bg-primary py-16 px-4 border-t border-border'>
           <div className='max-w-4xl mx-auto flex flex-col md:flex-row gap-8 items-center'>
             <div className='flex-1 space-y-4'>
               <h2 className='text-2xl font-bold mb-2'>{t('ourLocation')}</h2>

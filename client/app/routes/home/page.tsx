@@ -40,7 +40,7 @@ export default function HomePage() {
               Welcome!
             </motion.h1>
             <motion.p variants={fadeUpItem} className='text-2xl font-semibold'>
-              Take a look at your SDC journey so far!
+              Take a look at your journey so far!
             </motion.p>
           </motion.div>
           <motion.div className='text-white' variants={fadeUpItem}>

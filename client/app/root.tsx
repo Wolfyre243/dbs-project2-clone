@@ -34,7 +34,7 @@ export const links: Route.LinksFunction = () => [
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: 'SDC Exhibition App' },
+    { title: 'Smart Exhibition App' },
     { name: 'description', content: 'Welcome to React Router!' },
   ];
 }

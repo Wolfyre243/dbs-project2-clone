@@ -10,7 +10,7 @@ import {
 
 export default function CourseDisplaySection() {
   return (
-    <section className='w-full bg-gradient-to-b from-background/90 to-red-500/80 py-30 px-4'>
+    <section className='w-full bg-gradient-to-b from-background/90 to-primary/80 py-30 px-4'>
       <div className='max-w-5xl mx-auto'>
         <h2 className='text-3xl md:text-4xl font-bold text-center mb-4 text-foreground'>
           Courses @ SOC

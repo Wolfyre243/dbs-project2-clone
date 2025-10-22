@@ -192,7 +192,7 @@ export function AssistantChatBar({
             onChange={(e) => setMessage(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder='Ask Anything...'
-            className='min-h-[60px] max-h-[120px] resize-none pr-12 shadow bg-zinc-50/90 dark:bg-zinc-900/90 border-gray-200 dark:border-zinc-700 focus:border-red-300 dark:focus:border-red-500 focus:ring-red-200 dark:focus:ring-red-500/20 backdrop-blur-sm'
+            className='min-h-[60px] max-h-[120px] resize-none pr-12 shadow bg-zinc-50/90 dark:bg-zinc-900/90 border-gray-200 dark:border-zinc-700 backdrop-blur-sm'
             disabled={isLoading}
           />
           <div className='hidden md:flex absolute bottom-2 right-2 text-xs items-center text-gray-400 dark:text-zinc-500'>
@@ -215,7 +215,7 @@ export function AssistantChatBar({
         <Button
           onClick={handleSubmit}
           disabled={!message.trim() || isLoading}
-          className='self-end md:self-auto px-6 bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed'
+          className='self-end md:self-auto px-6 bg-gradient-to-r from-blue-500 to-primary hover:from-blue-600 hover:to-primary text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed'
         >
           {isLoading ? (
             <div className='flex items-center gap-2'>
