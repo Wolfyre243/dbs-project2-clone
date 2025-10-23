@@ -226,7 +226,7 @@ export function AppBar({ ...props }: React.ComponentProps<any>) {
       <div className='flex flex-row items-center gap-3 px-3'>
         <div className='flex h-full items-center'>
           <Link to='/' className='flex flex-row items-center'>
-            <div className='flex w-24'>
+            <div className='flex w-30 px-2 py-1 rounded-md bg-black/25 dark:bg-none'>
               <img
                 src='/soc-logo.png'
                 alt='Image'
