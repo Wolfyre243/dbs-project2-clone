@@ -19,7 +19,7 @@ export default function CourseDisplaySection() {
           Take a look at the top-notch courses offered here at SP!
         </p>
       </div>
-      <div className='max-w-10/12 mx-auto flex flex-row gap-4 justify-evenly'>
+      <div className='max-w-full md:max-w-10/12 mx-1 md:mx-auto flex flex-col md:flex-row gap-4 justify-evenly'>
         <Card className='w-full'>
           <CardHeader>
             <CardTitle>S30 Diploma in Applied AI & Analytics</CardTitle>
